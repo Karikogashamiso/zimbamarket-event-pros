@@ -18,7 +18,7 @@ const Header = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-white hover:text-secondary transition-colors">Browse</a>
+            <a href="/categories" className="text-white hover:text-secondary transition-colors">Browse</a>
             <a href="#" className="text-white hover:text-secondary transition-colors">Venues</a>
             <a href="#" className="text-white hover:text-secondary transition-colors">Services</a>
             <a href="/contact" className="text-white hover:text-secondary transition-colors">Contact</a>
@@ -50,7 +50,7 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-white/20 p-4">
             <nav className="flex flex-col space-y-4">
-              <a href="#" className="text-gray-800 hover:text-primary transition-colors">Browse</a>
+              <a href="/categories" className="text-gray-800 hover:text-primary transition-colors">Browse</a>
               <a href="#" className="text-gray-800 hover:text-primary transition-colors">Venues</a>
               <a href="#" className="text-gray-800 hover:text-primary transition-colors">Services</a>
               <a href="/contact" className="text-gray-800 hover:text-primary transition-colors">Contact</a>
