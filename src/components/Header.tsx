@@ -21,7 +21,7 @@ const Header = () => {
             <a href="#" className="text-white hover:text-secondary transition-colors">Browse</a>
             <a href="#" className="text-white hover:text-secondary transition-colors">Venues</a>
             <a href="#" className="text-white hover:text-secondary transition-colors">Services</a>
-            <a href="#" className="text-white hover:text-secondary transition-colors">How it Works</a>
+            <a href="/contact" className="text-white hover:text-secondary transition-colors">Contact</a>
           </nav>
           
           {/* Desktop Actions */}
@@ -53,7 +53,7 @@ const Header = () => {
               <a href="#" className="text-gray-800 hover:text-primary transition-colors">Browse</a>
               <a href="#" className="text-gray-800 hover:text-primary transition-colors">Venues</a>
               <a href="#" className="text-gray-800 hover:text-primary transition-colors">Services</a>
-              <a href="#" className="text-gray-800 hover:text-primary transition-colors">How it Works</a>
+              <a href="/contact" className="text-gray-800 hover:text-primary transition-colors">Contact</a>
               <div className="flex space-x-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" className="flex-1">Sign In</Button>
                 <Button variant="default" className="flex-1">List Business</Button>
