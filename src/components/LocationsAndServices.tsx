@@ -29,20 +29,22 @@ const LocationsAndServices = () => {
 
   const serviceProviders = [
     { name: "All Event Service Providers", count: "500+" },
-    { name: "Wedding Planners", count: "45+" },
-    { name: "Catering Companies", count: "80+" },
-    { name: "Professional DJs", count: "120+" },
-    { name: "Photographers", count: "90+" },
-    { name: "Videographers", count: "55+" },
-    { name: "Event Decorators", count: "70+" },
-    { name: "Florists", count: "40+" },
     { name: "Bakers & Cake Designers", count: "60+" },
-    { name: "Beauty & Makeup Artists", count: "35+" },
-    { name: "Live Musicians & Bands", count: "75+" },
-    { name: "Sound & Lighting", count: "40+" },
-    { name: "Transportation Services", count: "25+" },
-    { name: "Security Services", count: "20+" },
-    { name: "Event Officiants", count: "18+" }
+    { name: "Bartending Services", count: "35+" },
+    { name: "Catering Companies", count: "80+" },
+    { name: "Decor Services", count: "70+" },
+    { name: "Event Planners", count: "45+" },
+    { name: "Lighting & Sound Services", count: "40+" },
+    { name: "Photographers", count: "90+" },
+    { name: "Private Chefs", count: "25+" },
+    { name: "Wedding Planners", count: "35+" },
+    { name: "All Event Entertainers", count: "200+" },
+    { name: "Live Bands", count: "50+" },
+    { name: "Gospel Choirs", count: "25+" },
+    { name: "Professional DJs", count: "120+" },
+    { name: "Magicians", count: "15+" },
+    { name: "Master of Ceremonies", count: "30+" },
+    { name: "Solo Singers", count: "40+" }
   ];
 
   return (

@@ -33,7 +33,9 @@ const Header = () => {
               Sign In
             </Button>
             <Button variant="hero" size="sm">
-              List Business
+              <a href="/list-business" className="flex items-center">
+                List Business
+              </a>
             </Button>
           </div>
           
@@ -56,7 +58,9 @@ const Header = () => {
               <a href="/contact" className="text-gray-800 hover:text-primary transition-colors">Contact</a>
               <div className="flex space-x-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" className="flex-1">Sign In</Button>
-                <Button variant="default" className="flex-1">List Business</Button>
+                <Button variant="default" className="flex-1">
+                  <a href="/list-business">List Business</a>
+                </Button>
               </div>
             </nav>
           </div>
