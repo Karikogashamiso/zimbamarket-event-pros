@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_requests: {
+        Row: {
+          created_at: string
+          event_date: string | null
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          message: string | null
+          service_id: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_date?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          message?: string | null
+          service_id: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_date?: string | null
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          message?: string | null
+          service_id?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -41,6 +88,69 @@ export type Database = {
           name?: string
           slug?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          message: string
+          phone: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          message: string
+          phone?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          message?: string
+          phone?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

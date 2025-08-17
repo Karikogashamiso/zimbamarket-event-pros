@@ -3,8 +3,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    const subject = formData.get('subject') as string;
+    const message = formData.get('message') as string;
+
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone,
+          subject,
+          message,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Message sent!",
+        description: "Thank you for contacting us. We'll get back to you soon.",
+      });
+
+      // Reset form
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header Spacer */}
@@ -119,44 +172,48 @@ const Contact = () => {
                   <CardTitle className="text-2xl">Send us a Message</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">First Name</label>
-                      <Input placeholder="John" />
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">First Name</label>
+                        <Input name="firstName" placeholder="John" required />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Last Name</label>
+                        <Input name="lastName" placeholder="Doe" required />
+                      </div>
                     </div>
+                    
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Last Name</label>
-                      <Input placeholder="Doe" />
+                      <label className="text-sm font-medium mb-2 block">Email</label>
+                      <Input name="email" type="email" placeholder="john@example.com" required />
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Email</label>
-                    <Input type="email" placeholder="john@example.com" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Phone</label>
-                    <Input placeholder="+263 XX XXX XXXX" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Subject</label>
-                    <Input placeholder="Event planning inquiry" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Message</label>
-                    <Textarea 
-                      placeholder="Tell us about your event needs..."
-                      className="min-h-32"
-                    />
-                  </div>
-                  
-                  <Button className="w-full">
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Message
-                  </Button>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Phone</label>
+                      <Input name="phone" placeholder="+263 XX XXX XXXX" />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Subject</label>
+                      <Input name="subject" placeholder="Event planning inquiry" required />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Message</label>
+                      <Textarea 
+                        name="message"
+                        placeholder="Tell us about your event needs..."
+                        className="min-h-32"
+                        required
+                      />
+                    </div>
+                    
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Send className="w-4 h-4 mr-2" />
+                      {isLoading ? "Sending..." : "Send Message"}
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
             </div>

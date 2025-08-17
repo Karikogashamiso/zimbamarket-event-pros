@@ -28,137 +28,135 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useService } from "@/hooks/useServices";
+import { useReviews } from "@/hooks/useReviews";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const ServiceDetail = () => {
   const { id } = useParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState('');
   const [message, setMessage] = useState('');
+  const [isBookingLoading, setIsBookingLoading] = useState(false);
+  
+  const { service, loading: serviceLoading, error: serviceError } = useService(id || '');
+  const { reviews, loading: reviewsLoading } = useReviews(id || '');
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // Mock service data
-  const service = {
-    id: 1,
-    title: "Royal Gardens Wedding Venue",
-    category: "Wedding Venue",
-    location: "Harare, Zimbabwe",
-    address: "123 Garden Avenue, Highlands, Harare",
-    description: "Experience the magic of your special day at Royal Gardens, Zimbabwe's premier wedding venue. Set within beautifully manicured gardens with stunning views of the city, our venue offers the perfect blend of elegance and natural beauty for your dream wedding.",
-    fullDescription: "Royal Gardens Wedding Venue is an exquisite destination that combines sophistication with natural beauty. Our venue features multiple ceremony locations, from intimate garden settings to grand outdoor pavilions. The main reception hall can accommodate up to 200 guests and features floor-to-ceiling windows that flood the space with natural light during the day and offer romantic ambiance in the evening. Our professional team handles every detail, from décor setup to catering coordination, ensuring your wedding day is flawless.",
-    price: "From $500",
-    rating: 4.9,
-    reviews: 127,
-    images: [
-      "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
-      "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
-      "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png"
-    ],
-    verified: true,
-    featured: true,
-    availability: "Available",
-    responseTime: "Usually responds within 2 hours",
-    capacity: "50-200 guests",
-    phoneNumber: "+263 4 123 4567",
-    email: "info@royalgardens.co.zw",
-    website: "www.royalgardens.co.zw",
-    amenities: [
-      "Bridal Suite",
-      "Parking for 100+ cars",
-      "Professional Lighting",
-      "Sound System",
-      "Catering Kitchen",
-      "Garden Ceremony Space",
-      "Reception Hall",
-      "Photography Areas"
-    ],
-    packages: [
-      {
-        name: "Intimate Package",
-        description: "Perfect for smaller celebrations",
-        guests: "Up to 50 guests",
-        price: "$500",
-        includes: ["4-hour venue rental", "Basic sound system", "Bridal suite access"]
-      },
-      {
-        name: "Classic Package",
-        description: "Our most popular wedding package",
-        guests: "Up to 150 guests",
-        price: "$800",
-        includes: ["8-hour venue rental", "Full sound & lighting", "Bridal suite", "Ceremony décor", "Coordinator"]
-      },
-      {
-        name: "Premium Package",
-        description: "The ultimate wedding experience",
-        guests: "Up to 200 guests",
-        price: "$1200",
-        includes: ["Full day venue rental", "Premium sound & lighting", "Bridal & groom suites", "Full décor package", "Wedding coordinator", "Photography areas"]
+  // Handle booking submission
+  const handleBookingSubmit = async () => {
+    if (!service) return;
+    
+    setIsBookingLoading(true);
+    
+    try {
+      const bookingData = {
+        service_id: service.id,
+        event_date: selectedDate || null,
+        message: message || null,
+        ...(user ? {
+          user_id: user.id,
+        } : {
+          guest_name: '', // Will be handled by a form if user is not logged in
+          guest_email: '',
+          guest_phone: '',
+        })
+      };
+
+      const { error } = await supabase
+        .from('booking_requests')
+        .insert(bookingData);
+
+      if (error) {
+        throw error;
       }
-    ]
+
+      toast({
+        title: "Inquiry sent!",
+        description: "Your booking inquiry has been sent successfully. The service provider will contact you soon.",
+      });
+
+      // Reset form
+      setSelectedDate('');
+      setMessage('');
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBookingLoading(false);
+    }
   };
 
-  const reviews = [
-    {
-      id: 1,
-      name: "Sarah M.",
-      rating: 5,
-      date: "2 weeks ago",
-      comment: "Absolutely magical venue! The gardens are breathtaking and the staff went above and beyond to make our wedding day perfect. Highly recommend!",
-      helpful: 12
-    },
-    {
-      id: 2,
-      name: "David & Jane K.",
-      rating: 5,
-      date: "1 month ago",
-      comment: "Royal Gardens exceeded all our expectations. The venue is stunning, the service is impeccable, and our guests are still talking about how beautiful everything was.",
-      helpful: 8
-    },
-    {
-      id: 3,
-      name: "Michael T.",
-      rating: 4,
-      date: "2 months ago",
-      comment: "Great venue with excellent facilities. The only minor issue was parking during peak season, but the staff managed it well. Overall very satisfied.",
-      helpful: 5
-    }
-  ];
+  if (serviceLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        <div className="container mx-auto px-4 py-16">
+          <div className="flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading service details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const relatedServices = [
+  if (serviceError || !service) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Service Not Found</h1>
+            <p className="text-muted-foreground mb-4">The service you're looking for doesn't exist or has been removed.</p>
+            <Link to="/search">
+              <Button>Browse Other Services</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get service images - fallback to default if none exist
+  const serviceImages = service.image_url ? [service.image_url] : ["/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png"];
+  
+  // Mock packages for now - in a real app this would come from the database
+  const packages = [
     {
-      id: 2,
-      title: "Premium African Cuisine Catering",
-      category: "Catering",
-      location: "Harare, Zimbabwe",
-      price: "From $25/person",
-      rating: 4.8,
-      image: "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png"
-    },
-    {
-      id: 3,
-      title: "Elegant Events Photography",
-      category: "Photography",
-      location: "Harare, Zimbabwe",
-      price: "From $300",
-      rating: 4.9,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png"
+      name: "Basic Package",
+      description: "Essential services",
+      guests: `Up to ${service.capacity_min || 50} guests`,
+      price: `$${service.price_from || 500}`,
+      includes: ["Basic service", "Standard setup", "Support included"]
     }
   ];
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % service.images.length);
+    setCurrentImageIndex((prev) => (prev + 1) % serviceImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + service.images.length) % service.images.length);
+    setCurrentImageIndex((prev) => (prev - 1 + serviceImages.length) % serviceImages.length);
   };
 
   return (
     <>
       <Helmet>
-        <title>{service.title} - {service.category} | ZimEventPro</title>
+        <title>{service.title} - {service.category?.name} | ZimEventPro</title>
         <meta name="description" content={service.description} />
-        <meta property="og:title" content={`${service.title} - ${service.category}`} />
+        <meta property="og:title" content={`${service.title} - ${service.category?.name}`} />
         <meta property="og:description" content={service.description} />
-        <meta property="og:image" content={service.images[0]} />
+        <meta property="og:image" content={serviceImages[0]} />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -173,7 +171,7 @@ const ServiceDetail = () => {
               <span>/</span>
               <Link to="/categories" className="hover:text-primary">Categories</Link>
               <span>/</span>
-              <Link to="/search" className="hover:text-primary">{service.category}</Link>
+              <Link to="/search" className="hover:text-primary">{service.category?.name}</Link>
               <span>/</span>
               <span className="text-foreground">{service.title}</span>
             </nav>
@@ -192,52 +190,58 @@ const ServiceDetail = () => {
                 <div className="relative">
                   <div className="relative h-96 rounded-2xl overflow-hidden">
                     <img 
-                      src={service.images[currentImageIndex]} 
+                      src={serviceImages[currentImageIndex]} 
                       alt={service.title}
                       className="w-full h-full object-cover"
                     />
                     
                     {/* Navigation Buttons */}
-                    <button 
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                    >
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Image Counter */}
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                      {currentImageIndex + 1} / {service.images.length}
-                    </div>
+                    {serviceImages.length > 1 && (
+                      <>
+                        <button 
+                          onClick={prevImage}
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={nextImage}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                        >
+                          <ArrowRight className="w-5 h-5" />
+                        </button>
+                        
+                        {/* Image Counter */}
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                          {currentImageIndex + 1} / {serviceImages.length}
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Thumbnail Gallery */}
-                  <div className="flex gap-2 mt-4">
-                    {service.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                          currentImageIndex === index ? 'border-primary' : 'border-transparent'
-                        }`}
-                      >
-                        <img src={image} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
+                  {serviceImages.length > 1 && (
+                    <div className="flex gap-2 mt-4">
+                      {serviceImages.map((image, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                            currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                          }`}
+                        >
+                          <img src={image} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Service Details */}
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline">{service.category}</Badge>
+                      <Badge variant="outline">{service.category?.name}</Badge>
                       {service.verified && (
                         <Badge className="bg-primary">
                           <Shield className="w-3 h-3 mr-1" />
@@ -258,7 +262,7 @@ const ServiceDetail = () => {
                       <div className="flex items-center gap-1">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                         <span className="font-semibold">{service.rating}</span>
-                        <span className="text-muted-foreground">({service.reviews} reviews)</span>
+                        <span className="text-muted-foreground">({service.review_count} reviews)</span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="w-4 h-4" />
@@ -282,9 +286,9 @@ const ServiceDetail = () => {
                     
                     <TabsContent value="overview" className="space-y-6 mt-6">
                       <div>
-                        <h3 className="text-2xl font-bold mb-4">About This Venue</h3>
+                        <h3 className="text-2xl font-bold mb-4">About This Service</h3>
                         <p className="text-muted-foreground leading-relaxed">
-                          {service.fullDescription}
+                          {service.full_description || service.description}
                         </p>
                       </div>
                       
@@ -295,7 +299,14 @@ const ServiceDetail = () => {
                               <Users className="w-6 h-6 text-primary" />
                               <h4 className="font-semibold">Capacity</h4>
                             </div>
-                            <p className="text-muted-foreground">{service.capacity}</p>
+                            <p className="text-muted-foreground">
+                              {service.capacity_min && service.capacity_max 
+                                ? `${service.capacity_min}-${service.capacity_max} guests`
+                                : service.capacity_min 
+                                ? `Up to ${service.capacity_min} guests`
+                                : 'Capacity varies'
+                              }
+                            </p>
                           </CardContent>
                         </Card>
                         
@@ -305,16 +316,16 @@ const ServiceDetail = () => {
                               <Clock className="w-6 h-6 text-primary" />
                               <h4 className="font-semibold">Response Time</h4>
                             </div>
-                            <p className="text-muted-foreground">{service.responseTime}</p>
+                            <p className="text-muted-foreground">{service.response_time}</p>
                           </CardContent>
                         </Card>
                       </div>
                     </TabsContent>
                     
                     <TabsContent value="packages" className="space-y-6 mt-6">
-                      <h3 className="text-2xl font-bold">Wedding Packages</h3>
+                      <h3 className="text-2xl font-bold">Service Packages</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {service.packages.map((pkg, index) => (
+                        {packages.map((pkg, index) => (
                           <Card key={index} className="hover-lift">
                             <CardHeader>
                               <CardTitle>{pkg.name}</CardTitle>
@@ -345,14 +356,17 @@ const ServiceDetail = () => {
                     </TabsContent>
                     
                     <TabsContent value="amenities" className="space-y-6 mt-6">
-                      <h3 className="text-2xl font-bold">Venue Amenities</h3>
+                      <h3 className="text-2xl font-bold">Service Features</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {service.amenities.map((amenity, index) => (
+                        {(service.amenities || []).map((amenity, index) => (
                           <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <CheckCircle className="w-5 h-5 text-primary" />
                             <span>{amenity}</span>
                           </div>
                         ))}
+                        {(!service.amenities || service.amenities.length === 0) && (
+                          <p className="text-muted-foreground col-span-full">No specific amenities listed.</p>
+                        )}
                       </div>
                     </TabsContent>
                     
@@ -366,30 +380,43 @@ const ServiceDetail = () => {
                       </div>
                       
                       <div className="space-y-6">
-                        {reviews.map((review) => (
+                        {reviewsLoading ? (
+                          <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                            <p className="mt-2 text-muted-foreground">Loading reviews...</p>
+                          </div>
+                        ) : reviews.length > 0 ? (
+                          reviews.map((review) => (
                           <Card key={review.id}>
                             <CardContent className="p-6">
                               <div className="flex items-start justify-between mb-4">
                                 <div>
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="font-semibold">{review.name}</h4>
+                                    <h4 className="font-semibold">{review.reviewer_name}</h4>
                                     <div className="flex">
                                       {Array.from({ length: review.rating }).map((_, i) => (
                                         <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                       ))}
                                     </div>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">{review.date}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(review.created_at).toLocaleDateString()}
+                                  </p>
                                 </div>
                               </div>
                               <p className="text-muted-foreground mb-4">{review.comment}</p>
                               <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
                                 <ThumbsUp className="w-4 h-4" />
-                                Helpful ({review.helpful})
+                                Helpful ({review.helpful_count || 0})
                               </button>
                             </CardContent>
                           </Card>
-                        ))}
+                          ))
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-muted-foreground">No reviews yet.</p>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                   </Tabs>
@@ -404,10 +431,13 @@ const ServiceDetail = () => {
                   <Card className="p-6">
                     <div className="space-y-6">
                       <div>
-                        <div className="text-3xl font-bold text-primary mb-2">{service.price}</div>
+                        <div className="text-3xl font-bold text-primary mb-2">
+                          {service.price_from ? `From $${service.price_from}` : 'Contact for pricing'}
+                          {service.price_unit && <span className="text-lg">/{service.price_unit}</span>}
+                        </div>
                         <Badge className="bg-green-100 text-green-800">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          {service.availability}
+                          {service.availability_status}
                         </Badge>
                       </div>
                       
@@ -431,9 +461,13 @@ const ServiceDetail = () => {
                           />
                         </div>
                         
-                        <Button className="w-full text-lg py-3 h-auto">
+                        <Button 
+                          className="w-full text-lg py-3 h-auto" 
+                          onClick={handleBookingSubmit}
+                          disabled={isBookingLoading}
+                        >
                           <Send className="w-5 h-5 mr-2" />
-                          Send Inquiry
+                          {isBookingLoading ? "Sending..." : "Send Inquiry"}
                         </Button>
                         
                         <Button variant="outline" className="w-full">
@@ -448,21 +482,25 @@ const ServiceDetail = () => {
                   <Card className="p-6">
                     <h3 className="font-bold text-lg mb-4">Contact Information</h3>
                     <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-primary" />
-                        <a href={`tel:${service.phoneNumber}`} className="hover:text-primary">
-                          {service.phoneNumber}
-                        </a>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-primary" />
-                        <a href={`mailto:${service.email}`} className="hover:text-primary">
-                          {service.email}
-                        </a>
-                      </div>
+                      {service.phone_number && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="w-5 h-5 text-primary" />
+                          <a href={`tel:${service.phone_number}`} className="hover:text-primary">
+                            {service.phone_number}
+                          </a>
+                        </div>
+                      )}
+                      {service.email && (
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-primary" />
+                          <a href={`mailto:${service.email}`} className="hover:text-primary">
+                            {service.email}
+                          </a>
+                        </div>
+                      )}
                       <div className="flex items-center gap-3">
                         <MapPin className="w-5 h-5 text-primary" />
-                        <span className="text-sm">{service.address}</span>
+                        <span className="text-sm">{service.address || service.location}</span>
                       </div>
                     </div>
                   </Card>
@@ -489,40 +527,6 @@ const ServiceDetail = () => {
           </div>
         </section>
 
-        {/* Related Services */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8">You Might Also Like</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedServices.map((related) => (
-                <Card key={related.id} className="hover-lift overflow-hidden">
-                  <div className="h-48 overflow-hidden">
-                    <img 
-                      src={related.image} 
-                      alt={related.title}
-                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <Badge variant="outline" className="mb-2">{related.category}</Badge>
-                    <h3 className="font-bold text-lg mb-2">{related.title}</h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{related.location}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{related.rating}</span>
-                      </div>
-                      <span className="font-bold text-primary">{related.price}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus, LogIn, Mail, Lock, User, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AuthDialogProps {
   children: React.ReactNode;
@@ -14,24 +15,86 @@ interface AuthDialogProps {
 
 const AuthDialog = ({ children }: AuthDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn, signUp } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Welcome back!",
-      description: "You have successfully signed in.",
-    });
-    setIsOpen(false);
+    setIsLoading(true);
+    
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
+      setIsOpen(false);
+      
+      // Redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Account created!",
-      description: "Welcome to ZimEventPro. Please check your email to verify your account.",
-    });
-    setIsOpen(false);
+    setIsLoading(true);
+    
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const phoneNumber = formData.get('phone') as string;
+
+    try {
+      const { error } = await signUp(email, password, firstName, lastName, phoneNumber);
+      
+      if (error) {
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Account created!",
+        description: "Welcome to ZimEventPro. Please check your email to verify your account.",
+      });
+      setIsOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -74,6 +137,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         placeholder="Enter your email"
                         className="pl-10"
@@ -87,6 +151,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
+                        name="password"
                         type="password"
                         placeholder="Enter your password"
                         className="pl-10"
@@ -94,8 +159,8 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full">
-                    Sign In
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
                   <div className="text-center">
                     <a href="#" className="text-sm text-primary hover:underline">
@@ -124,6 +189,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="firstName"
+                          name="firstName"
                           placeholder="First name"
                           className="pl-10"
                           required
@@ -134,6 +200,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
+                        name="lastName"
                         placeholder="Last name"
                         required
                       />
@@ -145,6 +212,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="registerEmail"
+                        name="email"
                         type="email"
                         placeholder="Enter your email"
                         className="pl-10"
@@ -158,6 +226,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="phone"
+                        name="phone"
                         type="tel"
                         placeholder="+263 77 123 4567"
                         className="pl-10"
@@ -171,6 +240,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="registerPassword"
+                        name="password"
                         type="password"
                         placeholder="Create a password"
                         className="pl-10"
@@ -178,8 +248,8 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
                       />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full">
-                    Create Account
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Creating Account..." : "Create Account"}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     By creating an account, you agree to our{" "}
