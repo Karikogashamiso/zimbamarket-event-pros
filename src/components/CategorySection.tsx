@@ -22,32 +22,49 @@ import {
   ShoppingBag,
   Heart
 } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
+import { Link } from "react-router-dom";
 
 const CategorySection = () => {
-  const categories = [
-    { icon: Building2, title: "Venues" },
-    { icon: Utensils, title: "Catering" },
-    { icon: Wine, title: "Bar" },
-    { icon: Music, title: "DJ" },
-    { icon: Users2, title: "Entertainers" },
-    { icon: Flower, title: "Flowers" },
-    { icon: Palette, title: "Decor" },
-    { icon: Camera, title: "Photographers" },
-    { icon: Video, title: "Videographers" },
-    { icon: Cake, title: "Bakers" },
-    { icon: Piano, title: "Musicians" },
-    { icon: UserCheck, title: "Event Planners" },
-    { icon: Scissors, title: "Beauty" },
-    { icon: Mic, title: "Event Speakers" },
-    { icon: Shield, title: "Event Safety" },
-    { icon: Guitar, title: "Bands" },
-    { icon: Lightbulb, title: "Lighting" },
-    { icon: Speaker, title: "Sound" },
-    { icon: Image, title: "Photo Booths" },
-    { icon: ChefHat, title: "Private Chefs" },
-    { icon: ShoppingBag, title: "Food Stands" },
-    { icon: Heart, title: "Officiants" }
-  ];
+  const { categories, loading, error } = useCategories();
+
+  // Icon mapping
+  const iconMap: Record<string, any> = {
+    Building2,
+    Utensils,
+    Wine,
+    Music,
+    Users2,
+    Flower,
+    Palette,
+    Camera,
+    Video,
+    Cake,
+    Piano,
+    UserCheck,
+    Scissors,
+    Mic,
+    Shield,
+    Guitar,
+    Lightbulb,
+    Speaker,
+    Image,
+    ChefHat,
+    ShoppingBag,
+    Heart
+  };
+
+  if (error) {
+    return (
+      <section className="py-16 bg-gradient-to-br from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Error loading categories: {error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-gradient-to-br from-background to-muted/30">
@@ -62,21 +79,37 @@ const CategorySection = () => {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {categories.map((category, index) => (
-            <div 
-              key={index} 
-              className="bg-card hover:bg-accent/50 rounded-2xl p-6 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg border border-border/50 hover:border-primary/20 group"
-            >
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="p-3 rounded-xl bg-muted/50 group-hover:bg-primary/10 transition-colors duration-300">
-                  <category.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+          {loading ? (
+            // Loading skeleton
+            Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className="bg-card rounded-2xl p-6 border border-border/50">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="w-12 h-12 bg-muted rounded-xl animate-pulse"></div>
+                  <div className="w-16 h-4 bg-muted rounded animate-pulse"></div>
                 </div>
-                <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors duration-300">
-                  {category.title}
-                </h3>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            categories.map((category) => {
+              const IconComponent = iconMap[category.icon] || Building2;
+              return (
+                <Link 
+                  key={category.id}
+                  to={`/search?category=${category.slug}`}
+                  className="bg-card hover:bg-accent/50 rounded-2xl p-6 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg border border-border/50 hover:border-primary/20 group"
+                >
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="p-3 rounded-xl bg-muted/50 group-hover:bg-primary/10 transition-colors duration-300">
+                      <IconComponent className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                    </div>
+                    <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors duration-300">
+                      {category.name}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
     </section>

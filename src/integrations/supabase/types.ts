@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          helpful_count: number | null
+          id: string
+          rating: number
+          reviewer_name: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          rating: number
+          reviewer_name: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          rating?: number
+          reviewer_name?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          service_id: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          service_id: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_images_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          amenities: string[] | null
+          availability_status: string | null
+          capacity_max: number | null
+          capacity_min: number | null
+          category_id: string
+          created_at: string
+          description: string
+          email: string | null
+          featured: boolean | null
+          full_description: string | null
+          id: string
+          image_url: string | null
+          location: string
+          phone_number: string | null
+          price_from: number | null
+          price_unit: string | null
+          rating: number | null
+          response_time: string | null
+          review_count: number | null
+          title: string
+          updated_at: string
+          verified: boolean | null
+          website: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          amenities?: string[] | null
+          availability_status?: string | null
+          capacity_max?: number | null
+          capacity_min?: number | null
+          category_id: string
+          created_at?: string
+          description: string
+          email?: string | null
+          featured?: boolean | null
+          full_description?: string | null
+          id?: string
+          image_url?: string | null
+          location: string
+          phone_number?: string | null
+          price_from?: number | null
+          price_unit?: string | null
+          rating?: number | null
+          response_time?: string | null
+          review_count?: number | null
+          title: string
+          updated_at?: string
+          verified?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          amenities?: string[] | null
+          availability_status?: string | null
+          capacity_max?: number | null
+          capacity_min?: number | null
+          category_id?: string
+          created_at?: string
+          description?: string
+          email?: string | null
+          featured?: boolean | null
+          full_description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string
+          phone_number?: string | null
+          price_from?: number | null
+          price_unit?: string | null
+          rating?: number | null
+          response_time?: string | null
+          review_count?: number | null
+          title?: string
+          updated_at?: string
+          verified?: boolean | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,138 +1,138 @@
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Heart } from "lucide-react";
-import venue1 from "@/assets/venue-1.jpg";
-import catering1 from "@/assets/catering-1.jpg";
-import dj1 from "@/assets/dj-1.jpg";
-
-const featuredServices = [
-  {
-    id: 1,
-    title: "Royal Gardens Wedding Venue",
-    category: "Venue",
-    location: "Harare, Zimbabwe",
-    price: "From $500",
-    rating: 4.9,
-    reviews: 127,
-    image: venue1,
-    featured: true,
-    description: "Elegant garden venue perfect for weddings and celebrations"
-  },
-  {
-    id: 2,
-    title: "Premium African Cuisine Catering",
-    category: "Catering",
-    location: "Bulawayo, Zimbabwe",
-    price: "From $25/person",
-    rating: 4.8,
-    reviews: 89,
-    image: catering1,
-    featured: true,
-    description: "Authentic Zimbabwean cuisine with modern presentation"
-  },
-  {
-    id: 3,
-    title: "EliteBeats DJ Services",
-    category: "Entertainment",
-    location: "Victoria Falls, Zimbabwe",
-    price: "From $200",
-    rating: 5.0,
-    reviews: 156,
-    image: dj1,
-    featured: false,
-    description: "Professional DJ services for all types of events"
-  }
-];
+import { Button } from "@/components/ui/button";
+import { Star, MapPin, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useServices } from "@/hooks/useServices";
 
 const FeaturedListings = () => {
-  return (
-    <section className="py-20">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-16">
-          <div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Featured <span className="text-primary">Services</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Handpicked professionals ready to make your event exceptional
-            </p>
+  const { services, loading, error } = useServices({ featured: true });
+
+  if (error) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Error loading featured services: {error}</p>
           </div>
-          <Button variant="outline" className="hidden md:block">
-            View All Featured
-          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Featured Services
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Discover our top-rated and verified event professionals across Zimbabwe
+          </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredServices.map((service) => (
-            <Card key={service.id} className="overflow-hidden border-none shadow-card hover:shadow-card-hover transition-all duration-300 group">
-              <div className="relative">
-                <img 
-                  src={service.image} 
-                  alt={service.title}
-                  className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {service.featured && (
-                  <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground">
-                    Featured
-                  </Badge>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="absolute top-4 right-4 bg-white/80 hover:bg-white text-gray-600 hover:text-accent"
-                >
-                  <Heart className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="text-xs">
-                    {service.category}
-                  </Badge>
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                  {service.title}
-                </h3>
-                
-                <p className="text-muted-foreground text-sm mb-3">
-                  {service.description}
-                </p>
-                
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{service.location}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">{service.rating}</span>
+          {loading ? (
+            // Loading skeleton
+            Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index} className="overflow-hidden">
+                <div className="w-full h-64 bg-muted animate-pulse"></div>
+                <CardContent className="p-6">
+                  <div className="w-20 h-6 bg-muted rounded animate-pulse mb-3"></div>
+                  <div className="w-3/4 h-6 bg-muted rounded animate-pulse mb-2"></div>
+                  <div className="w-full h-4 bg-muted rounded animate-pulse mb-2"></div>
+                  <div className="w-5/6 h-4 bg-muted rounded animate-pulse mb-4"></div>
+                  <div className="w-1/2 h-4 bg-muted rounded animate-pulse mb-4"></div>
+                  <div className="w-full h-10 bg-muted rounded animate-pulse"></div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            services.slice(0, 6).map((service) => (
+              <Card key={service.id} className="group overflow-hidden hover-lift border-0 shadow-elegant hover:shadow-2xl transition-all duration-500">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={service.image_url || "/placeholder.svg"} 
+                    alt={service.title}
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                    loading="lazy"
+                  />
+                  
+                  {service.featured && (
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-secondary text-white font-semibold shadow-lg">
+                        Featured
+                      </Badge>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      ({service.reviews} reviews)
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-primary">{service.price}</p>
+                  )}
+                  
+                  <div className="absolute top-4 right-4">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
                 
-                <Button className="w-full mt-4" variant="outline">
-                  View Details
-                </Button>
-              </div>
-            </Card>
-          ))}
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {service.category?.name || 'Service'}
+                    </Badge>
+                  </div>
+                  
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors font-display">
+                    {service.title}
+                  </h3>
+                  
+                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
+                    {service.description}
+                  </p>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">{service.location}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-semibold">{service.rating}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        ({service.review_count} reviews)
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-primary">
+                        {service.price_from ? `From $${service.price_from}` : 'Contact for pricing'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Link to={`/service/${service.id}`}>
+                    <Button className="w-full hover-scale" size="sm">
+                      View Details
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
         
-        <div className="text-center mt-12 md:hidden">
-          <Button variant="outline">
-            View All Featured
-          </Button>
+        {/* View All Button */}
+        <div className="text-center mt-12">
+          <Link to="/search">
+            <Button variant="outline" size="lg" className="text-lg px-8 py-3 h-auto border-2 hover:border-primary hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
+              View All Services
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

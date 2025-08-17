@@ -34,8 +34,11 @@ import {
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
+import { useServices } from "@/hooks/useServices";
+import { useCategories } from "@/hooks/useCategories";
+
 const SearchResults = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
@@ -43,83 +46,45 @@ const SearchResults = () => {
   const [rating, setRating] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('relevance');
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate loading
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Use real data hooks
+  const { categories } = useCategories();
+  const { services, loading, error } = useServices({
+    query: searchQuery,
+    location: location,
+    category: category,
+    priceRange: priceRange,
+    rating: rating
+  });
 
-  const categories = [
-    { id: 'all', name: 'All Services', icon: Grid3X3, count: 847 },
-    { id: 'venues', name: 'Venues', icon: Building2, count: 156 },
-    { id: 'catering', name: 'Catering', icon: Utensils, count: 89 },
-    { id: 'music', name: 'Music & DJs', icon: Music, count: 124 },
-    { id: 'photography', name: 'Photography', icon: Camera, count: 78 },
-    { id: 'decor', name: 'Decor', icon: Palette, count: 92 },
-    { id: 'transport', name: 'Transport', icon: Car, count: 45 },
-    { id: 'flowers', name: 'Flowers', icon: Flower, count: 67 }
-  ];
+  // Handle search form submission
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (location) params.set('location', location);
+    if (category !== 'all') params.set('category', category);
+    setSearchParams(params);
+  };
 
-  const mockResults = [
-    {
-      id: 1,
-      title: "Royal Gardens Wedding Venue",
-      category: "Venue",
-      location: "Harare, Zimbabwe",
-      description: "Elegant garden venue perfect for weddings with capacity for 200 guests. Features beautiful outdoor ceremony space and covered reception hall.",
-      price: "From $500",
-      rating: 4.9,
-      reviews: 127,
-      image: "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
-      verified: true,
-      featured: true,
-      availability: "Available",
-      responseTime: "Usually responds within 2 hours"
-    },
-    {
-      id: 2,
-      title: "Premium African Cuisine Catering",
-      category: "Catering",
-      location: "Bulawayo, Zimbabwe",
-      description: "Authentic Zimbabwean cuisine with modern presentation. Specializing in traditional dishes and international fusion for events of all sizes.",
-      price: "From $25/person",
-      rating: 4.8,
-      reviews: 89,
-      image: "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
-      verified: true,
-      featured: false,
-      availability: "Available",
-      responseTime: "Usually responds within 1 hour"
-    },
-    {
-      id: 3,
-      title: "EliteBeats DJ Services",
-      category: "Entertainment",
-      location: "Victoria Falls, Zimbabwe",
-      description: "Professional DJ services with state-of-the-art sound systems. Specializing in weddings, corporate events, and private parties.",
-      price: "From $200",
-      rating: 5.0,
-      reviews: 156,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      verified: true,
-      featured: true,
-      availability: "Booking Fast",
-      responseTime: "Usually responds within 30 minutes"
-    }
+  const categoryTabs = [
+    { id: 'all', name: 'All Services', count: services.length },
+    ...categories.map(cat => ({
+      id: cat.slug,
+      name: cat.name,
+      count: services.filter(s => s.category?.slug === cat.slug).length
+    }))
   ];
 
   const ResultCard = ({ result, isLoading: cardLoading }: { result: any, isLoading: boolean }) => {
     if (cardLoading) {
       return (
         <Card className="overflow-hidden">
-          <div className="skeleton h-48 w-full"></div>
+          <div className="w-full h-48 bg-muted animate-pulse"></div>
           <CardContent className="p-6">
-            <div className="skeleton h-4 w-3/4 mb-2"></div>
-            <div className="skeleton h-3 w-1/2 mb-4"></div>
-            <div className="skeleton h-3 w-full mb-2"></div>
-            <div className="skeleton h-3 w-5/6"></div>
+            <div className="h-4 w-3/4 bg-muted rounded animate-pulse mb-2"></div>
+            <div className="h-3 w-1/2 bg-muted rounded animate-pulse mb-4"></div>
+            <div className="h-3 w-full bg-muted rounded animate-pulse mb-2"></div>
+            <div className="h-3 w-5/6 bg-muted rounded animate-pulse"></div>
           </CardContent>
         </Card>
       );
@@ -129,13 +94,12 @@ const SearchResults = () => {
       <Card className="group overflow-hidden hover-lift border-0 shadow-elegant hover:shadow-2xl transition-all duration-500">
         <div className="relative overflow-hidden">
           <img 
-            src={result.image} 
+            src={result.image_url || "/placeholder.svg"} 
             alt={result.title}
             className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
             loading="lazy"
           />
           
-          {/* Overlay Badges */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {result.featured && (
               <Badge className="bg-secondary text-white font-semibold shadow-lg">
@@ -152,30 +116,20 @@ const SearchResults = () => {
           </div>
           
           <div className="absolute top-4 right-4 flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="bg-white/90 hover:bg-white text-gray-600 hover:text-accent shadow-lg"
-            >
+            <Button variant="ghost" size="icon" className="bg-white/90 hover:bg-white text-gray-600 hover:text-accent shadow-lg">
               <Heart className="w-4 h-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
+            <Link to={`/service/${result.id}`}>
+              <Button variant="ghost" size="icon" className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg">
+                <Eye className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
 
-          {/* Availability Status */}
           <div className="absolute bottom-4 left-4">
-            <Badge 
-              variant={result.availability === "Available" ? "default" : "secondary"}
-              className="shadow-lg"
-            >
+            <Badge variant="default" className="shadow-lg">
               <Clock className="w-3 h-3 mr-1" />
-              {result.availability}
+              {result.availability_status || 'Available'}
             </Badge>
           </div>
         </div>
@@ -183,11 +137,8 @@ const SearchResults = () => {
         <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-3">
             <Badge variant="outline" className="text-xs font-medium">
-              {result.category}
+              {result.category?.name || 'Service'}
             </Badge>
-            {result.featured && (
-              <TrendingUp className="w-4 h-4 text-secondary" />
-            )}
           </div>
           
           <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors font-display">
@@ -210,24 +161,28 @@ const SearchResults = () => {
                 <span className="text-sm font-semibold">{result.rating}</span>
               </div>
               <span className="text-sm text-muted-foreground">
-                ({result.reviews} reviews)
+                ({result.review_count} reviews)
               </span>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-primary">{result.price}</p>
+              <p className="text-lg font-bold text-primary">
+                {result.price_from ? `From $${result.price_from}` : 'Contact for pricing'}
+              </p>
             </div>
           </div>
 
           <div className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
-            {result.responseTime}
+            {result.response_time}
           </div>
           
           <div className="flex gap-2">
-            <Button className="flex-1 hover-scale" size="sm">
-              View Details
-              <ArrowUpRight className="w-4 h-4 ml-1" />
-            </Button>
+            <Link to={`/service/${result.id}`} className="flex-1">
+              <Button className="w-full hover-scale" size="sm">
+                View Details
+                <ArrowUpRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" className="hover-scale">
               <Calendar className="w-4 h-4" />
             </Button>
@@ -311,7 +266,7 @@ const SearchResults = () => {
                   <div className="space-y-4 mb-6">
                     <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Categories</h4>
                     <div className="space-y-2">
-                      {categories.map((cat) => (
+                      {categoryTabs.map((cat) => (
                         <button
                           key={cat.id}
                           onClick={() => setCategory(cat.id)}
@@ -319,10 +274,7 @@ const SearchResults = () => {
                             category === cat.id ? 'bg-primary text-primary-foreground' : ''
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <cat.icon className="w-4 h-4" />
-                            <span className="text-sm">{cat.name}</span>
-                          </div>
+                          <span className="text-sm">{cat.name}</span>
                           <Badge variant="secondary" className="text-xs">
                             {cat.count}
                           </Badge>
@@ -393,12 +345,11 @@ const SearchResults = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Search Results</h2>
                     <p className="text-muted-foreground">
-                      {isLoading ? 'Loading...' : `Found ${mockResults.length} services matching your criteria`}
+                      {loading ? 'Loading...' : `Found ${services.length} services matching your criteria`}
                     </p>
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    {/* Sort */}
                     <div className="flex items-center gap-2">
                       <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                       <select 
@@ -414,7 +365,6 @@ const SearchResults = () => {
                       </select>
                     </div>
                     
-                    {/* View Mode */}
                     <div className="flex border border-border rounded-lg overflow-hidden">
                       <button
                         onClick={() => setViewMode('grid')}
@@ -432,25 +382,23 @@ const SearchResults = () => {
                   </div>
                 </div>
 
-                {/* Results Grid */}
                 <div className={`grid gap-6 ${
                   viewMode === 'grid' 
                     ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
                     : 'grid-cols-1'
                 }`}>
-                  {isLoading ? (
+                  {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <ResultCard key={i} result={null} isLoading={true} />
                     ))
                   ) : (
-                    mockResults.map((result) => (
+                    services.map((result) => (
                       <ResultCard key={result.id} result={result} isLoading={false} />
                     ))
                   )}
                 </div>
 
-                {/* Load More */}
-                {!isLoading && (
+                {!loading && services.length > 0 && (
                   <div className="text-center mt-12">
                     <Button variant="outline" size="lg" className="hover-scale">
                       Load More Results
