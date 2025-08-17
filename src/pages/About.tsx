@@ -22,6 +22,7 @@ import {
   Globe
 } from "lucide-react";
 import { useState } from "react";
+import LocationsAndServices from "@/components/LocationsAndServices";
 
 const About = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -127,7 +128,7 @@ const About = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 leading-relaxed">
-              ZimEventPro is Zimbabwe's most comprehensive platform dedicated to event planning services, venues, and professional entertainment. Your trusted partner for creating extraordinary celebrations.
+              ZimEventPro helps you plan your perfect event — from weddings and birthdays to conferences and corporate functions. Discover and compare event venues, private chefs, photographers, décor experts and more across Zimbabwe. Browse, book, and manage everything in one place.
             </p>
 
             {/* Hero Image */}
@@ -163,7 +164,7 @@ const About = () => {
                 Your Dedicated Online Event Planning Resource
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                ZimEventPro is your all-in-one platform for planning extraordinary events, from intimate weddings and corporate functions to birthday celebrations and cultural festivals. Find and book top <span className="text-primary font-semibold">event venues</span> for hire, book <span className="text-primary font-semibold">professional entertainers</span>, hire <span className="text-primary font-semibold">catering companies</span>, book a <span className="text-primary font-semibold">DJ</span>, and connect with all other event service providers across Zimbabwe — all in one convenient place.
+                ZimEventPro is your all-in-one platform for planning extraordinary events, from intimate weddings and corporate functions to birthday celebrations and cultural festivals. Find and book top <span className="text-primary font-semibold">event venues</span> for hire, book <span className="text-primary font-semibold">professional entertainers</span>, hire <span className="text-primary font-semibold">catering companies</span>, book a <span className="text-primary font-semibold">DJ</span>, and connect with all other event service providers across Zimbabwe — from Harare to Victoria Falls, Bulawayo to Mutare. Browse, book, and manage everything in one convenient place.
               </p>
             </div>
             
@@ -303,6 +304,9 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* Locations and Services */}
+      <LocationsAndServices />
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary to-secondary text-white">
