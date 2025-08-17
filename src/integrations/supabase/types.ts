@@ -23,8 +23,11 @@ export type Database = {
           guest_phone: string | null
           id: string
           message: string | null
+          payment_id: string | null
+          payment_status: string | null
           service_id: string
           status: string | null
+          total_amount: number | null
           user_id: string | null
         }
         Insert: {
@@ -35,8 +38,11 @@ export type Database = {
           guest_phone?: string | null
           id?: string
           message?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
           service_id: string
           status?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Update: {
@@ -47,16 +53,103 @@ export type Database = {
           guest_phone?: string | null
           id?: string
           message?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
           service_id?: string
           status?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "booking_requests_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "booking_requests_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_listings: {
+        Row: {
+          address: string | null
+          amenities: string[] | null
+          business_name: string
+          capacity_max: number | null
+          capacity_min: number | null
+          category_id: string
+          created_at: string
+          description: string
+          email: string | null
+          featured: boolean | null
+          id: string
+          images: string[] | null
+          location: string
+          phone_number: string | null
+          price_from: number | null
+          price_unit: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[] | null
+          business_name: string
+          capacity_max?: number | null
+          capacity_min?: number | null
+          category_id: string
+          created_at?: string
+          description: string
+          email?: string | null
+          featured?: boolean | null
+          id?: string
+          images?: string[] | null
+          location: string
+          phone_number?: string | null
+          price_from?: number | null
+          price_unit?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[] | null
+          business_name?: string
+          capacity_max?: number | null
+          capacity_min?: number | null
+          category_id?: string
+          created_at?: string
+          description?: string
+          email?: string | null
+          featured?: boolean | null
+          id?: string
+          images?: string[] | null
+          location?: string
+          phone_number?: string | null
+          price_from?: number | null
+          price_unit?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_listings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]
@@ -121,6 +214,45 @@ export type Database = {
           message?: string
           phone?: string | null
           subject?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          id: string
+          metadata: Json | null
+          payment_type: string
+          status: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type?: string
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -325,15 +457,42 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "business_owner" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -460,6 +619,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "business_owner", "user"],
+    },
   },
 } as const
