@@ -11,6 +11,7 @@ import {
   QrCode,
   MessageCircle,
   Home,
+  BookOpen,
   Search,
   Building2,
   Users,
@@ -23,6 +24,8 @@ const Footer = () => {
   const quickLinks = [
     { name: "Home", href: "/", icon: Home },
     { name: "Browse Services", href: "/categories", icon: Search },
+    { name: "Blog", href: "/blog", icon: BookOpen },
+    { name: "Video Tutorials", href: "/video-tutorials", icon: Users },
     { name: "List Business", href: "/list-business", icon: Building2 },
     { name: "About Us", href: "/about", icon: Users },
     { name: "Help Center", href: "/help", icon: HelpCircle },
@@ -220,8 +223,8 @@ const Footer = () => {
           </div>
           
           <div className="flex space-x-6">
-            <a href="#" className="text-white/60 hover:text-secondary text-sm transition-colors">Privacy Policy</a>
-            <a href="#" className="text-white/60 hover:text-secondary text-sm transition-colors">Terms of Service</a>
+            <a href="/privacy-policy" className="text-white/60 hover:text-secondary text-sm transition-colors">Privacy Policy</a>
+            <a href="/terms-of-service" className="text-white/60 hover:text-secondary text-sm transition-colors">Terms of Service</a>
             <a href="/help" className="text-white/60 hover:text-secondary text-sm transition-colors">Support</a>
           </div>
         </div>
