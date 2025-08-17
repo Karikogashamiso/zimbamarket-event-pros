@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Heart, User } from "lucide-react";
+import { Menu, Heart } from "lucide-react";
 import { useState } from "react";
+import AuthDialog from "./AuthDialog";
+import MobileMenu from "./MobileMenu";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,18 +13,18 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <h1 className="text-2xl md:text-3xl font-bold text-white">
               Zim<span className="text-secondary">EventPro</span>
             </h1>
-          </div>
+          </Link>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="/categories" className="text-white hover:text-secondary transition-colors">Browse</a>
-            <a href="/about" className="text-white hover:text-secondary transition-colors">About</a>
-            <a href="#" className="text-white hover:text-secondary transition-colors">Services</a>
-            <a href="/contact" className="text-white hover:text-secondary transition-colors">Contact</a>
+            <Link to="/categories" className="text-white hover:text-secondary transition-colors">Browse</Link>
+            <Link to="/about" className="text-white hover:text-secondary transition-colors">About</Link>
+            <Link to="/categories?category=services" className="text-white hover:text-secondary transition-colors">Services</Link>
+            <Link to="/contact" className="text-white hover:text-secondary transition-colors">Contact</Link>
           </nav>
           
           {/* Desktop Actions */}
@@ -29,14 +32,16 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
               <Heart className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" className="text-white hover:bg-white/20">
-              Sign In
-            </Button>
-            <Button variant="hero" size="sm">
-              <a href="/list-business" className="flex items-center">
+            <AuthDialog>
+              <Button variant="ghost" className="text-white hover:bg-white/20">
+                Sign In
+              </Button>
+            </AuthDialog>
+            <Link to="/list-business">
+              <Button variant="hero" size="sm">
                 List Business
-              </a>
-            </Button>
+              </Button>
+            </Link>
           </div>
           
           {/* Mobile Menu Button */}
@@ -49,22 +54,7 @@ const Header = () => {
         </div>
         
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-white/20 p-4">
-            <nav className="flex flex-col space-y-4">
-              <a href="/categories" className="text-gray-800 hover:text-primary transition-colors">Browse</a>
-              <a href="/about" className="text-gray-800 hover:text-primary transition-colors">About</a>
-              <a href="#" className="text-gray-800 hover:text-primary transition-colors">Services</a>
-              <a href="/contact" className="text-gray-800 hover:text-primary transition-colors">Contact</a>
-              <div className="flex space-x-2 pt-4 border-t border-gray-200">
-                <Button variant="outline" className="flex-1">Sign In</Button>
-                <Button variant="default" className="flex-1">
-                  <a href="/list-business">List Business</a>
-                </Button>
-              </div>
-            </nav>
-          </div>
-        )}
+        <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       </div>
     </header>
   );
