@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Star, Users, Calendar, Sparkles, TrendingUp, CheckCircle } from "lucide-react";
+import { Search, MapPin, Star, Calendar, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import heroBackground from "@/assets/hero-background.jpg";
 
@@ -8,12 +8,6 @@ const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
 
-  const stats = [
-    { icon: Users, label: "Happy Clients", value: "10,000+" },
-    { icon: Calendar, label: "Events Hosted", value: "5,000+" },
-    { icon: CheckCircle, label: "Verified Vendors", value: "500+" },
-    { icon: TrendingUp, label: "Success Rate", value: "98%" }
-  ];
 
   const popularSearches = ["Wedding Venues", "Corporate Events", "Birthday Parties", "DJs", "Catering"];
 
@@ -112,18 +106,6 @@ const HeroSection = () => {
             </Button>
           </div>
           
-          {/* Stats Section */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 opacity-0 animate-[fade-in_1s_ease-out_1.4s_forwards]">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center hover-scale">
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                  <stat.icon className="w-8 h-8 text-secondary mx-auto mb-3" />
-                  <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-sm text-white/70">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
       
