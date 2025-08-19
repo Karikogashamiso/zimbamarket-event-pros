@@ -16,6 +16,7 @@ const TrustSection = lazy(() => import("@/components/TrustSection"));
 const BusinessCTASection = lazy(() => import("@/components/BusinessCTASection"));
 const NewsletterSection = lazy(() => import("@/components/NewsletterSection"));
 const Footer = lazy(() => import("@/components/Footer"));
+const SmartRecommendations = lazy(() => import("@/components/Recommendations/SmartRecommendations"));
 
 const Index = () => {
   useEffect(() => {
@@ -83,6 +84,7 @@ const Index = () => {
         }>
           <CategorySection />
           <FeaturedListings />
+          <SmartRecommendations maxItems={6} />
           <LocationSection />
           <TrustSection />
           <BusinessCTASection />
