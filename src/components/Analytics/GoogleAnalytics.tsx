@@ -80,7 +80,7 @@ export const trackSearch = (searchTerm: string, location?: string, category?: st
   trackEvent('search', {
     search_term: searchTerm,
     location: location,
-    category: category,
+    search_category: category,
     category: 'search',
   });
 };

@@ -261,7 +261,7 @@ const PerformanceMonitor: React.FC = () => {
             
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {navigator.connection ? `${(navigator.connection as any).downlink}Mbps` : 'N/A'}
+                {(navigator as any).connection ? `${(navigator as any).connection.downlink}Mbps` : 'N/A'}
               </div>
               <div className="text-sm text-muted-foreground">Connection Speed</div>
             </div>

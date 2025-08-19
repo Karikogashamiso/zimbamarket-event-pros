@@ -1,9 +1,12 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Eye } from "lucide-react";
+import { Star, MapPin, Eye, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useServices } from "@/hooks/useServices";
+import LazyImage from "@/components/LazyImage";
+import { trackServiceView } from "@/components/Analytics/GoogleAnalytics";
 
 const FeaturedListings = () => {
   const { services, loading, error } = useServices({ featured: true });
@@ -52,17 +55,18 @@ const FeaturedListings = () => {
             services.slice(0, 6).map((service) => (
               <Card key={service.id} className="group overflow-hidden hover-lift border-0 shadow-elegant hover:shadow-2xl transition-all duration-500">
                 <div className="relative overflow-hidden">
-                   <LazyImage 
-                     src={service.image_url || "/placeholder.svg"} 
-                     alt={service.title}
-                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
-                     placeholder="/placeholder.svg"
-                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAAVAQEBAQEAAAAAAAAAAAAAAAAAAQID/8QAGhEAAwEBAQAAAAAAAAAAAAAAAAECEQMh/9oADAMBAAIRAxEAPwA5AAAD/9k="
-                   />
+                  <LazyImage 
+                    src={service.image_url || "/placeholder.svg"} 
+                    alt={service.title}
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                    placeholder="/placeholder.svg"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAAVAQEBAQEAAAAAAAAAAAAAAAAAAQID/8QAGhEAAwEBAQAAAAAAAAAAAAAAAAECEQMh/9oADAMBAAIRAxEAPwA5AAAD/9k="
+                  />
                   
                   {service.featured && (
                     <div className="absolute top-4 left-4">
                       <Badge className="bg-secondary text-white font-semibold shadow-lg">
+                        <Sparkles className="w-3 h-3 mr-1" />
                         Featured
                       </Badge>
                     </div>
@@ -117,7 +121,11 @@ const FeaturedListings = () => {
                   </div>
                   
                   <Link to={`/service/${service.id}`}>
-                    <Button className="w-full hover-scale" size="sm">
+                    <Button 
+                      className="w-full hover-scale" 
+                      size="sm"
+                      onClick={() => trackServiceView(service.id, service.title)}
+                    >
                       View Details
                     </Button>
                   </Link>
