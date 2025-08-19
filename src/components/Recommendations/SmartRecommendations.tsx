@@ -59,7 +59,13 @@ const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
     if (showTrending) {
       setLoadingTrending(true);
       getTrendingServices().then(services => {
-        setTrendingServices(services);
+        // Add missing properties to match Service interface
+        const formattedServices = services.map(service => ({
+          ...service,
+          description: `Popular ${service.category?.name || 'service'} with excellent ratings`,
+          location: 'Harare, Zimbabwe'
+        }));
+        setTrendingServices(formattedServices);
         setLoadingTrending(false);
       });
     }

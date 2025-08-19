@@ -74,47 +74,25 @@ export const useSmartRecommendations = (userId?: string) => {
     return updated.slice(0, 10); // Keep top 10
   };
 
-  // Save preferences to local storage and potentially to database
+  // Save preferences to local storage only for now
   const savePreferences = async (preferences: UserPreferences) => {
     try {
       // Save to localStorage for immediate access
       localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(preferences));
-
-      // Optionally save to database for cross-device sync
-      if (userId) {
-        await supabase
-          .from('user_preferences')
-          .upsert({
-            user_id: userId,
-            preferences: preferences,
-            updated_at: new Date().toISOString()
-          });
-      }
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
   };
 
-  // Load user preferences
+  // Load user preferences from localStorage only for now
   const loadPreferences = async () => {
     if (!userId) return;
 
     try {
-      // Try to load from database first
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('preferences')
-        .eq('user_id', userId)
-        .single();
-
-      if (data && !error) {
-        setUserPreferences(data.preferences);
-      } else {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`user_preferences_${userId}`);
-        if (stored) {
-          setUserPreferences(JSON.parse(stored));
-        }
+      // Load from localStorage
+      const stored = localStorage.getItem(`user_preferences_${userId}`);
+      if (stored) {
+        setUserPreferences(JSON.parse(stored));
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
