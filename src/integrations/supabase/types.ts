@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_analytics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          referrer: string | null
+          service_id: string
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          service_id: string
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          referrer?: string | null
+          service_id?: string
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_analytics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "booking_analytics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_conflicts: {
+        Row: {
+          conflict_date: string
+          conflict_time: string | null
+          conflict_type: string
+          created_at: string
+          description: string | null
+          id: string
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          service_id: string
+          severity: string
+        }
+        Insert: {
+          conflict_date: string
+          conflict_time?: string | null
+          conflict_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          service_id: string
+          severity: string
+        }
+        Update: {
+          conflict_date?: string
+          conflict_time?: string | null
+          conflict_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          service_id?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_conflicts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "booking_conflicts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_requests: {
         Row: {
           created_at: string
@@ -67,6 +178,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "payments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
           },
           {
             foreignKeyName: "booking_requests_service_id_fkey"
@@ -256,6 +374,60 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_models: {
+        Row: {
+          base_price: number
+          created_at: string
+          demand_threshold: number | null
+          dynamic_pricing_enabled: boolean | null
+          id: string
+          off_peak_multiplier: number | null
+          peak_multiplier: number | null
+          seasonal_adjustments: Json | null
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          demand_threshold?: number | null
+          dynamic_pricing_enabled?: boolean | null
+          id?: string
+          off_peak_multiplier?: number | null
+          peak_multiplier?: number | null
+          seasonal_adjustments?: Json | null
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          demand_threshold?: number | null
+          dynamic_pricing_enabled?: boolean | null
+          id?: string
+          off_peak_multiplier?: number | null
+          peak_multiplier?: number | null
+          seasonal_adjustments?: Json | null
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_models_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "pricing_models_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -322,6 +494,70 @@ export type Database = {
             foreignKeyName: "reviews_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "reviews_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_availability: {
+        Row: {
+          created_at: string
+          current_bookings: number | null
+          date: string
+          id: string
+          is_available: boolean | null
+          max_capacity: number | null
+          notes: string | null
+          price_override: number | null
+          service_id: string
+          time_slot: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_bookings?: number | null
+          date: string
+          id?: string
+          is_available?: boolean | null
+          max_capacity?: number | null
+          notes?: string | null
+          price_override?: number | null
+          service_id: string
+          time_slot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_bookings?: number | null
+          date?: string
+          id?: string
+          is_available?: boolean | null
+          max_capacity?: number | null
+          notes?: string | null
+          price_override?: number | null
+          service_id?: string
+          time_slot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_availability_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
+          {
+            foreignKeyName: "service_availability_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -356,6 +592,13 @@ export type Database = {
           service_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_images_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "business_metrics"
+            referencedColumns: ["service_id"]
+          },
           {
             foreignKeyName: "service_images_service_id_fkey"
             columns: ["service_id"]
@@ -457,6 +700,36 @@ export type Database = {
           },
         ]
       }
+      translations: {
+        Row: {
+          context: string | null
+          created_at: string
+          id: string
+          key: string
+          language_code: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          language_code: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          language_code?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           created_at: string
@@ -504,7 +777,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      business_metrics: {
+        Row: {
+          booking_conversion_rate: number | null
+          inquiry_conversion_rate: number | null
+          period: string | null
+          service_id: string | null
+          service_name: string | null
+          total_bookings: number | null
+          total_conversions: number | null
+          total_inquiries: number | null
+          total_views: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -513,6 +799,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      refresh_business_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
