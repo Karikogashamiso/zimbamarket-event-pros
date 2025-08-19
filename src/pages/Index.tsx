@@ -5,6 +5,7 @@ import MetaTags from "@/components/SEO/MetaTags";
 import StructuredData from "@/components/SEO/StructuredData";
 import InstallPrompt from "@/components/PWA/InstallPrompt";
 import NetworkStatus from "@/components/PWA/NetworkStatus";
+import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { measureWebVitals, monitorPerformanceBudget } from "@/utils/performance";
 
 // Lazy load components for better performance
@@ -66,6 +67,7 @@ const Index = () => {
         image="/og-image.jpg"
         url="https://zimeventpro.com"
       />
+      <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
       
       <StructuredData type="Organization" data={organizationData} />
       <StructuredData type="WebSite" data={websiteData} />

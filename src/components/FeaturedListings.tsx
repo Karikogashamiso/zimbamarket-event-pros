@@ -52,12 +52,13 @@ const FeaturedListings = () => {
             services.slice(0, 6).map((service) => (
               <Card key={service.id} className="group overflow-hidden hover-lift border-0 shadow-elegant hover:shadow-2xl transition-all duration-500">
                 <div className="relative overflow-hidden">
-                  <img 
-                    src={service.image_url || "/placeholder.svg"} 
-                    alt={service.title}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
-                    loading="lazy"
-                  />
+                   <LazyImage 
+                     src={service.image_url || "/placeholder.svg"} 
+                     alt={service.title}
+                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                     placeholder="/placeholder.svg"
+                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAAVAQEBAQEAAAAAAAAAAAAAAAAAAQID/8QAGhEAAwEBAQAAAAAAAAAAAAAAAAECEQMh/9oADAMBAAIRAxEAPwA5AAAD/9k="
+                   />
                   
                   {service.featured && (
                     <div className="absolute top-4 left-4">
