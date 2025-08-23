@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, Calendar, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import heroBackground from "@/assets/hero-background.jpg";
+import EnhancedSearch from "@/components/EnhancedSearch";
 
 const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,44 +55,8 @@ const HeroSection = () => {
           </p>
           
           {/* Enhanced Search Bar */}
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 mb-8 border border-white/30 shadow-2xl opacity-0 animate-[fade-in_1s_ease-out_1s_forwards] hover-scale">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative group">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 group-focus-within:text-primary transition-colors" />
-                <Input 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Try 'Wedding Venue in Harare' or 'DJ Services'"
-                  className="pl-12 bg-transparent border-0 text-gray-800 placeholder:text-gray-500 h-14 text-lg focus:ring-0 focus:border-0"
-                />
-              </div>
-              <div className="flex-1 relative group">
-                <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 group-focus-within:text-primary transition-colors" />
-                <Input 
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Harare, Bulawayo, Victoria Falls..."
-                  className="pl-12 bg-transparent border-0 text-gray-800 placeholder:text-gray-500 h-14 text-lg focus:ring-0 focus:border-0"
-                />
-              </div>
-              <Button variant="hero" size="lg" className="h-14 px-10 text-lg font-semibold hover-scale">
-                <Search className="w-5 h-5 mr-2" />
-                Search Now
-              </Button>
-            </div>
-            
-            {/* Popular Searches */}
-            <div className="flex flex-wrap gap-2 mt-4 justify-center">
-              <span className="text-sm text-gray-600 mr-2">Popular:</span>
-              {popularSearches.map((search, index) => (
-                <button 
-                  key={index}
-                  className="text-sm bg-gray-100 hover:bg-primary hover:text-white text-gray-700 px-3 py-1 rounded-full transition-all duration-200 hover-scale"
-                >
-                  {search}
-                </button>
-              ))}
-            </div>
+          <div className="opacity-0 animate-[fade-in_1s_ease-out_1s_forwards] mb-8">
+            <EnhancedSearch />
           </div>
           
           {/* CTA Buttons */}

@@ -17,6 +17,10 @@ const BusinessCTASection = lazy(() => import("@/components/BusinessCTASection"))
 const NewsletterSection = lazy(() => import("@/components/NewsletterSection"));
 const Footer = lazy(() => import("@/components/Footer"));
 const SmartRecommendations = lazy(() => import("@/components/Recommendations/SmartRecommendations"));
+const StatsSection = lazy(() => import("@/components/StatsSection"));
+const TestimonialsCarousel = lazy(() => import("@/components/TestimonialsCarousel"));
+const TrendingServices = lazy(() => import("@/components/TrendingServices"));
+const FloatingActionButton = lazy(() => import("@/components/FloatingActionButton"));
 
 const Index = () => {
   useEffect(() => {
@@ -82,9 +86,12 @@ const Index = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         }>
+          <StatsSection />
           <CategorySection />
+          <TrendingServices />
           <FeaturedListings />
           <SmartRecommendations maxItems={6} />
+          <TestimonialsCarousel />
           <LocationSection />
           <TrustSection />
           <BusinessCTASection />
@@ -94,6 +101,7 @@ const Index = () => {
         
         <InstallPrompt />
         <NetworkStatus />
+        <FloatingActionButton />
       </div>
     </>
   );

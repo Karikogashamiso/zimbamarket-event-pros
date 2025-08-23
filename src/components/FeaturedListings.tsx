@@ -24,73 +24,120 @@ const FeaturedListings = () => {
   }
 
   return (
-    <section className="py-16 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Featured Services
+    <section className="py-24 bg-gradient-to-br from-background via-muted/10 to-background relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute top-20 left-10 text-primary/5 animate-float">
+        <Star className="w-32 h-32" />
+      </div>
+      <div className="absolute bottom-20 right-10 text-secondary/5 animate-float delay-2000">
+        <Sparkles className="w-40 h-40" />
+      </div>
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-6 py-2 mb-6">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Featured Services</span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 text-gradient">
+            Premium Event Services
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Discover our top-rated and verified event professionals across Zimbabwe
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Discover our handpicked collection of Zimbabwe's most trusted and highly-rated event professionals
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {loading ? (
-            // Loading skeleton
-            Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} className="overflow-hidden">
-                <div className="w-full h-64 bg-muted animate-pulse"></div>
-                <CardContent className="p-6">
-                  <div className="w-20 h-6 bg-muted rounded animate-pulse mb-3"></div>
-                  <div className="w-3/4 h-6 bg-muted rounded animate-pulse mb-2"></div>
-                  <div className="w-full h-4 bg-muted rounded animate-pulse mb-2"></div>
-                  <div className="w-5/6 h-4 bg-muted rounded animate-pulse mb-4"></div>
-                  <div className="w-1/2 h-4 bg-muted rounded animate-pulse mb-4"></div>
-                  <div className="w-full h-10 bg-muted rounded animate-pulse"></div>
+            // Enhanced loading skeleton
+            Array.from({ length: 6 }).map((_, index) => (
+              <Card 
+                key={index} 
+                className="overflow-hidden card-elegant"
+                style={{
+                  animation: `fade-in-up 0.8s ease-out ${index * 0.1}s both`
+                }}
+              >
+                <div className="w-full h-64 skeleton"></div>
+                <CardContent className="p-6 space-y-4">
+                  <div className="w-20 h-5 skeleton"></div>
+                  <div className="w-3/4 h-6 skeleton"></div>
+                  <div className="w-full h-4 skeleton"></div>
+                  <div className="w-5/6 h-4 skeleton"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="w-24 h-4 skeleton"></div>
+                    <div className="w-16 h-6 skeleton"></div>
+                  </div>
+                  <div className="w-full h-10 skeleton"></div>
                 </CardContent>
               </Card>
             ))
           ) : (
-            services.slice(0, 6).map((service) => (
-              <Card key={service.id} className="group overflow-hidden hover-lift border-0 shadow-elegant hover:shadow-2xl transition-all duration-500">
+            services.slice(0, 6).map((service, index) => (
+              <Card 
+                key={service.id} 
+                className="group overflow-hidden card-interactive border-0 shadow-elegant hover:shadow-2xl"
+                style={{
+                  animation: `fade-in-up 0.8s ease-out ${index * 0.1}s both`
+                }}
+              >
                 <div className="relative overflow-hidden">
                   <LazyImage 
                     src={service.image_url || "/placeholder.svg"} 
                     alt={service.title}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-64 object-cover group-hover:scale-110 transition-all duration-700"
                     placeholder="/placeholder.svg"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAAVAQEBAQEAAAAAAAAAAAAAAAAAAQID/8QAGhEAAwEBAQAAAAAAAAAAAAAAAAECEQMh/9oADAMBAAIRAxEAPwA5AAAD/9k="
                   />
+                  
+                  {/* Enhanced overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
                   
                   {service.featured && (
                     <div className="absolute top-4 left-4">
-                      <Badge className="bg-secondary text-white font-semibold shadow-lg">
+                      <Badge className="bg-gradient-to-r from-secondary to-accent text-white font-semibold shadow-lg animate-glow">
                         <Sparkles className="w-3 h-3 mr-1" />
-                        Featured
+                        Premium
                       </Badge>
                     </div>
                   )}
                   
+                  {/* Enhanced action button */}
                   <div className="absolute top-4 right-4">
                     <Button 
-                      variant="ghost" 
+                      variant="glass" 
                       size="icon"
-                      className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg"
+                      className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </div>
+                  
+                  {/* Quick stats overlay */}
+                  <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                    <div className="flex justify-between items-center text-white text-sm">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{service.rating}</span>
+                        <span className="opacity-80">({service.review_count})</span>
+                      </div>
+                      <div className="font-bold">
+                        {service.price_from ? `$${service.price_from}+` : 'Custom'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="outline" className="text-xs font-medium">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
                       {service.category?.name || 'Service'}
                     </Badge>
+                    <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                      <MapPin className="w-3 h-3" />
+                      <span>{service.location}</span>
+                    </div>
                   </div>
                   
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors font-display">
+                  <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
                     {service.title}
                   </h3>
                   
@@ -98,35 +145,32 @@ const FeaturedListings = () => {
                     {service.description}
                   </p>
                   
-                  <div className="flex items-center gap-2 mb-4">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">{service.location}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <Star className="w-4 h-4 fill-secondary text-secondary" />
                         <span className="text-sm font-semibold">{service.rating}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        ({service.review_count} reviews)
+                      <span className="text-xs text-muted-foreground">
+                        {service.review_count} reviews
                       </span>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-primary">
-                        {service.price_from ? `From $${service.price_from}` : 'Contact for pricing'}
+                        {service.price_from ? `From $${service.price_from}` : 'Quote'}
                       </p>
                     </div>
                   </div>
                   
                   <Link to={`/service/${service.id}`}>
                     <Button 
-                      className="w-full hover-scale" 
+                      variant="premium"
+                      className="w-full hover-scale group/btn" 
                       size="sm"
                       onClick={() => trackServiceView(service.id, service.title)}
                     >
-                      View Details
+                      <span>View Details</span>
+                      <Eye className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
                 </CardContent>
@@ -135,11 +179,16 @@ const FeaturedListings = () => {
           )}
         </div>
         
-        {/* View All Button */}
-        <div className="text-center mt-12">
+        {/* Enhanced View All Button */}
+        <div className="text-center">
           <Link to="/search">
-            <Button variant="outline" size="lg" className="text-lg px-8 py-3 h-auto border-2 hover:border-primary hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
-              View All Services
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-lg px-12 py-4 h-auto border-2 hover:border-primary hover:shadow-glow-primary hover-scale group"
+            >
+              <span>Explore All Services</span>
+              <Sparkles className="w-5 h-5 ml-2 group-hover:animate-pulse" />
             </Button>
           </Link>
         </div>
