@@ -18,6 +18,9 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
+import TicketDesign from "./pages/TicketDesign";
+import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
+import LaunchPlan from "./pages/LaunchPlan";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,9 @@ const App: React.FC = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/tickets" element={<TicketDesign />} />
+            <Route path="/checkout" element={<CheckoutFlow />} />
+            <Route path="/launch-plan" element={<LaunchPlan />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
