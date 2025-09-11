@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import LaunchPlan from "./pages/LaunchPlan";
+import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App: React.FC = () => (
             <Route path="/tickets" element={<TicketDesign />} />
             <Route path="/checkout" element={<CheckoutFlow />} />
             <Route path="/launch-plan" element={<LaunchPlan />} />
+            <Route path="/ux-guide" element={<UXOptimizationGuide />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
