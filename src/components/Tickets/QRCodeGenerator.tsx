@@ -125,7 +125,7 @@ export const QRCodeGenerator: React.FC<QRGeneratorProps> = ({
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
-  const generateSignature = async (payload: SecureTicketData): Promise<string> {
+  const generateSignature = async (payload: SecureTicketData): Promise<string> => {
     // Simulate ECDSA signature generation
     // In production, this would use proper cryptographic signing
     const signatureInput = `${payload.ticketId}:${payload.eventId}:${payload.timestamp}:${payload.hash}`;

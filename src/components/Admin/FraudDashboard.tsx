@@ -70,7 +70,7 @@ export const FraudDashboard: React.FC = () => {
         .limit(50);
 
       if (alertsError) throw alertsError;
-      setAlerts(alertsData || []);
+      setAlerts((alertsData || []) as FraudAlert[]);
 
       // Fetch fraud statistics via edge function
       const { data: statsResponse, error: statsError } = await supabase.functions.invoke(
