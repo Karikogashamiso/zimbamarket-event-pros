@@ -335,6 +335,45 @@ export type Database = {
         }
         Relationships: []
       }
+      device_fingerprints: {
+        Row: {
+          blocked_reason: string | null
+          created_at: string
+          device_info: Json
+          fingerprint_hash: string
+          first_seen_at: string
+          fraud_score: number | null
+          id: string
+          is_blocked: boolean | null
+          last_seen_at: string
+          order_count: number | null
+        }
+        Insert: {
+          blocked_reason?: string | null
+          created_at?: string
+          device_info?: Json
+          fingerprint_hash: string
+          first_seen_at?: string
+          fraud_score?: number | null
+          id?: string
+          is_blocked?: boolean | null
+          last_seen_at?: string
+          order_count?: number | null
+        }
+        Update: {
+          blocked_reason?: string | null
+          created_at?: string
+          device_info?: Json
+          fingerprint_hash?: string
+          first_seen_at?: string
+          fraud_score?: number | null
+          id?: string
+          is_blocked?: boolean | null
+          last_seen_at?: string
+          order_count?: number | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           age_restriction: number | null
@@ -443,6 +482,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fraud_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          details: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          rule_id: string | null
+          severity_level: string
+          status: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          details?: Json
+          entity_id: string
+          entity_type: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          rule_id?: string | null
+          severity_level?: string
+          status?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          rule_id?: string | null
+          severity_level?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "fraud_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_rules: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          parameters: Json
+          rule_name: string
+          rule_type: string
+          severity_level: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          parameters?: Json
+          rule_name: string
+          rule_type: string
+          severity_level?: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          parameters?: Json
+          rule_name?: string
+          rule_type?: string
+          severity_level?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       orders: {
         Row: {
@@ -863,6 +988,95 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      purchase_risk_scores: {
+        Row: {
+          approved_by_user_id: string | null
+          created_at: string
+          device_analysis: Json | null
+          geolocation_analysis: Json | null
+          id: string
+          manual_review_required: boolean | null
+          order_id: string
+          payment_analysis: Json | null
+          risk_factors: Json
+          risk_score: number
+          updated_at: string
+          velocity_flags: Json | null
+        }
+        Insert: {
+          approved_by_user_id?: string | null
+          created_at?: string
+          device_analysis?: Json | null
+          geolocation_analysis?: Json | null
+          id?: string
+          manual_review_required?: boolean | null
+          order_id: string
+          payment_analysis?: Json | null
+          risk_factors?: Json
+          risk_score?: number
+          updated_at?: string
+          velocity_flags?: Json | null
+        }
+        Update: {
+          approved_by_user_id?: string | null
+          created_at?: string
+          device_analysis?: Json | null
+          geolocation_analysis?: Json | null
+          id?: string
+          manual_review_required?: boolean | null
+          order_id?: string
+          payment_analysis?: Json | null
+          risk_factors?: Json
+          risk_score?: number
+          updated_at?: string
+          velocity_flags?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_risk_scores_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_signing_keys: {
+        Row: {
+          algorithm: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_id: string
+          private_key_hash: string
+          public_key: string
+          revoked_at: string | null
+        }
+        Insert: {
+          algorithm?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_id: string
+          private_key_hash: string
+          public_key: string
+          revoked_at?: string | null
+        }
+        Update: {
+          algorithm?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_id?: string
+          private_key_hash?: string
+          public_key?: string
+          revoked_at?: string | null
         }
         Relationships: []
       }
@@ -1426,6 +1640,59 @@ export type Database = {
           },
         ]
       }
+      ticket_validations: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          id: string
+          ip_address: unknown | null
+          location_data: Json | null
+          offline_validation: boolean | null
+          signature_verification: boolean | null
+          ticket_id: string
+          validation_metadata: Json | null
+          validation_result: string
+          validation_type: string
+          validator_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: unknown | null
+          location_data?: Json | null
+          offline_validation?: boolean | null
+          signature_verification?: boolean | null
+          ticket_id: string
+          validation_metadata?: Json | null
+          validation_result: string
+          validation_type: string
+          validator_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: unknown | null
+          location_data?: Json | null
+          offline_validation?: boolean | null
+          signature_verification?: boolean | null
+          ticket_id?: string
+          validation_metadata?: Json | null
+          validation_result?: string
+          validation_type?: string
+          validator_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_validations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tickets: {
         Row: {
           created_at: string
@@ -1875,6 +2142,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_risk_score: {
+        Args: { order_uuid: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
