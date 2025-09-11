@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Users, Eye, Wheelchair } from 'lucide-react';
+import { MapPin, Users, Eye, Accessibility } from 'lucide-react';
 
 interface Seat {
   id: string;
@@ -104,7 +104,7 @@ export const SeatSelection: React.FC<SeatSelectionProps> = ({
   };
 
   const getSeatIcon = (seat: Seat) => {
-    if (seat.type === 'accessible') return <Wheelchair className="h-3 w-3" />;
+    if (seat.type === 'accessible') return <Accessibility className="h-3 w-3" />;
     return seat.number;
   };
 
@@ -154,7 +154,7 @@ export const SeatSelection: React.FC<SeatSelectionProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-green-100 border border-green-300 rounded flex items-center justify-center">
-                <Wheelchair className="h-3 w-3" />
+                <Accessibility className="h-3 w-3" />
               </div>
               <span>Accessible</span>
             </div>

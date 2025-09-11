@@ -14,7 +14,15 @@ import { PaymentOptions } from './PaymentOptions';
 import { OrderSummary } from './OrderSummary';
 import { TicketConfirmation } from './TicketConfirmation';
 
-export type CheckoutStep = 'event' | 'seats' | 'tiers' | 'addons' | 'customer' | 'payment' | 'summary' | 'confirmation';
+export type CheckoutStep = 
+  | 'event' 
+  | 'seats' 
+  | 'tiers' 
+  | 'addons' 
+  | 'customer' 
+  | 'payment' 
+  | 'summary' 
+  | 'confirmation';
 
 interface CheckoutData {
   event: any;
@@ -219,7 +227,7 @@ export const CheckoutFlow: React.FC = () => {
               
               {/* Navigation Buttons */}
               <div className="flex gap-2">
-                {currentStep !== 'event' && currentStep !== 'confirmation' && (
+                {!['event', 'confirmation'].includes(currentStep) && (
                   <Button
                     variant="outline"
                     onClick={goToPreviousStep}
