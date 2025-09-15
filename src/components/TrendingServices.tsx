@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Star, TrendingUp, MapPin, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import LazyImage from "@/components/LazyImage";
+import meiklesHotel from "@/assets/meikles-hotel.jpg";
+import rainbowTowersHotel from "@/assets/rainbow-towers-hotel.jpg";
+import crestaLodgeHarare from "@/assets/cresta-lodge-harare.jpg";
 
 // Mock trending hotels data
 const trendingServices = [
@@ -15,7 +18,7 @@ const trendingServices = [
     rating: 4.8,
     reviews: 342,
     price: "$120 - $280 per night",
-    image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
+    image: meiklesHotel,
     trending: "🔥 Hot",
     bookings: "+156 this month",
     features: ["Free WiFi", "Pool & Spa", "Restaurant", "Business Center"]
@@ -28,7 +31,7 @@ const trendingServices = [
     rating: 4.6,
     reviews: 287,
     price: "$95 - $180 per night",
-    image: "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
+    image: rainbowTowersHotel,
     trending: "⚡ Rising",
     bookings: "+98 this month",
     features: ["Conference Facilities", "Gym", "Restaurant", "City Views"]
@@ -41,7 +44,7 @@ const trendingServices = [
     rating: 4.7,
     reviews: 198,
     price: "$80 - $150 per night",
-    image: "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
+    image: crestaLodgeHarare,
     trending: "👑 Premium",
     bookings: "+67 this month",
     features: ["Garden Setting", "Pool", "Bar & Lounge", "Free Parking"]
