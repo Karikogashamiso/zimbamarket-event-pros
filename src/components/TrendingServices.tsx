@@ -5,46 +5,46 @@ import { Star, TrendingUp, MapPin, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import LazyImage from "@/components/LazyImage";
 
-// Mock trending services data
+// Mock trending hotels data
 const trendingServices = [
   {
     id: "1",
-    title: "Elegant Garden Weddings",
-    category: "Wedding Venues",
+    title: "Meikles Hotel",
+    category: "Luxury Hotel",
     location: "Harare",
-    rating: 4.9,
-    reviews: 156,
-    price: "$800 - $2,500",
+    rating: 4.8,
+    reviews: 342,
+    price: "$120 - $280 per night",
     image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
     trending: "🔥 Hot",
-    bookings: "+125 this month",
-    features: ["Garden Setting", "Catering Available", "Photography Included"]
+    bookings: "+156 this month",
+    features: ["Free WiFi", "Pool & Spa", "Restaurant", "Business Center"]
   },
   {
     id: "2", 
-    title: "Premium DJ & Sound",
-    category: "Entertainment",
-    location: "Bulawayo",
-    rating: 4.8,
-    reviews: 89,
-    price: "$200 - $800",
+    title: "Rainbow Towers Hotel",
+    category: "Business Hotel",
+    location: "Harare",
+    rating: 4.6,
+    reviews: 287,
+    price: "$95 - $180 per night",
     image: "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
     trending: "⚡ Rising",
-    bookings: "+89 this month",
-    features: ["Professional Equipment", "MC Services", "Lighting Setup"]
+    bookings: "+98 this month",
+    features: ["Conference Facilities", "Gym", "Restaurant", "City Views"]
   },
   {
     id: "3",
-    title: "Gourmet Catering Co.",
-    category: "Catering",
-    location: "Victoria Falls",
-    rating: 4.9,
-    reviews: 203,
-    price: "$15 - $60 per person",
+    title: "Cresta Lodge Harare",
+    category: "Boutique Hotel",
+    location: "Harare",
+    rating: 4.7,
+    reviews: 198,
+    price: "$80 - $150 per night",
     image: "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
     trending: "👑 Premium",
-    bookings: "+78 this month",
-    features: ["International Cuisine", "Dietary Options", "Full Service"]
+    bookings: "+67 this month",
+    features: ["Garden Setting", "Pool", "Bar & Lounge", "Free Parking"]
   }
 ];
 
@@ -61,10 +61,10 @@ const TrendingServices = () => {
               </Badge>
             </div>
             <h2 className="text-4xl md:text-5xl font-display font-bold text-gradient">
-              Most Popular Services
+              Top Harare Hotels
             </h2>
             <p className="text-xl text-muted-foreground mt-4 max-w-2xl">
-              Discover what's trending in Zimbabwe's event scene - the most booked and highly rated services
+              Discover Harare's finest accommodations - the most booked and highly rated hotels in the capital
             </p>
           </div>
           
