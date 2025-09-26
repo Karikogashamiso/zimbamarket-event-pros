@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import MetaTags from "@/components/SEO/MetaTags";
+import StructuredData from "@/components/SEO/StructuredData";
 import { 
   Building2, 
   Utensils, 
@@ -36,9 +40,58 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Categories = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  
+  // Get category from URL parameters
+  const selectedCategory = searchParams.get('category') || 'all';
+
+  // Update URL when category changes
+  const handleCategoryChange = (categoryId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (categoryId === 'all') {
+      newParams.delete('category');
+    } else {
+      newParams.set('category', categoryId);
+    }
+    
+    // Keep existing search query if present
+    if (searchQuery) {
+      newParams.set('search', searchQuery);
+    }
+    
+    setSearchParams(newParams);
+  };
+
+  // Handle category card clicks - navigate to search results with category filter
+  const handleCategoryCardClick = (category: any) => {
+    navigate(`/search-results?category=${category.category}`);
+  };
+
+  // Initialize search query from URL
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [searchParams]);
+
+  // Update URL when search query changes
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (query.trim()) {
+      newParams.set('search', query);
+    } else {
+      newParams.delete('search');
+    }
+    
+    setSearchParams(newParams);
+  };
 
   const allCategories = [
     {
@@ -257,7 +310,24 @@ const Categories = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <MetaTags
+        title={`Browse Event Service Categories${selectedCategory !== 'all' ? ` - ${categoryTabs.find(c => c.id === selectedCategory)?.label}` : ''} | ZimEventPro`}
+        description="Explore all event service categories in Zimbabwe. Find venues, caterers, DJs, photographers, decorators, and more for your perfect celebration."
+        keywords="event services Zimbabwe, categories, venues, catering, DJs, photography, event planning"
+        type="website"
+      />
+
+      <StructuredData
+        type="WebSite"
+        data={{
+          name: "ZimEventPro Categories",
+          description: "Browse all event service categories",
+          url: "https://zimeventpro.com/categories"
+        }}
+      />
+
+      <div className="min-h-screen bg-background">
       {/* Header Spacer */}
       <div className="h-20"></div>
       
@@ -281,10 +351,11 @@ const Categories = () => {
             <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 mb-8">
               <h3 className="text-2xl font-bold mb-4">Are you a service provider?</h3>
               <p className="text-white/90 mb-6">Join Zimbabwe's premier event marketplace and grow your business</p>
-              <Button variant="hero" size="lg" className="bg-secondary hover:bg-secondary/90 text-white">
-                <Plus className="w-5 h-5 mr-2" />
-                List My Business or Venue
-              </Button>
+            <Button variant="hero" size="lg" className="bg-secondary hover:bg-secondary/90 text-white"
+                    onClick={() => navigate('/list-business')}>
+              <Plus className="w-5 h-5 mr-2" />
+              List My Business or Venue
+            </Button>
             </div>
           </div>
         </div>
@@ -300,7 +371,7 @@ const Categories = () => {
                 <Input
                   placeholder="Search services, venues, or professionals..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-12 h-12 text-lg"
                 />
               </div>
@@ -325,7 +396,7 @@ const Categories = () => {
             </div>
 
             {/* Category Tabs */}
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-8">
+            <Tabs value={selectedCategory} onValueChange={handleCategoryChange} className="mb-8">
               <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 h-auto p-1">
                 {categoryTabs.slice(0, 5).map((tab) => (
                   <TabsTrigger 
@@ -348,7 +419,7 @@ const Categories = () => {
                     key={tab.id}
                     variant={selectedCategory === tab.id ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedCategory(tab.id)}
+                    onClick={() => handleCategoryChange(tab.id)}
                     className="h-auto p-2"
                   >
                     {tab.label} ({tab.count})
@@ -379,7 +450,11 @@ const Categories = () => {
               : "grid-cols-1 max-w-4xl mx-auto"
           }`}>
             {filteredCategories.map((category, index) => (
-              <Card key={index} className="group cursor-pointer hover-scale transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+              <Card 
+                key={index} 
+                className="group cursor-pointer hover-scale transition-all duration-300 hover:shadow-xl hover:shadow-primary/10"
+                onClick={() => handleCategoryCardClick(category)}
+              >
                 <CardContent className="p-6">
                   <div className={`flex ${viewMode === "list" ? "flex-row items-center gap-6" : "flex-col items-center text-center"}`}>
                     <div className="relative">
@@ -424,7 +499,8 @@ const Categories = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl">
+            <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer"
+                  onClick={() => navigate('/search-results?category=venues')}>
               <div className="relative h-64 bg-gradient-to-br from-primary to-primary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
@@ -437,7 +513,8 @@ const Categories = () => {
               </div>
             </Card>
             
-            <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl">
+            <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer"
+                  onClick={() => navigate('/search-results')}>
               <div className="relative h-64 bg-gradient-to-br from-secondary to-secondary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
@@ -453,6 +530,7 @@ const Categories = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 
