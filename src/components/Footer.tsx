@@ -91,43 +91,70 @@ const Footer = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Facebook Page */}
-                  <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
-                    <CardContent className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Facebook className="w-5 h-5 text-blue-400" />
-                        <span className="text-sm font-medium">Page</span>
-                      </div>
-                      <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto">
-                        <QrCode className="w-12 h-12 text-primary" />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <a 
+                    href="https://facebook.com/zimeventpro" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                      <CardContent className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Facebook className="w-5 h-5 text-blue-400" />
+                          <span className="text-sm font-medium">Page</span>
+                        </div>
+                        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto">
+                          <QrCode className="w-12 h-12 text-primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </a>
                   
                   {/* Facebook Group */}
-                  <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
-                    <CardContent className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Facebook className="w-5 h-5 text-blue-400" />
-                        <span className="text-sm font-medium">Group</span>
-                      </div>
-                      <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto">
-                        <QrCode className="w-12 h-12 text-primary" />
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <a 
+                    href="https://facebook.com/groups/zimeventpro" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                      <CardContent className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Facebook className="w-5 h-5 text-blue-400" />
+                          <span className="text-sm font-medium">Group</span>
+                        </div>
+                        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto">
+                          <QrCode className="w-12 h-12 text-primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </a>
                 </div>
                 
                 {/* Social Links */}
                 <div className="flex space-x-3 pt-4">
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-secondary">
+                  <a 
+                    href="https://instagram.com/zimeventpro" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white hover:bg-white/20 hover:text-secondary p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                  >
                     <Instagram className="w-5 h-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-secondary">
+                  </a>
+                  <a 
+                    href="https://twitter.com/zimeventpro" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white hover:bg-white/20 hover:text-secondary p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                  >
                     <Twitter className="w-5 h-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 hover:text-secondary">
+                  </a>
+                  <a 
+                    href="https://wa.me/263774409989" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white hover:bg-white/20 hover:text-secondary p-2 rounded-lg transition-all duration-200 hover:scale-110"
+                  >
                     <MessageCircle className="w-5 h-5" />
-                  </Button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -185,11 +212,21 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-secondary" />
-                <span className="text-white/80 text-sm">info@zimeventpro.co.zw</span>
+                <a 
+                  href="mailto:info@zimeventpro.co.zw" 
+                  className="text-white/80 text-sm hover:text-secondary transition-colors"
+                >
+                  info@zimeventpro.co.zw
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-secondary" />
-                <span className="text-white/80 text-sm">+263 4 123 4567</span>
+                <a 
+                  href="tel:+263774409989" 
+                  className="text-white/80 text-sm hover:text-secondary transition-colors"
+                >
+                  +263 77 440 9989
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-secondary" />
