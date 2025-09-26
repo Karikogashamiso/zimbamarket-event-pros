@@ -1,4 +1,3 @@
-import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,40 +26,44 @@ import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 
 const queryClient = new QueryClient();
 
-const App: React.FC = () => (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/categories" element={<Layout><Categories /></Layout>} />
-            <Route path="/search" element={<Layout><SearchResults /></Layout>} />
-            <Route path="/service/:id" element={<Layout><ServiceDetail /></Layout>} />
-            <Route path="/about" element={<Layout><About /></Layout>} />
-            <Route path="/blog" element={<Layout><Blog /></Layout>} />
-            <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
-            <Route path="/list-business" element={<Layout><ListBusiness /></Layout>} />
-            <Route path="/help" element={<Layout><Help /></Layout>} />
-            <Route path="/contact" element={<Layout><Contact /></Layout>} />
-            <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
-            <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
-            <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
-            <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
-            <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
-            <Route path="/ux-guide" element={<Layout><UXOptimizationGuide /></Layout>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<Layout><NotFound /></Layout>} />
-          </Routes>
-          
-          {/* Global Chat Widget - Available on all pages */}
-          <ChatWidget />
-        </BrowserRouter>
-      </TooltipProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <TooltipProvider>
+          <div>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/categories" element={<Layout><Categories /></Layout>} />
+                <Route path="/search" element={<Layout><SearchResults /></Layout>} />
+                <Route path="/service/:id" element={<Layout><ServiceDetail /></Layout>} />
+                <Route path="/about" element={<Layout><About /></Layout>} />
+                <Route path="/blog" element={<Layout><Blog /></Layout>} />
+                <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
+                <Route path="/list-business" element={<Layout><ListBusiness /></Layout>} />
+                <Route path="/help" element={<Layout><Help /></Layout>} />
+                <Route path="/contact" element={<Layout><Contact /></Layout>} />
+                <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+                <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
+                <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
+                <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
+                <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
+                <Route path="/ux-guide" element={<Layout><UXOptimizationGuide /></Layout>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+              
+              {/* Global Chat Widget - Available on all pages */}
+              <ChatWidget />
+            </BrowserRouter>
+          </div>
+        </TooltipProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
