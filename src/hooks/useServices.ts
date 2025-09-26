@@ -39,22 +39,39 @@ interface UseServicesReturn {
   error: string | null;
   retry: () => void;
   isRetrying: boolean;
+  loadMore: () => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  totalCount: number;
 }
+
+const ITEMS_PER_PAGE = 12;
 
 export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchServices = async (isRetry = false) => {
+  const fetchServices = async (isRetry = false, loadMore = false) => {
     try {
       if (isRetry) {
         setIsRetrying(true);
+      } else if (loadMore) {
+        setLoadingMore(true);
       } else {
         setLoading(true);
+        setCurrentPage(0);
+        setServices([]);
+        setHasMore(true);
       }
       setError(null);
+
+      const pageToFetch = loadMore ? currentPage + 1 : 0;
 
       let query = supabase
         .from('services')
@@ -142,6 +159,60 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
                      .order('rating', { ascending: false });
       }
 
+      // First get total count for pagination
+      const countQuery = supabase
+        .from('services')
+        .select('id', { count: 'exact' })
+        .eq('active', true);
+
+      // Apply same filters to count query
+      if (filters?.query) {
+        countQuery.or(`title.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
+      }
+      if (filters?.location) {
+        countQuery.ilike('location', `%${filters.location}%`);
+      }
+      if (filters?.category && filters.category !== 'all') {
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', filters.category)
+          .single();
+        if (categoryData) {
+          countQuery.eq('category_id', categoryData.id);
+        }
+      }
+      if (filters?.rating && filters.rating > 0) {
+        countQuery.gte('rating', filters.rating);
+      }
+      if (filters?.featured) {
+        countQuery.eq('featured', true);
+      }
+      if (filters?.verified) {
+        countQuery.eq('verified', true);
+      }
+      if (filters?.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 10000)) {
+        countQuery.gte('price_from', filters.priceRange.min);
+        if (filters.priceRange.max < 10000) {
+          countQuery.lte('price_from', filters.priceRange.max);
+        }
+      }
+      if (filters?.capacity && (filters.capacity.min > 1 || filters.capacity.max < 1000)) {
+        if (filters.capacity.min > 1) {
+          countQuery.gte('capacity_max', filters.capacity.min);
+        }
+        if (filters.capacity.max < 1000) {
+          countQuery.lte('capacity_min', filters.capacity.max);
+        }
+      }
+
+      const { count } = await countQuery;
+      const total = count || 0;
+
+      // Add pagination to main query
+      query = query
+        .range(pageToFetch * ITEMS_PER_PAGE, (pageToFetch + 1) * ITEMS_PER_PAGE - 1);
+
       const { data, error } = await query;
 
       if (error) {
@@ -159,17 +230,32 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
         }
       }
 
-      setServices(data || []);
+      if (!loadMore) {
+        setServices(data || []);
+        setTotalCount(total);
+      } else {
+        setServices(prevServices => [...prevServices, ...(data || [])]);
+      }
+
+      const newCurrentPage = loadMore ? pageToFetch : 0;
+      setCurrentPage(newCurrentPage);
+      setHasMore((newCurrentPage + 1) * ITEMS_PER_PAGE < total);
     } catch (err: any) {
       console.error('Services fetch error:', err);
       setError(err.message || 'Failed to load services. Please try again.');
     } finally {
       setLoading(false);
       setIsRetrying(false);
+      setLoadingMore(false);
     }
   };
 
   const retry = () => fetchServices(true);
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchServices(false, true);
+    }
+  };
 
   useEffect(() => {
     fetchServices();
@@ -187,7 +273,17 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
     filters?.sortBy
   ]);
 
-  return { services, loading, error, retry, isRetrying };
+  return { 
+    services, 
+    loading, 
+    error, 
+    retry, 
+    isRetrying, 
+    loadMore, 
+    hasMore, 
+    loadingMore,
+    totalCount 
+  };
 };
 
 interface UseServiceReturn {

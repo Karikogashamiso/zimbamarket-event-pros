@@ -83,7 +83,15 @@ const SearchResults = () => {
 
   // Use real data hooks
   const { categories } = useCategories();
-  const { services, loading, error } = useServices(searchFilters);
+  const { 
+    services, 
+    loading, 
+    error, 
+    loadMore, 
+    hasMore, 
+    loadingMore, 
+    totalCount 
+  } = useServices(searchFilters);
 
   // Handle search form submission
   const handleSearch = (filters: SearchFilters) => {
@@ -313,7 +321,10 @@ const SearchResults = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Search Results</h2>
                     <p className="text-muted-foreground">
-                      {loading ? 'Loading...' : `Found ${services.length} services matching your criteria`}
+                      {loading 
+                        ? 'Loading...' 
+                        : `Showing ${services.length} of ${totalCount} services matching your criteria`
+                      }
                     </p>
                   </div>
                   
@@ -363,11 +374,46 @@ const SearchResults = () => {
                   )}
                 </div>
 
-                {!loading && services.length > 0 && (
+                {/* Load More Button */}
+                {!loading && services.length > 0 && hasMore && (
                   <div className="text-center mt-12">
-                    <Button variant="outline" size="lg" className="hover-scale">
-                      Load More Results
-                      <ChevronDown className="w-4 h-4 ml-2" />
+                    <Button 
+                      variant="outline" 
+                      size="lg" 
+                      className="hover-scale" 
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                          Loading More...
+                        </>
+                      ) : (
+                        <>
+                          Load More Results
+                          <ChevronDown className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Showing {services.length} of {totalCount} results
+                    </p>
+                  </div>
+                )}
+
+                {/* No More Results Message */}
+                {!loading && services.length > 0 && !hasMore && (
+                  <div className="text-center mt-12 py-8 border-t border-border">
+                    <p className="text-muted-foreground">
+                      You've seen all {totalCount} results matching your criteria.
+                    </p>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                      className="mt-2"
+                    >
+                      Back to Top
                     </Button>
                   </div>
                 )}
