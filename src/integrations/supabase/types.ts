@@ -1452,6 +1452,39 @@ export type Database = {
           },
         ]
       }
+      service_analytics: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          service_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          service_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          service_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       service_availability: {
         Row: {
           created_at: string
@@ -1553,6 +1586,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          report_data: Json | null
+          reported_by_user_id: string | null
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          service_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          report_data?: Json | null
+          reported_by_user_id?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          service_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          report_data?: Json | null
+          reported_by_user_id?: string | null
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          service_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -2161,6 +2233,27 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_saved_services: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
           user_id?: string
         }
         Relationships: []

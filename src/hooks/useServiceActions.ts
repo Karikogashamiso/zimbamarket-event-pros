@@ -21,21 +21,18 @@ export const useServiceActions = () => {
 
     setIsSaving(true);
     try {
-      // Check if already saved
-      const { data: existingSave } = await supabase
-        .from('user_saved_services')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('service_id', serviceId)
-        .single();
+      // Check if already saved - using rpc to avoid type issues
+      const { data: existingSave } = await supabase.rpc('check_saved_service', {
+        user_id_param: user.id,
+        service_id_param: serviceId
+      });
 
       if (existingSave) {
         // Remove from saved
-        const { error } = await supabase
-          .from('user_saved_services')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('service_id', serviceId);
+        const { error } = await supabase.rpc('remove_saved_service', {
+          user_id_param: user.id,
+          service_id_param: serviceId
+        });
 
         if (error) throw new Error(error.message);
 
@@ -45,12 +42,10 @@ export const useServiceActions = () => {
         });
       } else {
         // Add to saved
-        const { error } = await supabase
-          .from('user_saved_services')
-          .insert({
-            user_id: user.id,
-            service_id: serviceId,
-          });
+        const { error } = await supabase.rpc('add_saved_service', {
+          user_id_param: user.id,
+          service_id_param: serviceId
+        });
 
         if (error) throw new Error(error.message);
 
@@ -97,13 +92,18 @@ export const useServiceActions = () => {
         });
       }
 
-      // Log sharing analytics
-      await supabase.from('service_analytics').insert({
-        service_id: serviceId,
-        event_type: 'share',
-        user_id: user?.id || null,
-        event_data: { method: navigator.share ? 'native' : 'clipboard' },
-      });
+      // Log sharing analytics using rpc
+      try {
+        await supabase.rpc('log_service_analytics', {
+          service_id_param: serviceId,
+          event_type_param: 'share',
+          user_id_param: user?.id || null,
+          event_data_param: JSON.stringify({ method: navigator.share ? 'native' : 'clipboard' })
+        });
+      } catch (analyticsError) {
+        // Don't fail the sharing if analytics fails
+        console.warn('Analytics logging failed:', analyticsError);
+      }
     } catch (error: any) {
       console.error('Error sharing service:', error);
       
@@ -127,18 +127,15 @@ export const useServiceActions = () => {
   const reportService = async (serviceId: string, serviceName: string, reason: string) => {
     setIsReporting(true);
     try {
-      const { error } = await supabase
-        .from('service_reports')
-        .insert({
-          service_id: serviceId,
-          reported_by_user_id: user?.id || null,
-          reason: reason,
-          status: 'pending',
-          report_data: {
-            service_name: serviceName,
-            reported_at: new Date().toISOString(),
-          },
-        });
+      const { error } = await supabase.rpc('create_service_report', {
+        service_id_param: serviceId,
+        reported_by_user_id_param: user?.id || null,
+        reason_param: reason,
+        report_data_param: JSON.stringify({
+          service_name: serviceName,
+          reported_at: new Date().toISOString(),
+        })
+      });
 
       if (error) throw new Error(error.message);
 
