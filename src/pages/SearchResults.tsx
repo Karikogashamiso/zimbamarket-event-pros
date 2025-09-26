@@ -30,28 +30,60 @@ import { trackServiceView, trackSearch } from "@/components/Analytics/GoogleAnal
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState('grid');
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    query: searchParams.get('q') || '',
-    location: searchParams.get('location') || '',
-    category: searchParams.get('category') || '',
-    priceRange: { min: 0, max: 10000 },
-    rating: 0,
-    availability: [],
-    capacity: { min: 1, max: 1000 },
-    amenities: [],
-    featured: false,
-    verified: false,
-    sortBy: 'relevance',
-  });
+  
+  // Helper function to parse URL params into proper SearchFilters format
+  const parseFiltersFromParams = (): Partial<SearchFilters> => {
+    const filters: Partial<SearchFilters> = {
+      query: searchParams.get('q') || '',
+      location: searchParams.get('location') || '',
+      category: searchParams.get('category') || '',
+      featured: searchParams.get('featured') === 'true',
+      verified: searchParams.get('verified') === 'true',
+      rating: 0,
+      priceRange: { min: 0, max: 10000 },
+      capacity: { min: 1, max: 1000 },
+      amenities: [],
+      availability: [],
+      sortBy: 'relevance',
+    };
+
+    // Parse price range from URL
+    const priceRangeParam = searchParams.get('priceRange');
+    if (priceRangeParam === 'budget') {
+      filters.priceRange = { min: 100, max: 500 };
+    } else if (priceRangeParam === 'mid') {
+      filters.priceRange = { min: 500, max: 1500 };
+    } else if (priceRangeParam === 'premium') {
+      filters.priceRange = { min: 1500, max: 5000 };
+    } else if (priceRangeParam === 'luxury') {
+      filters.priceRange = { min: 5000, max: 10000 };
+    }
+
+    // Parse capacity from URL
+    const capacityParam = searchParams.get('capacity');
+    if (capacityParam === 'intimate') {
+      filters.capacity = { min: 1, max: 50 };
+    } else if (capacityParam === 'medium') {
+      filters.capacity = { min: 50, max: 150 };
+    } else if (capacityParam === 'large') {
+      filters.capacity = { min: 150, max: 300 };
+    } else if (capacityParam === 'grand') {
+      filters.capacity = { min: 300, max: 1000 };
+    }
+
+    return filters;
+  };
+
+  const [searchFilters, setSearchFilters] = useState<Partial<SearchFilters>>(parseFiltersFromParams);
+
+  // Update filters when URL params change
+  useEffect(() => {
+    setSearchFilters(parseFiltersFromParams());
+  }, [searchParams]);
 
   // Use real data hooks
   const { categories } = useCategories();
-  const { services, loading, error } = useServices({
-    query: searchFilters.query,
-    location: searchFilters.location,
-    category: searchFilters.category,
-    featured: searchFilters.featured,
-  });
+  const { services, loading, error } = useServices(searchFilters);
 
   // Handle search form submission
   const handleSearch = (filters: SearchFilters) => {
@@ -61,10 +93,39 @@ const SearchResults = () => {
     if (filters.query) params.set('q', filters.query);
     if (filters.location) params.set('location', filters.location);
     if (filters.category) params.set('category', filters.category);
+    if (filters.featured) params.set('featured', 'true');
+    if (filters.verified) params.set('verified', 'true');
+    
+    // Convert price range back to simple string for URL
+    if (filters.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 10000)) {
+      if (filters.priceRange.min === 100 && filters.priceRange.max === 500) {
+        params.set('priceRange', 'budget');
+      } else if (filters.priceRange.min === 500 && filters.priceRange.max === 1500) {
+        params.set('priceRange', 'mid');
+      } else if (filters.priceRange.min === 1500 && filters.priceRange.max === 5000) {
+        params.set('priceRange', 'premium');
+      } else if (filters.priceRange.min === 5000) {
+        params.set('priceRange', 'luxury');
+      }
+    }
+    
+    // Convert capacity back to simple string for URL
+    if (filters.capacity && (filters.capacity.min > 1 || filters.capacity.max < 1000)) {
+      if (filters.capacity.max === 50) {
+        params.set('capacity', 'intimate');
+      } else if (filters.capacity.min === 50 && filters.capacity.max === 150) {
+        params.set('capacity', 'medium');
+      } else if (filters.capacity.min === 150 && filters.capacity.max === 300) {
+        params.set('capacity', 'large');
+      } else if (filters.capacity.min === 300) {
+        params.set('capacity', 'grand');
+      }
+    }
+    
     setSearchParams(params);
     
     // Track search
-    trackSearch(filters.query, filters.location, filters.category);
+    trackSearch(filters.query || '', filters.location || '', filters.category || '');
   };
 
   const categoryTabs = [
@@ -258,7 +319,7 @@ const SearchResults = () => {
                   
                   <div className="flex items-center gap-4">
                     <select 
-                      value={searchFilters.sortBy}
+                      value={searchFilters.sortBy || 'relevance'}
                       onChange={(e) => setSearchFilters(prev => ({ ...prev, sortBy: e.target.value as any }))}
                       className="border border-border rounded-lg px-3 py-2 text-sm bg-background"
                     >

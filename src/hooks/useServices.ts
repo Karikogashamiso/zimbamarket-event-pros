@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { SearchFilters } from '@/components/Search/AdvancedSearch';
 
 export interface Service {
   id: string;
@@ -31,16 +32,7 @@ export interface Service {
   };
 }
 
-export interface SearchFilters {
-  query?: string;
-  location?: string;
-  category?: string;
-  priceRange?: string;
-  rating?: string;
-  featured?: boolean;
-}
-
-export const useServices = (filters?: SearchFilters) => {
+export const useServices = (filters?: Partial<SearchFilters>) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,32 +73,61 @@ export const useServices = (filters?: SearchFilters) => {
           }
         }
 
-        if (filters?.rating && filters.rating !== 'all') {
-          const minRating = parseFloat(filters.rating);
-          query = query.gte('rating', minRating);
+        if (filters?.rating && filters.rating > 0) {
+          query = query.gte('rating', filters.rating);
         }
 
         if (filters?.featured) {
           query = query.eq('featured', true);
         }
 
+        if (filters?.verified) {
+          query = query.eq('verified', true);
+        }
+
         // Price range filtering
-        if (filters?.priceRange && filters.priceRange !== 'all') {
-          const priceRange = filters.priceRange;
-          if (priceRange === '$0-$100') {
-            query = query.lte('price_from', 100);
-          } else if (priceRange === '$100-$500') {
-            query = query.gte('price_from', 100).lte('price_from', 500);
-          } else if (priceRange === '$500-$1000') {
-            query = query.gte('price_from', 500).lte('price_from', 1000);
-          } else if (priceRange === '$1000+') {
-            query = query.gte('price_from', 1000);
+        if (filters?.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 10000)) {
+          query = query.gte('price_from', filters.priceRange.min);
+          if (filters.priceRange.max < 10000) {
+            query = query.lte('price_from', filters.priceRange.max);
           }
         }
 
-        // Order by featured first, then by rating
-        query = query.order('featured', { ascending: false })
-                    .order('rating', { ascending: false });
+        // Capacity filtering
+        if (filters?.capacity && (filters.capacity.min > 1 || filters.capacity.max < 1000)) {
+          if (filters.capacity.min > 1) {
+            query = query.gte('capacity_max', filters.capacity.min);
+          }
+          if (filters.capacity.max < 1000) {
+            query = query.lte('capacity_min', filters.capacity.max);
+          }
+        }
+
+        // Order based on sortBy
+        if (filters?.sortBy) {
+          switch (filters.sortBy) {
+            case 'price-low':
+              query = query.order('price_from', { ascending: true });
+              break;
+            case 'price-high':
+              query = query.order('price_from', { ascending: false });
+              break;
+            case 'rating':
+              query = query.order('rating', { ascending: false });
+              break;
+            case 'newest':
+              query = query.order('created_at', { ascending: false });
+              break;
+            default:
+              // Default: featured first, then by rating
+              query = query.order('featured', { ascending: false })
+                           .order('rating', { ascending: false });
+          }
+        } else {
+          // Default: featured first, then by rating
+          query = query.order('featured', { ascending: false })
+                       .order('rating', { ascending: false });
+        }
 
         const { data, error } = await query;
 
@@ -126,7 +147,19 @@ export const useServices = (filters?: SearchFilters) => {
     };
 
     fetchServices();
-  }, [filters?.query, filters?.location, filters?.category, filters?.priceRange, filters?.rating, filters?.featured]);
+  }, [
+    filters?.query, 
+    filters?.location, 
+    filters?.category, 
+    filters?.priceRange?.min, 
+    filters?.priceRange?.max, 
+    filters?.rating, 
+    filters?.featured, 
+    filters?.verified,
+    filters?.capacity?.min, 
+    filters?.capacity?.max,
+    filters?.sortBy
+  ]);
 
   return { services, loading, error };
 };

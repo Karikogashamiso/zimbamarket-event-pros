@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -46,11 +47,13 @@ const recentSearches = [
 ];
 
 const EnhancedSearch = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [guestCount, setGuestCount] = useState("");
+  const [eventDate, setEventDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -77,6 +80,37 @@ const EnhancedSearch = () => {
     setPriceRange('');
     setGuestCount('');
     setLocation('');
+    setEventDate('');
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (location.trim()) params.set('location', location.trim());
+    if (category) params.set('category', category);
+    if (priceRange) params.set('priceRange', priceRange);
+    if (guestCount) params.set('capacity', guestCount);
+    if (eventDate) params.set('date', eventDate);
+    
+    navigate(`/search-results?${params.toString()}`);
+    setShowSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    // Auto-search when clicking a suggestion
+    const params = new URLSearchParams();
+    params.set('q', suggestion);
+    if (location.trim()) params.set('location', location.trim());
+    navigate(`/search-results?${params.toString()}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   return (
@@ -92,6 +126,7 @@ const EnhancedSearch = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyPress={handleKeyPress}
               placeholder="Search for venues, catering, photography..."
               className="pl-12 h-12 text-base border-0 bg-muted/50 focus:bg-background transition-all"
             />
@@ -103,6 +138,7 @@ const EnhancedSearch = () => {
             <Input 
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="Harare, Bulawayo, Victoria Falls..."
               className="pl-12 h-12 text-base border-0 bg-muted/50 focus:bg-background transition-all"
             />
@@ -119,7 +155,7 @@ const EnhancedSearch = () => {
               <SlidersHorizontal className="w-5 h-5 mr-2" />
               Filters
             </Button>
-            <Button variant="hero" size="lg" className="h-12 px-8">
+            <Button variant="hero" size="lg" className="h-12 px-8" onClick={handleSearch}>
               <Search className="w-5 h-5 mr-2" />
               Search
             </Button>
@@ -210,6 +246,8 @@ const EnhancedSearch = () => {
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input 
                   type="date" 
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
                   className="pl-10 h-10"
                   placeholder="Event Date"
                 />
@@ -233,7 +271,7 @@ const EnhancedSearch = () => {
                 {popularSearches.map((search, index) => (
                   <button
                     key={index}
-                    onClick={() => setSearchQuery(search)}
+                    onClick={() => handleSuggestionClick(search)}
                     className="block w-full text-left text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 p-2 rounded transition-all"
                   >
                     {search}
@@ -252,7 +290,7 @@ const EnhancedSearch = () => {
                 {trendingNow.map((trend, index) => (
                   <button
                     key={index}
-                    onClick={() => setSearchQuery(trend)}
+                    onClick={() => handleSuggestionClick(trend)}
                     className="block w-full text-left text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 p-2 rounded transition-all"
                   >
                     {trend}
@@ -271,7 +309,7 @@ const EnhancedSearch = () => {
                 {recentSearches.map((recent, index) => (
                   <button
                     key={index}
-                    onClick={() => setSearchQuery(recent)}
+                    onClick={() => handleSuggestionClick(recent)}
                     className="block w-full text-left text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 p-2 rounded transition-all"
                   >
                     {recent}
