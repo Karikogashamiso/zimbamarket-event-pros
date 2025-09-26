@@ -21,6 +21,7 @@ import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
+import { OrderConfirmation } from "./pages/OrderConfirmation";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
                 <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
                 <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
+                <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                 <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
                 <Route path="/ux-guide" element={<Layout><UXOptimizationGuide /></Layout>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

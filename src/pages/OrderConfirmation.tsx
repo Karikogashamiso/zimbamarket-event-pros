@@ -1,0 +1,300 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { TicketDisplay } from '@/components/Tickets/TicketDisplay';
+import { CheckCircle, Mail, ArrowLeft, Home, Download, Share2, Receipt } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import MetaTags from '@/components/SEO/MetaTags';
+
+export const OrderConfirmation: React.FC = () => {
+  const { orderNumber } = useParams<{ orderNumber: string }>();
+  const navigate = useNavigate();
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (!orderNumber) {
+        setError('Order number not provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('Fetching order details for:', orderNumber);
+        
+        // Fetch order details
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('order_number', orderNumber)
+          .single();
+
+        if (orderError || !order) {
+          console.error('Order not found:', orderError);
+          setError('Order not found');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch tickets for this order
+        const { data: tickets, error: ticketsError } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            ticket_types (
+              name,
+              description
+            )
+          `)
+          .eq('order_id', order.id);
+
+        if (ticketsError) {
+          console.warn('Failed to fetch tickets:', ticketsError);
+        }
+
+        const enrichedOrder = {
+          ...order,
+          tickets: tickets?.map(ticket => ({
+            ...ticket,
+            ticket_type_name: ticket.ticket_types?.name || 'General Admission'
+          })) || []
+        };
+
+        setOrderDetails(enrichedOrder);
+      } catch (err: any) {
+        console.error('Error fetching order:', err);
+        setError('Failed to load order details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [orderNumber]);
+
+  const formatCurrency = (amount: number, currency = 'USD') => {
+    const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
+    return `${symbol}${amount.toFixed(2)}`;
+  };
+
+  const handleTicketDownload = (ticketId: string, format: 'pdf' | 'image') => {
+    toast.success(`${format.toUpperCase()} download will be implemented with payment integration`);
+  };
+
+  const handleTicketShare = (ticketId: string, method: 'email' | 'whatsapp') => {
+    toast.success(`Ticket shared via ${method === 'whatsapp' ? 'WhatsApp' : 'Email'}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto text-center space-y-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p>Loading your order details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !orderDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
+        <MetaTags
+          title="Order Not Found - ZimEventPro"
+          description="The requested order could not be found."
+        />
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto text-center space-y-6">
+            <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+              <div className="text-red-600 text-2xl">!</div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-red-600 mb-2">Order Not Found</h1>
+              <p className="text-muted-foreground">
+                {error || 'The order you are looking for could not be found.'}
+              </p>
+            </div>
+            <Button onClick={() => navigate('/')} className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Return to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
+      <MetaTags
+        title={`Order Confirmation - ${orderDetails.order_number} - ZimEventPro`}
+        description={`Your booking has been confirmed. Order ${orderDetails.order_number} details and tickets.`}
+      />
+      
+      {/* Header */}
+      <div className="bg-background/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+            <div>
+              <h1 className="font-semibold text-lg">Order Confirmation</h1>
+              <p className="text-sm text-muted-foreground">
+                Your booking has been confirmed
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Success Icon */}
+          <div className="text-center">
+            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="h-12 w-12 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-green-600 mb-2">Booking Confirmed!</h2>
+            <p className="text-muted-foreground">
+              Your booking has been successfully processed
+            </p>
+          </div>
+
+          {/* Order Details Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Order Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Order Number</p>
+                  <p className="font-mono font-semibold">{orderDetails.order_number}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Paid</p>
+                  <p className="font-semibold text-green-600">
+                    {formatCurrency(orderDetails.total_amount, orderDetails.currency)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment Status</p>
+                  <Badge className="bg-green-100 text-green-800">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    {orderDetails.payment_status}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Booking Status</p>
+                  <Badge className="bg-blue-100 text-blue-800">
+                    {orderDetails.booking_status}
+                  </Badge>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Confirmation sent to:</p>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{orderDetails.customer_email}</span>
+                </div>
+              </div>
+
+              {/* Event Information */}
+              {orderDetails.metadata?.event && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Event Details:</p>
+                    <div className="bg-blue-50 p-3 rounded-lg space-y-1">
+                      <p className="font-medium">{orderDetails.metadata.event.title}</p>
+                      {orderDetails.metadata.event.date && (
+                        <p className="text-sm text-muted-foreground">Date: {orderDetails.metadata.event.date}</p>
+                      )}
+                      {orderDetails.metadata.event.venue && (
+                        <p className="text-sm text-muted-foreground">Venue: {orderDetails.metadata.event.venue}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Tickets Display */}
+              {orderDetails.tickets && orderDetails.tickets.length > 0 && (
+                <>
+                  <Separator />
+                  <TicketDisplay
+                    orderDetails={orderDetails}
+                    tickets={orderDetails.tickets}
+                    onDownload={handleTicketDownload}
+                    onShare={handleTicketShare}
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Receipt
+              </Button>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
+                Share Booking
+              </Button>
+            </div>
+
+            <Button 
+              onClick={() => navigate('/')}
+              className="w-full"
+            >
+              Return to Home
+            </Button>
+          </div>
+
+          {/* Help Section */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-blue-800 mb-1">Need Help?</h4>
+                  <p className="text-sm text-blue-700 mb-2">
+                    If you have any questions about your booking or need to make changes:
+                  </p>
+                  <div className="text-sm text-blue-600">
+                    <p>📧 Email: support@zimeventpro.com</p>
+                    <p>📱 WhatsApp: +263 77 123 4567</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};

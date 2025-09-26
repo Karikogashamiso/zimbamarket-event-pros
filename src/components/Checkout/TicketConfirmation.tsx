@@ -124,12 +124,22 @@ export const TicketConfirmation: React.FC<TicketConfirmationProps> = ({ orderDet
             </Button>
           </div>
 
-          <Button 
-            onClick={() => window.location.href = '/'}
-            className="w-full"
-          >
-            Return to Home
-          </Button>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => window.location.href = `/order-confirmation/${orderDetails.order_number}`}
+              variant="outline"
+              className="w-full"
+            >
+              View Full Order Details
+            </Button>
+            
+            <Button 
+              onClick={() => window.location.href = '/'}
+              className="w-full"
+            >
+              Return to Home
+            </Button>
+          </div>
         </div>
       )}
 

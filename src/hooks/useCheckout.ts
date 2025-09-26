@@ -310,6 +310,24 @@ export const useCheckout = () => {
 
       setOrderDetails(finalOrderDetails);
 
+      // Step 6: Send order confirmation email
+      try {
+        console.log('Sending order confirmation email...');
+        const emailResponse = await supabase.functions.invoke('send-order-confirmation', {
+          body: { orderDetails: finalOrderDetails }
+        });
+
+        if (emailResponse.error) {
+          console.warn('Failed to send confirmation email:', emailResponse.error);
+          // Don't fail the entire checkout for email issues
+        } else {
+          console.log('Order confirmation email sent successfully');
+        }
+      } catch (emailError) {
+        console.warn('Email sending failed:', emailError);
+        // Don't fail the entire checkout for email issues
+      }
+
       toast({
         title: "Booking Confirmed!",
         description: `Your order ${order.order_number} has been confirmed. Check your email for tickets.`,
