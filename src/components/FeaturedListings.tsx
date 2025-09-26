@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useServices } from "@/hooks/useServices";
 import LazyImage from "@/components/LazyImage";
 import { trackServiceView } from "@/components/Analytics/GoogleAnalytics";
+import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 
 const FeaturedListings = () => {
   const { services, loading, error } = useServices({ featured: true });
@@ -73,109 +74,110 @@ const FeaturedListings = () => {
             ))
           ) : (
             services.slice(0, 6).map((service, index) => (
-              <Card 
-                key={service.id} 
-                className="group overflow-hidden card-interactive border-0 shadow-elegant hover:shadow-2xl"
-                style={{
-                  animation: `fade-in-up 0.8s ease-out ${index * 0.1}s both`
-                }}
-              >
-                <div className="relative overflow-hidden">
-                  <LazyImage 
-                    src={service.image_url || "/placeholder.svg"} 
-                    alt={service.title}
-                    aspectRatio={4 / 3}
-                    className="group-hover:scale-110 transition-all duration-700"
-                    placeholder="/placeholder.svg"
-                  />
+              <SectionErrorBoundary key={service.id} sectionName="service card" showRetry={false}>
+                <Card 
+                  className="group overflow-hidden card-interactive border-0 shadow-elegant hover:shadow-2xl"
+                  style={{
+                    animation: `fade-in-up 0.8s ease-out ${index * 0.1}s both`
+                  }}
+                >
+                  <div className="relative overflow-hidden">
+                    <LazyImage 
+                      src={service.image_url || "/placeholder.svg"} 
+                      alt={service.title}
+                      aspectRatio={4 / 3}
+                      className="group-hover:scale-110 transition-all duration-700"
+                      placeholder="/placeholder.svg"
+                    />
+                    
+                    {/* Enhanced overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                    
+                    {service.featured && (
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-gradient-to-r from-secondary to-accent text-white font-semibold shadow-lg animate-glow">
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Premium
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Enhanced action button */}
+                    <div className="absolute top-4 right-4">
+                      <Button 
+                        variant="glass" 
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Quick stats overlay */}
+                    <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                      <div className="flex justify-between items-center text-white text-sm">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          <span className="font-semibold">{service.rating}</span>
+                          <span className="opacity-80">({service.review_count})</span>
+                        </div>
+                        <div className="font-bold">
+                          {service.price_from ? `$${service.price_from}+` : 'Custom'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   
-                  {/* Enhanced overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                  
-                  {service.featured && (
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-gradient-to-r from-secondary to-accent text-white font-semibold shadow-lg animate-glow">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        Premium
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <Badge variant="outline" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
+                        {service.category?.name || 'Service'}
                       </Badge>
-                    </div>
-                  )}
-                  
-                  {/* Enhanced action button */}
-                  <div className="absolute top-4 right-4">
-                    <Button 
-                      variant="glass" 
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  {/* Quick stats overlay */}
-                  <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                    <div className="flex justify-between items-center text-white text-sm">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{service.rating}</span>
-                        <span className="opacity-80">({service.review_count})</span>
-                      </div>
-                      <div className="font-bold">
-                        {service.price_from ? `$${service.price_from}+` : 'Custom'}
+                      <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                        <MapPin className="w-3 h-3" />
+                        <span>{service.location}</span>
                       </div>
                     </div>
-                  </div>
-                </div>
-                
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant="outline" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                      {service.category?.name || 'Service'}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                      <MapPin className="w-3 h-3" />
-                      <span>{service.location}</span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
-                    {service.title}
-                  </h3>
-                  
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
-                    {service.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-secondary text-secondary" />
-                        <span className="text-sm font-semibold">{service.rating}</span>
+                    
+                    <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
+                      {service.title}
+                    </h3>
+                    
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
+                      {service.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-secondary text-secondary" />
+                          <span className="text-sm font-semibold">{service.rating}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {service.review_count} reviews
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {service.review_count} reviews
-                      </span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-primary">
+                          {service.price_from ? `From $${service.price_from}` : 'Quote'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-primary">
-                        {service.price_from ? `From $${service.price_from}` : 'Quote'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <Link to={`/service/${service.id}`}>
-                    <Button 
-                      variant="premium"
-                      className="w-full hover-scale group/btn" 
-                      size="sm"
-                      onClick={() => trackServiceView(service.id, service.title)}
-                    >
-                      <span>View Details</span>
-                      <Eye className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                    
+                    <Link to={`/service/${service.id}`}>
+                      <Button 
+                        variant="premium"
+                        className="w-full hover-scale group/btn" 
+                        size="sm"
+                        onClick={() => trackServiceView(service.id, service.title)}
+                      >
+                        <span>View Details</span>
+                        <Eye className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              </SectionErrorBoundary>
             ))
           )}
         </div>

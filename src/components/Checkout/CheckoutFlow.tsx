@@ -15,6 +15,7 @@ import { OrderSummary } from './OrderSummary';
 import { TicketConfirmation } from './TicketConfirmation';
 import { useCheckout, CheckoutData } from '@/hooks/useCheckout';
 import { useToast } from '@/hooks/use-toast';
+import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 
 export type CheckoutStep = 
   | 'event' 
@@ -229,7 +230,9 @@ export const CheckoutFlow: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
-        {renderStepContent()}
+        <SectionErrorBoundary sectionName="checkout step">
+          {renderStepContent()}
+        </SectionErrorBoundary>
       </div>
 
       {/* Mobile Footer Navigation */}

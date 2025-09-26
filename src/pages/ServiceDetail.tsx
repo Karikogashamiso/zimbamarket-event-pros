@@ -39,6 +39,7 @@ import { AvailabilityModal } from "@/components/Modals/AvailabilityModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
 import { ServiceImageGallery } from "@/components/ImageGallery/ServiceImageGallery";
 import { useServiceActions } from "@/hooks/useServiceActions";
+import { ServiceErrorBoundary, SectionErrorBoundary } from "@/components/ErrorBoundary";
 
 // Booking form validation schema
 const guestBookingSchema = z.object({
@@ -287,7 +288,7 @@ const ServiceDetail = () => {
   ];
 
   return (
-    <>
+    <ServiceErrorBoundary serviceId={id}>
       <Helmet>
         <title>{service.title} - {service.category?.name} | ZimEventPro</title>
         <meta name="description" content={service.description} />
@@ -301,19 +302,21 @@ const ServiceDetail = () => {
         <div className="h-20"></div>
         
         {/* Breadcrumb */}
-        <section className="py-4 border-b">
-          <div className="container mx-auto px-4">
-            <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link to="/" className="hover:text-primary">Home</Link>
-              <span>/</span>
-              <Link to="/categories" className="hover:text-primary">Categories</Link>
-              <span>/</span>
-              <Link to="/search" className="hover:text-primary">{service.category?.name}</Link>
-              <span>/</span>
-              <span className="text-foreground">{service.title}</span>
-            </nav>
-          </div>
-        </section>
+        <SectionErrorBoundary sectionName="breadcrumb navigation" showRetry={false}>
+          <section className="py-4 border-b">
+            <div className="container mx-auto px-4">
+              <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Link to="/" className="hover:text-primary">Home</Link>
+                <span>/</span>
+                <Link to="/categories" className="hover:text-primary">Categories</Link>
+                <span>/</span>
+                <Link to="/search" className="hover:text-primary">{service.category?.name}</Link>
+                <span>/</span>
+                <span className="text-foreground">{service.title}</span>
+              </nav>
+            </div>
+          </section>
+        </SectionErrorBoundary>
 
         {/* Main Content */}
         <section className="py-8">
@@ -324,14 +327,17 @@ const ServiceDetail = () => {
               <div className="lg:col-span-2 space-y-8">
                 
                 {/* Enhanced Image Gallery */}
-                <ServiceImageGallery 
-                  images={serviceImages}
-                  serviceName={service.title}
-                  className="w-full"
-                />
+                <SectionErrorBoundary sectionName="image gallery">
+                  <ServiceImageGallery 
+                    images={serviceImages}
+                    serviceName={service.title}
+                    className="w-full"
+                  />
+                </SectionErrorBoundary>
 
                 {/* Service Details */}
-                <div className="space-y-6">
+                <SectionErrorBoundary sectionName="service details">
+                  <div className="space-y-6">
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="outline">{service.category?.name}</Badge>
@@ -514,7 +520,8 @@ const ServiceDetail = () => {
                       </div>
                     </TabsContent>
                   </Tabs>
-                </div>
+                  </div>
+                </SectionErrorBoundary>
               </div>
 
               {/* Sidebar */}
@@ -688,7 +695,7 @@ const ServiceDetail = () => {
         </section>
 
       </div>
-    </>
+    </ServiceErrorBoundary>
   );
 };
 

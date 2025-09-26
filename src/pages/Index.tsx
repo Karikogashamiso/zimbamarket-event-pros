@@ -16,6 +16,7 @@ import {
   LocationSectionSkeleton,
   SectionSkeleton
 } from "@/components/ui/section-skeleton";
+import { ErrorBoundary, SectionErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy load components for better performance
 const CategorySection = lazy(() => import("@/components/CategorySection"));
@@ -86,41 +87,82 @@ const Index = () => {
       <StructuredData type="Organization" data={organizationData} />
       <StructuredData type="WebSite" data={websiteData} />
       
-      <div className="min-h-screen">
-        <Header />
-        <HeroSection />
-        
-        <Suspense fallback={
-          <>
-            <StatsSectionSkeleton />
-            <CategorySectionSkeleton />
-            <TrendingServicesSkeleton />
-            <FeaturedListingsSkeleton />
-            <TestimonialsSkeleton />
-            <LocationSectionSkeleton />
-            <SectionSkeleton className="py-16" />
-            <SectionSkeleton className="py-16" />
-            <SectionSkeleton className="py-16" />
-            <SectionSkeleton className="py-12" />
-          </>
-        }>
-          <StatsSection />
-          <CategorySection />
-          <TrendingServices />
-          <FeaturedListings />
-          <SmartRecommendations maxItems={6} />
-          <TestimonialsCarousel />
-          <LocationSection />
-          <TrustSection />
-          <BusinessCTASection />
-          <NewsletterSection />
-          <Footer />
-        </Suspense>
-        
-        <InstallPrompt />
-        <NetworkStatus />
-        <FloatingActionButton />
-      </div>
+      <ErrorBoundary showDetails={process.env.NODE_ENV === 'development'}>
+        <div className="min-h-screen">
+          <SectionErrorBoundary sectionName="header">
+            <Header />
+          </SectionErrorBoundary>
+          
+          <SectionErrorBoundary sectionName="hero section">
+            <HeroSection />
+          </SectionErrorBoundary>
+          
+          <Suspense fallback={
+            <>
+              <StatsSectionSkeleton />
+              <CategorySectionSkeleton />
+              <TrendingServicesSkeleton />
+              <FeaturedListingsSkeleton />
+              <TestimonialsSkeleton />
+              <LocationSectionSkeleton />
+              <SectionSkeleton className="py-16" />
+              <SectionSkeleton className="py-16" />
+              <SectionSkeleton className="py-16" />
+              <SectionSkeleton className="py-12" />
+            </>
+          }>
+            <SectionErrorBoundary sectionName="statistics">
+              <StatsSection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="categories">
+              <CategorySection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="trending services">
+              <TrendingServices />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="featured listings">
+              <FeaturedListings />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="recommendations">
+              <SmartRecommendations maxItems={6} />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="testimonials">
+              <TestimonialsCarousel />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="locations">
+              <LocationSection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="trust section">
+              <TrustSection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="business CTA">
+              <BusinessCTASection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="newsletter">
+              <NewsletterSection />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="footer">
+              <Footer />
+            </SectionErrorBoundary>
+          </Suspense>
+          
+          <SectionErrorBoundary sectionName="PWA components" showRetry={false}>
+            <InstallPrompt />
+            <NetworkStatus />
+            <FloatingActionButton />
+          </SectionErrorBoundary>
+        </div>
+      </ErrorBoundary>
     </>
   );
 };
