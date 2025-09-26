@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,8 @@ const ListBusiness = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>("");
+  const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
+  const [customBusinessType, setCustomBusinessType] = useState("");
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
@@ -52,6 +55,37 @@ const ListBusiness = () => {
     email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
     description: z.string().trim().min(1, "Business description is required").max(1000, "Description must be less than 1000 characters")
   });
+
+  // Handle custom business type modal
+  const handleOtherBusinessTypeClick = () => {
+    setIsOtherModalOpen(true);
+  };
+
+  const handleCustomBusinessTypeSave = () => {
+    if (customBusinessType.trim()) {
+      setSelectedBusinessType(customBusinessType.trim());
+      setFormData(prev => ({
+        ...prev,
+        businessType: customBusinessType.trim()
+      }));
+      setIsOtherModalOpen(false);
+      toast({
+        title: "Custom Business Type Added",
+        description: `"${customBusinessType.trim()}" has been selected as your business type.`,
+      });
+    } else {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a valid business type.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCustomBusinessTypeCancel = () => {
+    setCustomBusinessType("");
+    setIsOtherModalOpen(false);
+  };
 
   // Handle business type card selection
   const handleBusinessTypeSelect = (businessType: string) => {
@@ -124,8 +158,9 @@ const ListBusiness = () => {
         description: ""
       });
       
-      // Reset selected business type
+      // Reset selected business type and custom type
       setSelectedBusinessType("");
+      setCustomBusinessType("");
 
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -347,15 +382,73 @@ const ListBusiness = () => {
             <p className="text-muted-foreground mb-6">
               Don't see your business type? No problem! We welcome all event-related services.
             </p>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="hover-scale"
-              onClick={() => handleBusinessTypeSelect("Other Business Types")}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Other Business Types
-            </Button>
+            
+            <Dialog open={isOtherModalOpen} onOpenChange={setIsOtherModalOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="hover-scale"
+                  onClick={handleOtherBusinessTypeClick}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Other Business Types
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] bg-background border shadow-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Add Custom Business Type</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        What type of business do you have? *
+                      </label>
+                      <Input
+                        placeholder="e.g., Mobile Bar Service, Photo Booth Rental, Event Lighting..."
+                        value={customBusinessType}
+                        onChange={(e) => setCustomBusinessType(e.target.value)}
+                        className="w-full"
+                        maxLength={50}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Be specific about your services (max 50 characters)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCustomBusinessTypeCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCustomBusinessTypeSave}
+                    disabled={!customBusinessType.trim()}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Add Business Type
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            {selectedBusinessType && !businessTypes.some(bt => bt.name === selectedBusinessType) && (
+              <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-primary">Custom Business Type Selected</p>
+                    <p className="text-sm text-muted-foreground">"{selectedBusinessType}"</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
