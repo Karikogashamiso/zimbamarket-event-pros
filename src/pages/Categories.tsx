@@ -365,11 +365,12 @@ const Categories = () => {
             <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 mb-8">
               <h3 className="text-2xl font-bold mb-4">Are you a service provider?</h3>
               <p className="text-white/90 mb-6">Join Zimbabwe's premier event marketplace and grow your business</p>
-            <Button variant="hero" size="lg" className="bg-secondary hover:bg-secondary/90 text-white"
-                    onClick={() => navigate('/list-business')}>
-              <Plus className="w-5 h-5 mr-2" />
-              List My Business or Venue
-            </Button>
+            <Link to="/list-business">
+              <Button variant="hero" size="lg" className="bg-secondary hover:bg-secondary/90 text-white">
+                <Plus className="w-5 h-5 mr-2" />
+                List My Business or Venue
+              </Button>
+            </Link>
             </div>
           </div>
         </div>
