@@ -445,6 +445,30 @@ export type Database = {
         }
         Relationships: []
       }
+      csrf_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          session_id: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          session_id?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_id?: string | null
+          token?: string
+        }
+        Relationships: []
+      }
       device_fingerprints: {
         Row: {
           blocked_reason: string | null
@@ -2384,6 +2408,10 @@ export type Database = {
       calculate_risk_score: {
         Args: { order_uuid: string }
         Returns: number
+      }
+      cleanup_expired_csrf_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       has_role: {
         Args: {

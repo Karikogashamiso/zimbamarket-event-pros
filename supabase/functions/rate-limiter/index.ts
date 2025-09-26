@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { validateCSRFToken } from '../_shared/csrf-validation.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-csrf-token',
 }
 
 interface RateLimitRequest {
@@ -73,10 +74,25 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Validate CSRF token
+    const csrfValidation = await validateCSRFToken(req, supabaseClient);
+    if (!csrfValidation.isValid) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'CSRF validation failed',
+          message: csrfValidation.error 
+        }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     if (req.method !== 'POST') {
       return new Response(
@@ -119,7 +135,7 @@ serve(async (req) => {
     console.log(`Rate limit check: ${action} for ${identifier}`);
 
     // Check current attempts in the window
-    const { data: attempts, error: queryError } = await supabase
+    const { data: attempts, error: queryError } = await supabaseClient
       .from('rate_limit_attempts')
       .select('*')
       .eq('action', action)
@@ -169,7 +185,7 @@ serve(async (req) => {
       console.log(`Rate limit exceeded: ${action} for ${identifier}, blocking for ${config.blockMinutes} minutes`);
       
       // Create blocked attempt record
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseClient
         .from('rate_limit_attempts')
         .insert({
           action,
@@ -206,7 +222,7 @@ serve(async (req) => {
     }
 
     // Record this attempt
-    const { error: recordError } = await supabase
+    const { error: recordError } = await supabaseClient
       .from('rate_limit_attempts')
       .insert({
         action,

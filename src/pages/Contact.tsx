@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useAuthenticatedRequest } from '@/hooks/useAuthenticatedRequest';
 import { 
   sanitizeContactData, 
   logContactFormAnalytics, 
@@ -21,6 +22,7 @@ const Contact = () => {
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [integrationStatus, setIntegrationStatus] = useState<string>('Checking...');
   const { toast } = useToast();
+  const { makeSupabaseRequest } = useAuthenticatedRequest();
 
   // Verify backend integration on component mount
   useEffect(() => {
@@ -137,6 +139,26 @@ const Contact = () => {
         messageLength: validatedData.message.length,
         timestamp: new Date().toISOString()
       });
+
+      // Check rate limiting with CSRF protection
+      const rateLimitResponse = await makeSupabaseRequest('rate-limiter', {
+        action: 'contact_form',
+        identifier: validatedData.email,
+        additionalData: {
+          email: validatedData.email,
+          userAgent: navigator.userAgent
+        }
+      });
+
+      if (rateLimitResponse.error || !rateLimitResponse.data?.allowed) {
+        const errorMessage = rateLimitResponse.data?.message || 'Rate limit exceeded. Please try again later.';
+        toast({
+          title: "Too many attempts",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Sanitize data for database insertion
       const sanitizedData = sanitizeContactData({
