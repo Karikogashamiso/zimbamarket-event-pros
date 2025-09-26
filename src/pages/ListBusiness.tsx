@@ -35,6 +35,8 @@ const ListBusiness = () => {
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>("");
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
   const [customBusinessType, setCustomBusinessType] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
@@ -47,14 +49,80 @@ const ListBusiness = () => {
 
   // Form validation schema
   const businessApplicationSchema = z.object({
-    businessName: z.string().trim().min(1, "Business name is required").max(100, "Business name must be less than 100 characters"),
-    businessType: z.string().trim().min(1, "Business type is required").max(50, "Business type must be less than 50 characters"),
-    location: z.string().trim().min(1, "Location is required").max(100, "Location must be less than 100 characters"),
-    contactPerson: z.string().trim().min(1, "Contact person is required").max(100, "Contact person name must be less than 100 characters"),
-    phoneNumber: z.string().trim().min(1, "Phone number is required").max(20, "Phone number must be less than 20 characters"),
-    email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-    description: z.string().trim().min(1, "Business description is required").max(1000, "Description must be less than 1000 characters")
+    businessName: z.string()
+      .trim()
+      .min(1, "Business name is required")
+      .min(2, "Business name must be at least 2 characters")
+      .max(100, "Business name must be less than 100 characters")
+      .regex(/^[a-zA-Z0-9\s&'-]+$/, "Business name contains invalid characters"),
+    businessType: z.string()
+      .trim()
+      .min(1, "Business type is required")
+      .max(50, "Business type must be less than 50 characters"),
+    location: z.string()
+      .trim()
+      .min(1, "Location is required")
+      .min(2, "Location must be at least 2 characters")
+      .max(100, "Location must be less than 100 characters"),
+    contactPerson: z.string()
+      .trim()
+      .min(1, "Contact person is required")
+      .min(2, "Contact person name must be at least 2 characters")
+      .max(100, "Contact person name must be less than 100 characters")
+      .regex(/^[a-zA-Z\s'-]+$/, "Contact person name contains invalid characters"),
+    phoneNumber: z.string()
+      .trim()
+      .min(1, "Phone number is required")
+      .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, "Please enter a valid phone number")
+      .max(20, "Phone number must be less than 20 characters"),
+    email: z.string()
+      .trim()
+      .min(1, "Email address is required")
+      .email("Please enter a valid email address")
+      .max(255, "Email must be less than 255 characters"),
+    description: z.string()
+      .trim()
+      .min(1, "Business description is required")
+      .min(10, "Description must be at least 10 characters")
+      .max(1000, "Description must be less than 1000 characters")
   });
+
+  // Validate individual field
+  const validateField = (field: string, value: string) => {
+    try {
+      const fieldSchema = businessApplicationSchema.shape[field as keyof typeof businessApplicationSchema.shape];
+      fieldSchema.parse(value);
+      
+      // Clear error if validation passes
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+      
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.errors[0]?.message || "Invalid input";
+        setFormErrors(prev => ({
+          ...prev,
+          [field]: errorMessage
+        }));
+      }
+      return false;
+    }
+  };
+
+  // Handle field blur (when user leaves field)
+  const handleFieldBlur = (field: string) => {
+    setTouchedFields(prev => ({
+      ...prev,
+      [field]: true
+    }));
+    
+    // Validate field on blur
+    validateField(field, formData[field as keyof typeof formData]);
+  };
 
   // Handle custom business type modal
   const handleOtherBusinessTypeClick = () => {
@@ -96,12 +164,17 @@ const ListBusiness = () => {
     }));
   };
 
-  // Handle form input changes
+  // Handle form input changes with validation
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    
+    // Real-time validation for touched fields
+    if (touchedFields[field]) {
+      validateField(field, value);
+    }
     
     // Update selected business type when manually typing
     if (field === 'businessType') {
@@ -115,7 +188,11 @@ const ListBusiness = () => {
     setIsSubmitting(true);
 
     try {
-      // Validate form data
+      // Mark all fields as touched for validation display
+      const allFields = Object.keys(formData);
+      setTouchedFields(allFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}));
+
+      // Validate all fields
       const validatedData = businessApplicationSchema.parse(formData);
 
       // Submit to Supabase
@@ -147,7 +224,7 @@ const ListBusiness = () => {
         description: "Thank you for your interest. Our team will review your application and contact you within 24 hours.",
       });
 
-      // Reset form
+      // Reset form and validation states
       setFormData({
         businessName: "",
         businessType: "",
@@ -161,10 +238,21 @@ const ListBusiness = () => {
       // Reset selected business type and custom type
       setSelectedBusinessType("");
       setCustomBusinessType("");
+      setFormErrors({});
+      setTouchedFields({});
 
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setFormErrors(newErrors);
+        
+        // Show first validation error
         const firstError = error.errors[0];
         toast({
           title: "Validation Error",
@@ -510,8 +598,17 @@ const ListBusiness = () => {
                           placeholder="Your Business Name"
                           value={formData.businessName}
                           onChange={(e) => handleInputChange('businessName', e.target.value)}
+                          onBlur={() => handleFieldBlur('businessName')}
+                          className={`${
+                            touchedFields.businessName && formErrors.businessName 
+                              ? 'border-destructive focus:border-destructive' 
+                              : ''
+                          }`}
                           required
                         />
+                        {touchedFields.businessName && formErrors.businessName && (
+                          <p className="text-xs text-destructive mt-1">{formErrors.businessName}</p>
+                        )}
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-2 block">Business Type *</label>
@@ -519,12 +616,21 @@ const ListBusiness = () => {
                           placeholder="e.g., Wedding Venue"
                           value={formData.businessType}
                           onChange={(e) => handleInputChange('businessType', e.target.value)}
+                          onBlur={() => handleFieldBlur('businessType')}
+                          className={`${
+                            touchedFields.businessType && formErrors.businessType 
+                              ? 'border-destructive focus:border-destructive' 
+                              : ''
+                          }`}
                           required
                         />
                         {selectedBusinessType && (
                           <p className="text-xs text-muted-foreground mt-1">
                             Selected: {selectedBusinessType}
                           </p>
+                        )}
+                        {touchedFields.businessType && formErrors.businessType && (
+                          <p className="text-xs text-destructive mt-1">{formErrors.businessType}</p>
                         )}
                       </div>
                     </div>
@@ -535,8 +641,17 @@ const ListBusiness = () => {
                         placeholder="City, Zimbabwe"
                         value={formData.location}
                         onChange={(e) => handleInputChange('location', e.target.value)}
+                        onBlur={() => handleFieldBlur('location')}
+                        className={`${
+                          touchedFields.location && formErrors.location 
+                            ? 'border-destructive focus:border-destructive' 
+                            : ''
+                        }`}
                         required
                       />
+                      {touchedFields.location && formErrors.location && (
+                        <p className="text-xs text-destructive mt-1">{formErrors.location}</p>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -546,8 +661,17 @@ const ListBusiness = () => {
                           placeholder="Your Name"
                           value={formData.contactPerson}
                           onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                          onBlur={() => handleFieldBlur('contactPerson')}
+                          className={`${
+                            touchedFields.contactPerson && formErrors.contactPerson 
+                              ? 'border-destructive focus:border-destructive' 
+                              : ''
+                          }`}
                           required
                         />
+                        {touchedFields.contactPerson && formErrors.contactPerson && (
+                          <p className="text-xs text-destructive mt-1">{formErrors.contactPerson}</p>
+                        )}
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-2 block">Phone Number *</label>
@@ -555,8 +679,17 @@ const ListBusiness = () => {
                           placeholder="+263 XX XXX XXXX"
                           value={formData.phoneNumber}
                           onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                          onBlur={() => handleFieldBlur('phoneNumber')}
+                          className={`${
+                            touchedFields.phoneNumber && formErrors.phoneNumber 
+                              ? 'border-destructive focus:border-destructive' 
+                              : ''
+                          }`}
                           required
                         />
+                        {touchedFields.phoneNumber && formErrors.phoneNumber && (
+                          <p className="text-xs text-destructive mt-1">{formErrors.phoneNumber}</p>
+                        )}
                       </div>
                     </div>
                     
@@ -567,25 +700,51 @@ const ListBusiness = () => {
                         placeholder="your@email.com"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
+                        onBlur={() => handleFieldBlur('email')}
+                        className={`${
+                          touchedFields.email && formErrors.email 
+                            ? 'border-destructive focus:border-destructive' 
+                            : ''
+                        }`}
                         required
                       />
+                      {touchedFields.email && formErrors.email && (
+                        <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
+                      )}
                     </div>
                     
                     <div>
                       <label className="text-sm font-medium mb-2 block">Tell us about your business *</label>
                       <Textarea 
                         placeholder="Describe your services, experience, and what makes your business special..."
-                        className="min-h-32"
+                        className={`min-h-32 ${
+                          touchedFields.description && formErrors.description 
+                            ? 'border-destructive focus:border-destructive' 
+                            : ''
+                        }`}
                         value={formData.description}
                         onChange={(e) => handleInputChange('description', e.target.value)}
+                        onBlur={() => handleFieldBlur('description')}
                         required
                       />
+                      <div className="flex justify-between items-center mt-1">
+                        {touchedFields.description && formErrors.description ? (
+                          <p className="text-xs text-destructive">{formErrors.description}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Min 10 characters required
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {formData.description.length}/1000
+                        </p>
+                      </div>
                     </div>
                     
                     <Button 
                       type="submit" 
                       className="w-full text-lg py-3 h-auto"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || Object.keys(formErrors).length > 0}
                     >
                       <CheckCircle className="w-5 h-5 mr-2" />
                       {isSubmitting ? "Submitting..." : "Submit Application"}
