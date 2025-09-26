@@ -195,6 +195,48 @@ export type Database = {
           },
         ]
       }
+      business_applications: {
+        Row: {
+          business_name: string
+          business_type: string
+          contact_person: string
+          created_at: string
+          description: string
+          email: string
+          id: string
+          location: string
+          phone_number: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          business_type: string
+          contact_person: string
+          created_at?: string
+          description: string
+          email: string
+          id?: string
+          location: string
+          phone_number: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          business_type?: string
+          contact_person?: string
+          created_at?: string
+          description?: string
+          email?: string
+          id?: string
+          location?: string
+          phone_number?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_listings: {
         Row: {
           address: string | null

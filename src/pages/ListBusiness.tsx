@@ -4,6 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 import { 
   Building2, 
   TrendingUp, 
@@ -25,6 +29,108 @@ import {
 } from "lucide-react";
 
 const ListBusiness = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    businessName: "",
+    businessType: "",
+    location: "",
+    contactPerson: "",
+    phoneNumber: "",
+    email: "",
+    description: ""
+  });
+
+  // Form validation schema
+  const businessApplicationSchema = z.object({
+    businessName: z.string().trim().min(1, "Business name is required").max(100, "Business name must be less than 100 characters"),
+    businessType: z.string().trim().min(1, "Business type is required").max(50, "Business type must be less than 50 characters"),
+    location: z.string().trim().min(1, "Location is required").max(100, "Location must be less than 100 characters"),
+    contactPerson: z.string().trim().min(1, "Contact person is required").max(100, "Contact person name must be less than 100 characters"),
+    phoneNumber: z.string().trim().min(1, "Phone number is required").max(20, "Phone number must be less than 20 characters"),
+    email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+    description: z.string().trim().min(1, "Business description is required").max(1000, "Description must be less than 1000 characters")
+  });
+
+  // Handle form input changes
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmitApplication = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Validate form data
+      const validatedData = businessApplicationSchema.parse(formData);
+
+      // Submit to Supabase
+      const { error } = await supabase
+        .from('business_applications')
+        .insert({
+          business_name: validatedData.businessName,
+          business_type: validatedData.businessType,
+          location: validatedData.location,
+          contact_person: validatedData.contactPerson,
+          phone_number: validatedData.phoneNumber,
+          email: validatedData.email,
+          description: validatedData.description
+        });
+
+      if (error) {
+        console.error('Submission error:', error);
+        toast({
+          title: "Submission Failed",
+          description: "There was an error submitting your application. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Success
+      toast({
+        title: "Application Submitted Successfully!",
+        description: "Thank you for your interest. Our team will review your application and contact you within 24 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        businessName: "",
+        businessType: "",
+        location: "",
+        contactPerson: "",
+        phoneNumber: "",
+        email: "",
+        description: ""
+      });
+
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive",
+        });
+      } else {
+        console.error('Unexpected error:', error);
+        toast({
+          title: "Submission Failed",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Scroll to contact form
   const scrollToForm = () => {
     const formSection = document.getElementById('contact-form');
@@ -254,51 +360,91 @@ const ListBusiness = () => {
                 <CardHeader className="p-0 mb-6">
                   <CardTitle className="text-2xl">Business Information</CardTitle>
                 </CardHeader>
-                <CardContent className="p-0 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Business Name</label>
-                      <Input placeholder="Your Business Name" />
+                <CardContent className="p-0">
+                  <form onSubmit={handleSubmitApplication} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Business Name *</label>
+                        <Input 
+                          placeholder="Your Business Name"
+                          value={formData.businessName}
+                          onChange={(e) => handleInputChange('businessName', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Business Type *</label>
+                        <Input 
+                          placeholder="e.g., Wedding Venue"
+                          value={formData.businessType}
+                          onChange={(e) => handleInputChange('businessType', e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
+                    
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Business Type</label>
-                      <Input placeholder="e.g., Wedding Venue" />
+                      <label className="text-sm font-medium mb-2 block">Location *</label>
+                      <Input 
+                        placeholder="City, Zimbabwe"
+                        value={formData.location}
+                        onChange={(e) => handleInputChange('location', e.target.value)}
+                        required
+                      />
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Location</label>
-                    <Input placeholder="City, Zimbabwe" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Contact Person *</label>
+                        <Input 
+                          placeholder="Your Name"
+                          value={formData.contactPerson}
+                          onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Phone Number *</label>
+                        <Input 
+                          placeholder="+263 XX XXX XXXX"
+                          value={formData.phoneNumber}
+                          onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Contact Person</label>
-                      <Input placeholder="Your Name" />
+                      <label className="text-sm font-medium mb-2 block">Email Address *</label>
+                      <Input 
+                        type="email"
+                        placeholder="your@email.com"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        required
+                      />
                     </div>
+                    
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Phone Number</label>
-                      <Input placeholder="+263 XX XXX XXXX" />
+                      <label className="text-sm font-medium mb-2 block">Tell us about your business *</label>
+                      <Textarea 
+                        placeholder="Describe your services, experience, and what makes your business special..."
+                        className="min-h-32"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        required
+                      />
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Email Address</label>
-                    <Input type="email" placeholder="your@email.com" />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Tell us about your business</label>
-                    <Textarea 
-                      placeholder="Describe your services, experience, and what makes your business special..."
-                      className="min-h-32"
-                    />
-                  </div>
-                  
-                  <Button className="w-full text-lg py-3 h-auto">
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Submit Application
-                  </Button>
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full text-lg py-3 h-auto"
+                      disabled={isSubmitting}
+                    >
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      {isSubmitting ? "Submitting..." : "Submit Application"}
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
               
