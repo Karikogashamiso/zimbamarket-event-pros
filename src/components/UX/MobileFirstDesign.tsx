@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import djImage from "@/assets/dj-1.jpg";
 import { 
   Search, 
   Filter, 
@@ -185,11 +186,23 @@ const MobileFirstDesign = () => {
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
+                {i === 0 ? (
+                  <div className="w-12 h-12 rounded-lg overflow-hidden">
+                    <img 
+                      src={djImage} 
+                      alt="EliteBeats DJ Services" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                )}
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">EliteBeats DJ Services</h4>
+                  <h4 className="font-medium text-sm">
+                    {i === 0 ? "EliteBeats DJ Services" : "EliteBeats DJ Services"}
+                  </h4>
                   <p className="text-xs text-muted-foreground">Professional DJ • Victoria Falls</p>
                   <div className="flex items-center mt-1">
                     <Star className="w-3 h-3 text-yellow-400 fill-current" />
