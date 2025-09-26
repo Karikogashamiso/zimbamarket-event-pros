@@ -7,6 +7,15 @@ import InstallPrompt from "@/components/PWA/InstallPrompt";
 import NetworkStatus from "@/components/PWA/NetworkStatus";
 import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { measureWebVitals, monitorPerformanceBudget } from "@/utils/performance";
+import {
+  StatsSectionSkeleton,
+  CategorySectionSkeleton,
+  TrendingServicesSkeleton,
+  FeaturedListingsSkeleton,
+  TestimonialsSkeleton,
+  LocationSectionSkeleton,
+  SectionSkeleton
+} from "@/components/ui/section-skeleton";
 
 // Lazy load components for better performance
 const CategorySection = lazy(() => import("@/components/CategorySection"));
@@ -82,9 +91,18 @@ const Index = () => {
         <HeroSection />
         
         <Suspense fallback={
-          <div className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+          <>
+            <StatsSectionSkeleton />
+            <CategorySectionSkeleton />
+            <TrendingServicesSkeleton />
+            <FeaturedListingsSkeleton />
+            <TestimonialsSkeleton />
+            <LocationSectionSkeleton />
+            <SectionSkeleton className="py-16" />
+            <SectionSkeleton className="py-16" />
+            <SectionSkeleton className="py-16" />
+            <SectionSkeleton className="py-12" />
+          </>
         }>
           <StatsSection />
           <CategorySection />

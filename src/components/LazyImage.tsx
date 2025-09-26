@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
@@ -7,6 +8,8 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   placeholder?: string;
   className?: string;
   blurDataURL?: string;
+  aspectRatio?: number;
+  containerClassName?: string;
 }
 
 const LazyImage: React.FC<LazyImageProps> = ({
@@ -15,6 +18,8 @@ const LazyImage: React.FC<LazyImageProps> = ({
   placeholder = "/placeholder.svg",
   className,
   blurDataURL,
+  aspectRatio,
+  containerClassName,
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -54,11 +59,10 @@ const LazyImage: React.FC<LazyImageProps> = ({
     setIsLoaded(true);
   };
 
-  return (
+  const ImageContent = () => (
     <div
-      ref={imgRef}
       className={cn(
-        'relative overflow-hidden bg-muted',
+        'relative overflow-hidden bg-muted w-full h-full',
         className
       )}
     >
@@ -72,9 +76,11 @@ const LazyImage: React.FC<LazyImageProps> = ({
         />
       )}
       
-      {/* Loading placeholder */}
+      {/* Loading placeholder with shimmer */}
       {!isLoaded && !blurDataURL && (
-        <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/50 to-muted">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/10 to-transparent animate-shimmer" />
+        </div>
       )}
 
       {/* Actual image */}
@@ -93,6 +99,24 @@ const LazyImage: React.FC<LazyImageProps> = ({
           {...props}
         />
       )}
+    </div>
+  );
+
+  // If aspect ratio is provided, wrap in AspectRatio container
+  if (aspectRatio) {
+    return (
+      <div ref={imgRef} className={containerClassName}>
+        <AspectRatio ratio={aspectRatio}>
+          <ImageContent />
+        </AspectRatio>
+      </div>
+    );
+  }
+
+  // Default behavior without aspect ratio
+  return (
+    <div ref={imgRef} className={containerClassName}>
+      <ImageContent />
     </div>
   );
 };

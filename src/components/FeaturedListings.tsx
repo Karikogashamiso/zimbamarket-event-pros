@@ -84,7 +84,8 @@ const FeaturedListings = () => {
                   <LazyImage 
                     src={service.image_url || "/placeholder.svg"} 
                     alt={service.title}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-all duration-700"
+                    aspectRatio={4 / 3}
+                    className="group-hover:scale-110 transition-all duration-700"
                     placeholder="/placeholder.svg"
                   />
                   

@@ -92,7 +92,8 @@ const TrendingServices = () => {
                 <LazyImage
                   src={service.image}
                   alt={service.title}
-                  className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                  aspectRatio={16 / 9}
+                  className="transition-transform duration-500 group-hover:scale-110"
                 />
                 
                 {/* Trending badge */}
