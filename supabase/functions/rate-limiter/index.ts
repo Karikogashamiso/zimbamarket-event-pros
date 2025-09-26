@@ -252,7 +252,7 @@ serve(async (req) => {
       JSON.stringify({ 
         allowed: true, 
         message: 'Rate limiter error, allowing request',
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       }),
       { 
         status: 200, 
