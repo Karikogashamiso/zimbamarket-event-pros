@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, Calendar, Sparkles, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import heroBackground from "@/assets/hero-background.jpg";
 import EnhancedSearch from "@/components/EnhancedSearch";
 
@@ -61,14 +62,18 @@ const HeroSection = () => {
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 opacity-0 animate-[fade-in_1s_ease-out_1.2s_forwards]">
-            <Button variant="celebration" size="lg" className="text-lg px-10 py-4 h-auto hover-scale">
-              <Calendar className="w-5 h-5 mr-2" />
-              Browse All Services
-            </Button>
-            <Button variant="outline" size="lg" className="text-lg px-10 py-4 h-auto border-white/40 text-white hover:bg-white hover:text-primary hover-scale">
-              <TrendingUp className="w-5 h-5 mr-2" />
-              List Your Business
-            </Button>
+            <Link to="/categories">
+              <Button variant="celebration" size="lg" className="text-lg px-10 py-4 h-auto hover-scale">
+                <Calendar className="w-5 h-5 mr-2" />
+                Browse All Services
+              </Button>
+            </Link>
+            <Link to="/list-business">
+              <Button variant="outline" size="lg" className="text-lg px-10 py-4 h-auto border-white/40 text-white hover:bg-white hover:text-primary hover-scale">
+                <TrendingUp className="w-5 h-5 mr-2" />
+                List Your Business
+              </Button>
+            </Link>
           </div>
           
         </div>
