@@ -40,12 +40,17 @@ import { ReportModal } from "@/components/Modals/ReportModal";
 import { useServiceActions } from "@/hooks/useServiceActions";
 
 // Booking form validation schema
-const bookingSchema = z.object({
+const guestBookingSchema = z.object({
   selectedDate: z.string().optional(),
-  message: z.string().optional(),
-  guestName: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters").optional(),
-  guestEmail: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters").optional(),
+  message: z.string().max(1000, "Message must be less than 1000 characters").optional(),
+  guestName: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  guestEmail: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   guestPhone: z.string().max(20, "Phone number must be less than 20 characters").optional(),
+});
+
+const userBookingSchema = z.object({
+  selectedDate: z.string().optional(),
+  message: z.string().max(1000, "Message must be less than 1000 characters").optional(),
 });
 
 const ServiceDetail = () => {
@@ -79,31 +84,28 @@ const ServiceDetail = () => {
 
   // Validate form data
   const validateForm = () => {
-    const formData = {
-      selectedDate,
-      message,
-      ...(user ? {} : {
-        guestName: guestName.trim(),
-        guestEmail: guestEmail.trim(),
-        guestPhone: guestPhone.trim(),
-      })
-    };
-
     try {
-      if (!user) {
-        // For guest users, require name and email
-        if (!guestName.trim()) {
-          throw new Error("Name is required");
-        }
-        if (!guestEmail.trim()) {
-          throw new Error("Email is required");
-        }
-        if (guestEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
-          throw new Error("Invalid email address");
-        }
+      if (!service || !service.id) {
+        throw new Error("Service information is missing");
       }
 
-      bookingSchema.parse(formData);
+      if (user) {
+        // Validate authenticated user form
+        userBookingSchema.parse({
+          selectedDate,
+          message: message.trim(),
+        });
+      } else {
+        // Validate guest user form
+        guestBookingSchema.parse({
+          selectedDate,
+          message: message.trim(),
+          guestName: guestName.trim(),
+          guestEmail: guestEmail.trim(),
+          guestPhone: guestPhone.trim() || undefined,
+        });
+      }
+
       setErrors({});
       return true;
     } catch (error) {
@@ -128,7 +130,14 @@ const ServiceDetail = () => {
 
   // Handle booking submission
   const handleBookingSubmit = async () => {
-    if (!service) return;
+    if (!service) {
+      toast({
+        title: "Error",
+        description: "Service information is missing. Please refresh the page and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validate form
     if (!validateForm()) {
@@ -138,32 +147,56 @@ const ServiceDetail = () => {
     setIsBookingLoading(true);
     
     try {
-      const bookingData = {
+      // Prepare booking data
+      const bookingData: any = {
         service_id: service.id,
         event_date: selectedDate || null,
         message: message.trim() || null,
-        ...(user ? {
-          user_id: user.id,
-        } : {
-          guest_name: guestName.trim(),
-          guest_email: guestEmail.trim().toLowerCase(),
-          guest_phone: guestPhone.trim() || null,
-        })
       };
 
-      console.log('Submitting booking data:', bookingData);
+      // Add user-specific data
+      if (user) {
+        bookingData.user_id = user.id;
+      } else {
+        // Guest user data
+        bookingData.guest_name = guestName.trim();
+        bookingData.guest_email = guestEmail.trim().toLowerCase();
+        bookingData.guest_phone = guestPhone.trim() || null;
+      }
 
+      console.log('Submitting booking data:', {
+        ...bookingData,
+        guest_email: bookingData.guest_email ? '[REDACTED]' : undefined
+      });
+
+      // Insert booking request
       const { data, error } = await supabase
         .from('booking_requests')
         .insert(bookingData)
-        .select();
+        .select('id, status, created_at');
 
       if (error) {
-        console.error('Supabase error:', error);
-        throw new Error(error.message || 'Failed to submit booking request');
+        console.error('Supabase error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Provide user-friendly error messages
+        let errorMessage = 'Failed to submit booking request';
+        if (error.code === '23503') {
+          errorMessage = 'Invalid service reference. Please refresh the page and try again.';
+        } else if (error.code === '42501') {
+          errorMessage = 'Permission denied. Please make sure you have the necessary permissions.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      console.log('Booking request created:', data);
+      console.log('Booking request created successfully:', data);
 
       toast({
         title: "Inquiry sent!",
@@ -178,11 +211,12 @@ const ServiceDetail = () => {
       setGuestPhone('');
       setErrors({});
       setTouchedFields({});
+      
     } catch (error: any) {
       console.error('Error submitting booking:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send inquiry. Please try again.",
+        title: "Submission Failed",
+        description: error.message || "Unable to submit booking inquiry. Please try again or contact support.",
         variant: "destructive",
       });
     } finally {
