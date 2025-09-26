@@ -6,14 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useEmailService } from "@/hooks/useEmailService";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { z } from "zod";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { 
+    sendVerificationEmail, 
+    sendPasswordResetEmail, 
+    isLoading: emailLoading,
+    lastError: emailError,
+    retryLastEmail 
+  } = useEmailService();
   
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -205,11 +213,30 @@ const Auth = () => {
           });
         }
       } else {
-        setIsEmailSent(true);
-        toast({
-          title: "Account Created!",
-          description: "Please check your email for a verification link to complete your registration.",
-        });
+        // Send verification email with enhanced error handling
+        const emailResult = await sendVerificationEmail(
+          validatedData.email,
+          redirectUrl,
+          validatedData.firstName
+        );
+
+        if (emailResult.success) {
+          setIsEmailSent(true);
+          toast({
+            title: "Account Created!",
+            description: "Please check your email for a verification link to complete your registration.",
+          });
+        } else {
+          // Email sending failed, but account was created
+          toast({
+            title: "Account Created (Email Issue)",
+            description: `Your account was created successfully, but we couldn't send the verification email. ${emailResult.error?.message || 'Please try again.'}`,
+            variant: "destructive",
+          });
+          
+          // Still show email sent screen so user can retry
+          setIsEmailSent(true);
+        }
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -240,17 +267,38 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error('Supabase password reset error:', error);
         toast({
           title: "Reset Failed",
-          description: error.message,
+          description: error.message.includes('rate limit') 
+            ? 'Too many password reset attempts. Please wait a moment before trying again.'
+            : error.message,
           variant: "destructive",
         });
       } else {
-        setResetEmailSent(true);
-        toast({
-          title: "Reset Link Sent!",
-          description: "Please check your email for a password reset link.",
-        });
+        // Send confirmation email with enhanced error handling
+        const emailResult = await sendPasswordResetEmail(
+          validatedData.email,
+          redirectUrl
+        );
+
+        if (emailResult.success) {
+          setResetEmailSent(true);
+          toast({
+            title: "Reset Link Sent!",
+            description: "Please check your email for a password reset link.",
+          });
+        } else {
+          // Supabase reset was successful but email notification failed
+          toast({
+            title: "Reset Initiated (Email Issue)",
+            description: `Password reset was initiated, but we couldn't send the confirmation email. ${emailResult.error?.message || 'Please check your email anyway.'}`,
+            variant: "destructive",
+          });
+          
+          // Still show success screen since reset was initiated
+          setResetEmailSent(true);
+        }
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -293,8 +341,49 @@ const Auth = () => {
                 Didn't receive the email? Check your spam folder or wait a few minutes.
               </AlertDescription>
             </Alert>
+
+            {emailError && emailError.retryable && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {emailError.message}
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="flex flex-col gap-2">
+              {emailError?.retryable && (
+                <Button 
+                  variant="default" 
+                  onClick={async () => {
+                    const result = await sendVerificationEmail(
+                      signupForm.email,
+                      `${window.location.origin}/`,
+                      signupForm.firstName
+                    );
+                    if (result.success) {
+                      toast({
+                        title: "Email Resent!",
+                        description: "Please check your email for the verification link.",
+                      });
+                    }
+                  }}
+                  disabled={emailLoading}
+                  className="w-full"
+                >
+                  {emailLoading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Resending...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Resend Verification Email
+                    </>
+                  )}
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -345,8 +434,48 @@ const Auth = () => {
                 Didn't receive the email? Check your spam folder or wait a few minutes.
               </AlertDescription>
             </Alert>
+
+            {emailError && emailError.retryable && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {emailError.message}
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="flex flex-col gap-2">
+              {emailError?.retryable && (
+                <Button 
+                  variant="default" 
+                  onClick={async () => {
+                    const result = await sendPasswordResetEmail(
+                      resetEmail,
+                      `${window.location.origin}/auth`
+                    );
+                    if (result.success) {
+                      toast({
+                        title: "Reset Email Resent!",
+                        description: "Please check your email for the password reset link.",
+                      });
+                    }
+                  }}
+                  disabled={emailLoading}
+                  className="w-full"
+                >
+                  {emailLoading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Resending...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Resend Reset Email
+                    </>
+                  )}
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 onClick={() => {
