@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import djImage from "@/assets/dj-1.jpg";
+import djImage from "@/assets/elitebeats-dj-live.jpg";
+import weddingVenueImage from "@/assets/royal-gardens-wedding-venue.jpg";
 import { 
   Search, 
   Filter, 
@@ -126,9 +127,13 @@ const MobileFirstDesign = () => {
           
           <Card className="overflow-hidden">
             <div className="relative">
-              {/* Image placeholder */}
-              <div className="h-32 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <MapPin className="w-8 h-8 text-primary" />
+              {/* Wedding venue image */}
+              <div className="h-32 overflow-hidden">
+                <img 
+                  src={weddingVenueImage} 
+                  alt="Royal Gardens Wedding Venue" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               
               {/* Overlay Actions */}
