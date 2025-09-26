@@ -93,6 +93,20 @@ const Categories = () => {
     setSearchParams(newParams);
   };
 
+  // Handle search submission - navigate to search results
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  // Handle Enter key press
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
+    }
+  };
+
   const allCategories = [
     {
       icon: Building2,
@@ -372,10 +386,19 @@ const Categories = () => {
                   placeholder="Search services, venues, or professionals..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   className="pl-12 h-12 text-lg"
                 />
               </div>
               <div className="flex gap-2">
+                <Button
+                  onClick={handleSearchSubmit}
+                  className="h-12 px-6"
+                  disabled={!searchQuery.trim()}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </Button>
                 <Button
                   variant={viewMode === "grid" ? "default" : "outline"}
                   size="icon"

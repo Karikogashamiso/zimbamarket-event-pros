@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +25,23 @@ import {
 } from "lucide-react";
 
 const MobileFirstDesign = () => {
-  const [activeTab, setActiveTab] = useState("home");
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
+  const [activeTab, setActiveTab] = useState("home");
+  
+  // Handle search submission
+  const handleSearchSubmit = () => {
+    if (searchValue.trim()) {
+      navigate(`/search-results?q=${encodeURIComponent(searchValue.trim())}`);
+    }
+  };
+
+  // Handle Enter key press
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
+    }
+  };
 
   return (
     <div className="max-w-sm mx-auto bg-white border rounded-3xl overflow-hidden shadow-2xl">
@@ -54,14 +70,25 @@ const MobileFirstDesign = () => {
         </div>
 
         {/* Mobile Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search events, venues, services..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-10 pr-4 bg-white/90 border-0 rounded-full text-foreground placeholder:text-muted-foreground"
-          />
+        <div className="relative flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search events, venues, services..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
+              className="pl-10 pr-4 bg-white/90 border-0 rounded-full text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <Button
+            onClick={handleSearchSubmit}
+            size="sm"
+            className="rounded-full"
+            disabled={!searchValue.trim()}
+          >
+            <Search className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 

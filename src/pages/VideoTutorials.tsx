@@ -185,6 +185,12 @@ const VideoTutorials = () => {
                 placeholder="Search tutorials, topics, or instructors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    // This filters video tutorials locally
+                    console.log('Video tutorial search:', searchQuery);
+                  }
+                }}
                 className="pl-12 h-14 text-lg"
               />
             </div>

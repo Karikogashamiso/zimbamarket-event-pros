@@ -136,6 +136,12 @@ const Help = () => {
                 placeholder="Search for help articles, guides, or FAQs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    // This filters help articles locally
+                    console.log('Help search:', searchQuery);
+                  }
+                }}
                 className="pl-12 h-14 text-lg"
               />
             </div>

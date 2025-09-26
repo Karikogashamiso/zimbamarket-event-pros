@@ -152,6 +152,12 @@ const Blog = () => {
                 placeholder="Search articles, tips, and guides..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    // This could navigate to search results if needed
+                    console.log('Blog search:', searchQuery);
+                  }
+                }}
                 className="pl-12 h-14 text-lg"
               />
             </div>

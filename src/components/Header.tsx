@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Heart, LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Menu, Heart, LogOut, Search } from "lucide-react";
 import { useState } from "react";
 import AuthDialog from "./AuthDialog";
 import MobileMenu from "./MobileMenu";
@@ -59,6 +60,25 @@ const Header = () => {
             <Link to="/categories?category=services" className="text-white hover:text-secondary transition-colors">Services</Link>
             <Link to="/contact" className="text-white hover:text-secondary transition-colors">Contact</Link>
           </nav>
+          
+          {/* Desktop Search */}
+          <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 w-4 h-4" />
+              <Input
+                placeholder="Search services..."
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    const target = e.target as HTMLInputElement;
+                    if (target.value.trim()) {
+                      window.location.href = `/search-results?q=${encodeURIComponent(target.value.trim())}`;
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
           
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
