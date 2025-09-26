@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { 
   Facebook, 
   Instagram, 
@@ -33,13 +34,25 @@ const Footer = () => {
   ];
 
   const serviceCategories = [
-    "Wedding Venues", "Catering Services", "Event DJs", "Photography",
-    "Event Planning", "Decor & Flowers", "Entertainment", "Audio Visual"
+    { name: "Wedding Venues", href: "/categories?category=venues" },
+    { name: "Catering Services", href: "/categories?category=food" },
+    { name: "Event DJs", href: "/categories?category=entertainment" },
+    { name: "Photography", href: "/categories?category=media" },
+    { name: "Event Planning", href: "/categories?category=planning" },
+    { name: "Decor & Flowers", href: "/categories?category=decor" },
+    { name: "Entertainment", href: "/categories?category=entertainment" },
+    { name: "Audio Visual", href: "/categories?category=technical" }
   ];
 
   const locations = [
-    "Harare Events", "Bulawayo Events", "Mutare Events", "Victoria Falls Events",
-    "Gweru Events", "Masvingo Events", "Chinhoyi Events", "Kwekwe Events"
+    { name: "Harare Events", href: "/search?location=harare" },
+    { name: "Bulawayo Events", href: "/search?location=bulawayo" },
+    { name: "Mutare Events", href: "/search?location=mutare" },
+    { name: "Victoria Falls Events", href: "/search?location=victoria-falls" },
+    { name: "Gweru Events", href: "/search?location=gweru" },
+    { name: "Masvingo Events", href: "/search?location=masvingo" },
+    { name: "Chinhoyi Events", href: "/search?location=chinhoyi" },
+    { name: "Kwekwe Events", href: "/search?location=kwekwe" }
   ];
 
   return (
@@ -129,13 +142,13 @@ const Footer = () => {
             <ul className="space-y-3">
               {quickLinks.map((link, index) => (
                 <li key={index}>
-                  <a 
-                    href={link.href} 
+                  <Link 
+                    to={link.href} 
                     className="flex items-center gap-3 text-white/80 hover:text-secondary transition-colors duration-200 group"
                   >
                     <link.icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -147,9 +160,9 @@ const Footer = () => {
             <ul className="space-y-3">
               {serviceCategories.map((service, index) => (
                 <li key={index}>
-                  <a href="#" className="text-white/80 hover:text-secondary transition-colors duration-200 text-sm">
-                    {service}
-                  </a>
+                  <Link to={service.href} className="text-white/80 hover:text-secondary transition-colors duration-200 text-sm">
+                    {service.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -161,9 +174,9 @@ const Footer = () => {
             <ul className="space-y-3 mb-8">
               {locations.slice(0, 6).map((location, index) => (
                 <li key={index}>
-                  <a href="#" className="text-white/80 hover:text-secondary transition-colors duration-200 text-sm">
-                    {location}
-                  </a>
+                  <Link to={location.href} className="text-white/80 hover:text-secondary transition-colors duration-200 text-sm">
+                    {location.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -223,24 +236,24 @@ const Footer = () => {
           </div>
           
           <div className="flex space-x-6">
-            <a href="/privacy-policy" className="text-white/60 hover:text-secondary text-sm transition-colors">Privacy Policy</a>
-            <a href="/terms-of-service" className="text-white/60 hover:text-secondary text-sm transition-colors">Terms of Service</a>
-            <a href="/help" className="text-white/60 hover:text-secondary text-sm transition-colors">Support</a>
+            <Link to="/privacy-policy" className="text-white/60 hover:text-secondary text-sm transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="text-white/60 hover:text-secondary text-sm transition-colors">Terms of Service</Link>
+            <Link to="/help" className="text-white/60 hover:text-secondary text-sm transition-colors">Support</Link>
           </div>
         </div>
       </div>
       
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button 
-          size="lg" 
-          className="rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover-scale"
-        >
-          <a href="/help" className="flex items-center">
+        <Link to="/help">
+          <Button 
+            size="lg" 
+            className="rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover-scale flex items-center"
+          >
             <MessageCircle className="w-5 h-5 mr-2" />
             Need Help?
-          </a>
-        </Button>
+          </Button>
+        </Link>
       </div>
     </footer>
   );
