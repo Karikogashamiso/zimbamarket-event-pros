@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { 
   Building2, 
   TrendingUp, 
@@ -24,6 +25,21 @@ import {
 } from "lucide-react";
 
 const ListBusiness = () => {
+  // Scroll to contact form
+  const scrollToForm = () => {
+    const formSection = document.getElementById('contact-form');
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Scroll to benefits section
+  const scrollToBenefits = () => {
+    const benefitsSection = document.getElementById('benefits');
+    if (benefitsSection) {
+      benefitsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   const benefits = [
     {
       icon: TrendingUp,
@@ -113,11 +129,11 @@ const ListBusiness = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Button size="lg" className="text-lg px-8 py-4 h-auto hover-scale">
+              <Button size="lg" className="text-lg px-8 py-4 h-auto hover-scale" onClick={scrollToForm}>
                 <Plus className="w-5 h-5 mr-2" />
                 List Your Business Free
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto hover-scale">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto hover-scale" onClick={scrollToBenefits}>
                 <Users className="w-5 h-5 mr-2" />
                 Learn More
               </Button>
@@ -191,7 +207,7 @@ const ListBusiness = () => {
       </section>
 
       {/* Benefits */}
-      <section className="py-20 bg-muted/30">
+      <section id="benefits" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -221,7 +237,7 @@ const ListBusiness = () => {
       </section>
 
       {/* Contact Form */}
-      <section className="py-20">
+      <section id="contact-form" className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
