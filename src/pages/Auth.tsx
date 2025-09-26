@@ -30,6 +30,11 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
+  const [passwordUpdateForm, setPasswordUpdateForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
   
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -69,11 +74,34 @@ const Auth = () => {
     email: z.string().email("Please enter a valid email address"),
   });
 
-  // Check URL parameters for tab
+  const updatePasswordSchema = z.object({
+    password: z.string()
+      .min(6, "Password must be at least 6 characters")
+      .max(128, "Password must be less than 128 characters")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+  // Check URL parameters for tab and password reset
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'signup' || tab === 'login') {
       setActiveTab(tab);
+    }
+
+    // Check if this is a password reset callback
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const type = searchParams.get('type');
+    
+    if (accessToken && refreshToken && type === 'recovery') {
+      console.log('Password reset callback detected');
+      setShowPasswordUpdate(true);
+      setShowForgotPassword(false);
+      setResetEmailSent(false);
     }
   }, [searchParams]);
 
@@ -299,6 +327,65 @@ const Auth = () => {
           // Still show success screen since reset was initiated
           setResetEmailSent(true);
         }
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setFormErrors(newErrors);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setFormErrors({});
+
+    try {
+      const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
+
+      const { error } = await supabase.auth.updateUser({
+        password: validatedData.password
+      });
+
+      if (error) {
+        console.error('Password update error:', error);
+        
+        if (error.message.includes('session_not_found') || error.message.includes('invalid_token')) {
+          toast({
+            title: "Reset Link Expired",
+            description: "Your password reset link has expired. Please request a new one.",
+            variant: "destructive",
+          });
+          setShowPasswordUpdate(false);
+          setShowForgotPassword(true);
+        } else {
+          toast({
+            title: "Password Update Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Password Updated Successfully",
+          description: "Your password has been updated. You can now sign in with your new password.",
+        });
+        
+        // Clear the form and redirect to login
+        setPasswordUpdateForm({ password: "", confirmPassword: "" });
+        setShowPasswordUpdate(false);
+        setActiveTab("login");
+        
+        // Clear URL parameters
+        navigate("/auth?tab=login", { replace: true });
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -544,6 +631,101 @@ const Auth = () => {
                 className="w-full"
               >
                 Back to Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (showPasswordUpdate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">Create New Password</CardTitle>
+            <p className="text-muted-foreground">
+              Enter your new password below. Make sure it's secure and easy to remember.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">New Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your new password"
+                    value={passwordUpdateForm.password}
+                    onChange={(e) => setPasswordUpdateForm(prev => ({ ...prev, password: e.target.value }))}
+                    onBlur={() => validateField(updatePasswordSchema, passwordUpdateForm, "password")}
+                    className={`pl-10 pr-10 ${formErrors.password ? 'border-destructive' : ''}`}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {formErrors.password && (
+                  <p className="text-xs text-destructive mt-1">{formErrors.password}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Must contain uppercase, lowercase, and number
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Confirm New Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm your new password"
+                    value={passwordUpdateForm.confirmPassword}
+                    onChange={(e) => setPasswordUpdateForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onBlur={() => validateField(updatePasswordSchema, passwordUpdateForm, "confirmPassword")}
+                    className={`pl-10 ${formErrors.confirmPassword ? 'border-destructive' : ''}`}
+                    required
+                  />
+                </div>
+                {formErrors.confirmPassword && (
+                  <p className="text-xs text-destructive mt-1">{formErrors.confirmPassword}</p>
+                )}
+              </div>
+
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Your new password will be applied to your account immediately after confirmation.
+                </AlertDescription>
+              </Alert>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Updating Password..." : "Update Password"}
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => {
+                  setShowPasswordUpdate(false);
+                  setPasswordUpdateForm({ password: "", confirmPassword: "" });
+                  navigate("/auth?tab=login", { replace: true });
+                }}
+                className="w-full"
+              >
+                Cancel
               </Button>
             </form>
           </CardContent>
