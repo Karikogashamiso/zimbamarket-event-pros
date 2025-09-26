@@ -61,6 +61,14 @@ const Auth = () => {
     email: z.string().email("Please enter a valid email address"),
   });
 
+  // Check URL parameters for tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'signup' || tab === 'login') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {

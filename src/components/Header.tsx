@@ -100,7 +100,7 @@ const Header = () => {
                 </Button>
               </>
             ) : (
-              <Link to="/auth">
+              <Link to="/auth?tab=login">
                 <Button variant="glass" size="sm">
                   <User className="w-4 h-4 mr-2" />
                   Sign In

@@ -81,13 +81,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                 </>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to="/auth" onClick={onClose}>
+                  <Link to="/auth?tab=login" onClick={onClose}>
                     <Button variant="outline" className="w-full h-12 text-base font-medium">
                       <User className="mr-2 h-4 w-4" />
                       Sign In
                     </Button>
                   </Link>
-                  <Link to="/auth" onClick={onClose}>
+                  <Link to="/auth?tab=signup" onClick={onClose}>
                     <Button className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
                       Sign Up
                     </Button>
