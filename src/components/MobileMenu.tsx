@@ -2,9 +2,10 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle } from "lucide-react";
-import AuthDialog from "./AuthDialog";
+import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle, User, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,6 +13,35 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to sign out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out. Come back soon!",
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   const menuItems = [
@@ -27,20 +57,43 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       <div className="fixed inset-x-0 top-0 z-50 h-full w-full bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-6 pt-20">
         <Card className="mx-auto max-w-md bg-white/95 backdrop-blur-md shadow-2xl">
           <div className="p-6">
-            {/* Auth Buttons */}
+            {/* Auth Section */}
             <div className="mb-6 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <AuthDialog defaultTab="register">
-                  <Button variant="outline" className="w-full h-12 text-base font-medium">
-                    Register
+              {user ? (
+                <>
+                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
+                    <User className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-sm">
+                        {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-12 text-base font-medium"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-5 w-5" />
+                    Sign Out
                   </Button>
-                </AuthDialog>
-                <AuthDialog defaultTab="login">
-                  <Button className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
-                    Login
-                  </Button>
-                </AuthDialog>
-              </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <Link to="/auth" onClick={onClose}>
+                    <Button variant="outline" className="w-full h-12 text-base font-medium">
+                      <User className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/auth" onClick={onClose}>
+                    <Button className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
               <Link to="/list-business" onClick={onClose}>
                 <Button className="w-full h-12 text-base font-medium bg-secondary hover:bg-secondary/90 text-secondary-foreground">
                   <PlusCircle className="mr-2 h-5 w-5" />

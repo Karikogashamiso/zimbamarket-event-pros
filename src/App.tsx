@@ -23,6 +23,7 @@ import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/categories" element={<Layout><Categories /></Layout>} />
                 <Route path="/search" element={<Layout><SearchResults /></Layout>} />
                 <Route path="/service/:id" element={<Layout><ServiceDetail /></Layout>} />

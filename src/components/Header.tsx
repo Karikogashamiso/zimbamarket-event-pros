@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search } from "lucide-react";
+import { Menu, Heart, LogOut, Search, User } from "lucide-react";
 import { useState } from "react";
-import AuthDialog from "./AuthDialog";
 import MobileMenu from "./MobileMenu";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,12 +25,9 @@ const Header = () => {
       }
       
       toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
+        title: "Signed out successfully",
+        description: "You have been signed out. Come back soon!",
       });
-      
-      // Redirect to home page
-      window.location.href = '/';
     } catch (error) {
       toast({
         title: "Error",
@@ -87,24 +83,29 @@ const Header = () => {
             </Button>
             {user ? (
               <>
-                <span className="text-white text-sm">
-                  Welcome, {user.user_metadata?.first_name || user.email}
-                </span>
+                <div className="flex items-center gap-2 text-white">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">
+                    {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                  </span>
+                </div>
                 <Button 
                   variant="ghost" 
-                  size="icon"
+                  size="sm"
                   className="text-white hover:bg-white/20"
                   onClick={handleSignOut}
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
                 </Button>
               </>
             ) : (
-              <AuthDialog>
-                <Button variant="ghost" className="text-white hover:bg-white/20">
+              <Link to="/auth">
+                <Button variant="glass" size="sm">
+                  <User className="w-4 h-4 mr-2" />
                   Sign In
                 </Button>
-              </AuthDialog>
+              </Link>
             )}
             <Link to="/list-business">
               <Button variant="hero" size="sm">
