@@ -37,6 +37,7 @@ import { z } from "zod";
 import { ReviewModal } from "@/components/Modals/ReviewModal";
 import { AvailabilityModal } from "@/components/Modals/AvailabilityModal";
 import { ReportModal } from "@/components/Modals/ReportModal";
+import { ServiceImageGallery } from "@/components/ImageGallery/ServiceImageGallery";
 import { useServiceActions } from "@/hooks/useServiceActions";
 
 // Booking form validation schema
@@ -55,7 +56,6 @@ const userBookingSchema = z.object({
 
 const ServiceDetail = () => {
   const { id } = useParams();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState('');
   const [message, setMessage] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -257,8 +257,23 @@ const ServiceDetail = () => {
     );
   }
 
-  // Get service images - fallback to default if none exist
-  const serviceImages = service.image_url ? [service.image_url] : ["/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png"];
+  // Get service images from the new images array with fallback
+  const getServiceImages = () => {
+    // Use the new images array if available and not empty
+    if (service.images && Array.isArray(service.images) && service.images.length > 0) {
+      return service.images.filter((img: string) => img && img.trim() !== '');
+    }
+    
+    // Fallback to single image_url if images array is not available
+    if (service.image_url && service.image_url.trim() !== '') {
+      return [service.image_url];
+    }
+    
+    // Final fallback to default image
+    return ["/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png"];
+  };
+
+  const serviceImages = getServiceImages();
   
   // Mock packages for now - in a real app this would come from the database
   const packages = [
@@ -270,14 +285,6 @@ const ServiceDetail = () => {
       includes: ["Basic service", "Standard setup", "Support included"]
     }
   ];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % serviceImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + serviceImages.length) % serviceImages.length);
-  };
 
   return (
     <>
@@ -316,56 +323,12 @@ const ServiceDetail = () => {
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-8">
                 
-                {/* Image Gallery */}
-                <div className="relative">
-                  <div className="relative h-96 rounded-2xl overflow-hidden">
-                    <img 
-                      src={serviceImages[currentImageIndex]} 
-                      alt={service.title}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Navigation Buttons */}
-                    {serviceImages.length > 1 && (
-                      <>
-                        <button 
-                          onClick={prevImage}
-                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                        >
-                          <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <button 
-                          onClick={nextImage}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                        >
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                        
-                        {/* Image Counter */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                          {currentImageIndex + 1} / {serviceImages.length}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Thumbnail Gallery */}
-                  {serviceImages.length > 1 && (
-                    <div className="flex gap-2 mt-4">
-                      {serviceImages.map((image, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentImageIndex(index)}
-                          className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                            currentImageIndex === index ? 'border-primary' : 'border-transparent'
-                          }`}
-                        >
-                          <img src={image} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* Enhanced Image Gallery */}
+                <ServiceImageGallery 
+                  images={serviceImages}
+                  serviceName={service.title}
+                  className="w-full"
+                />
 
                 {/* Service Details */}
                 <div className="space-y-6">

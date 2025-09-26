@@ -1642,6 +1642,7 @@ export type Database = {
           full_description: string | null
           id: string
           image_url: string | null
+          images: string[] | null
           location: string
           phone_number: string | null
           price_from: number | null
@@ -1669,6 +1670,7 @@ export type Database = {
           full_description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           location: string
           phone_number?: string | null
           price_from?: number | null
@@ -1696,6 +1698,7 @@ export type Database = {
           full_description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           location?: string
           phone_number?: string | null
           price_from?: number | null

@@ -24,6 +24,7 @@ export interface Service {
   featured: boolean;
   verified: boolean;
   image_url?: string;
+  images?: string[];
   amenities?: string[];
   created_at: string;
   category?: {
