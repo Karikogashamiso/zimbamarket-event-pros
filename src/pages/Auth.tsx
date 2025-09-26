@@ -19,6 +19,9 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -52,6 +55,10 @@ const Auth = () => {
   }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
+  });
+
+  const resetPasswordSchema = z.object({
+    email: z.string().email("Please enter a valid email address"),
   });
 
   // Check if user is already logged in
@@ -211,6 +218,47 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setFormErrors({});
+
+    try {
+      const validatedData = resetPasswordSchema.parse({ email: resetEmail });
+      const redirectUrl = `${window.location.origin}/auth`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(validatedData.email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        toast({
+          title: "Reset Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setResetEmailSent(true);
+        toast({
+          title: "Reset Link Sent!",
+          description: "Please check your email for a password reset link.",
+        });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setFormErrors(newErrors);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isEmailSent) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
@@ -257,6 +305,110 @@ const Auth = () => {
                 Try Different Email
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (resetEmailSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl">Check Your Email</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                We've sent a password reset link to <strong>{resetEmail}</strong>
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Click the link in the email to reset your password.
+              </p>
+            </div>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Didn't receive the email? Check your spam folder or wait a few minutes.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setResetEmailSent(false);
+                  setShowForgotPassword(false);
+                }}
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setResetEmailSent(false);
+                  setResetEmail("");
+                }}
+                className="w-full"
+              >
+                Try Different Email
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <p className="text-muted-foreground">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className={`pl-10 ${formErrors.email ? 'border-destructive' : ''}`}
+                    required
+                  />
+                </div>
+                {formErrors.email && (
+                  <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Sending Reset Link..." : "Send Reset Link"}
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setShowForgotPassword(false)}
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
@@ -342,6 +494,17 @@ const Auth = () => {
                       {formErrors.password && (
                         <p className="text-xs text-destructive mt-1">{formErrors.password}</p>
                       )}
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="p-0 h-auto text-sm"
+                        onClick={() => setShowForgotPassword(true)}
+                      >
+                        Forgot password?
+                      </Button>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>
