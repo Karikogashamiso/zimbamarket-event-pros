@@ -119,6 +119,12 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     onSearch(filters);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       query: '',
@@ -158,6 +164,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                 placeholder="Search venues, caterers, DJs..."
                 value={filters.query}
                 onChange={(e) => updateFilter('query', e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="pl-10"
               />
             </div>
@@ -168,6 +175,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                 placeholder="Location in Zimbabwe"
                 value={filters.location}
                 onChange={(e) => updateFilter('location', e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="pl-10"
               />
             </div>
@@ -428,7 +436,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
               <div className="flex gap-2 pt-4">
                 <Button onClick={handleSearch} disabled={isLoading} className="flex-1">
                   <Search className="w-4 h-4 mr-2" />
-                  Apply Filters
+                  Search
                 </Button>
                 <Button variant="outline" onClick={() => setIsExpanded(false)}>
                   <ChevronDown className="w-4 h-4" />
