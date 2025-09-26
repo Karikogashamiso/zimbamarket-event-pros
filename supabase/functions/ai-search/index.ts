@@ -11,6 +11,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ServiceWithCategory {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  price_from: number | null;
+  rating: number | null;
+  category: { name: string; slug: string } | null;
+  amenities: string[] | null;
+}
+
+interface RecommendedService {
+  serviceId: string;
+  relevanceScore: number;
+  reasonForRecommendation: string;
+}
+
+interface AIAnalysis {
+  interpretedIntent: string;
+  extractedRequirements: {
+    eventType: string;
+    estimatedBudget: string | null;
+    guestCount: number | null;
+    specificServices: string[];
+    locationPreference: string;
+  };
+  recommendedServices: RecommendedService[];
+  searchTerms: string[];
+  alternativeLocations: string[];
+  additionalSuggestions: string[];
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -52,6 +84,9 @@ serve(async (req) => {
       throw new Error('Failed to fetch services from database');
     }
 
+    // Type the services safely
+    const typedServices = (services || []) as unknown as ServiceWithCategory[];
+
     // Create AI prompt for intelligent search
     const aiPrompt = `
 You are an intelligent event planning assistant for ZimEventPro, a marketplace in Zimbabwe. 
@@ -63,7 +98,7 @@ Category: "${category || 'All categories'}"
 User Preferences: ${JSON.stringify(userPreferences || {})}
 
 Available Services Context:
-${services.map(s => `- ${s.title} (${s.category?.name}) in ${s.location}: ${s.description.substring(0, 100)}...`).join('\n')}
+${typedServices.map((s: ServiceWithCategory) => `- ${s.title} (${s.category?.name || 'No category'}) in ${s.location}: ${s.description.substring(0, 100)}...`).join('\n')}
 
 Based on the user's natural language query, please:
 1. Interpret their intent (e.g., wedding, birthday party, corporate event)
@@ -121,7 +156,7 @@ Respond in JSON format:
     }
 
     const aiData = await response.json();
-    const aiAnalysis = JSON.parse(aiData.choices[0].message.content);
+    const aiAnalysis = JSON.parse(aiData.choices[0].message.content) as AIAnalysis;
 
     // Build enhanced search filters based on AI analysis
     const enhancedFilters = {
@@ -129,16 +164,16 @@ Respond in JSON format:
       aiInterpretation: aiAnalysis.interpretedIntent,
       searchTerms: aiAnalysis.searchTerms,
       extractedRequirements: aiAnalysis.extractedRequirements,
-      recommendedServiceIds: aiAnalysis.recommendedServices.map(r => r.serviceId),
+      recommendedServiceIds: aiAnalysis.recommendedServices.map((r: RecommendedService) => r.serviceId),
       alternativeLocations: aiAnalysis.alternativeLocations,
       suggestions: aiAnalysis.additionalSuggestions
     };
 
     // Get recommended services with full details
-    const recommendedServices = services.filter(service => 
-      aiAnalysis.recommendedServices.some(rec => rec.serviceId === service.id)
-    ).map(service => {
-      const recommendation = aiAnalysis.recommendedServices.find(rec => rec.serviceId === service.id);
+    const recommendedServices = typedServices.filter((service: ServiceWithCategory) => 
+      aiAnalysis.recommendedServices.some((rec: RecommendedService) => rec.serviceId === service.id)
+    ).map((service: ServiceWithCategory) => {
+      const recommendation = aiAnalysis.recommendedServices.find((rec: RecommendedService) => rec.serviceId === service.id);
       return {
         ...service,
         relevanceScore: recommendation?.relevanceScore || 0,
@@ -169,9 +204,10 @@ Respond in JSON format:
 
   } catch (error) {
     console.error('Error in ai-search function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message,
+      error: errorMessage,
       fallback: true
     }), {
       status: 500,
