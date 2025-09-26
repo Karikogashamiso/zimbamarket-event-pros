@@ -34,6 +34,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { ReviewModal } from "@/components/Modals/ReviewModal";
+import { AvailabilityModal } from "@/components/Modals/AvailabilityModal";
+import { ReportModal } from "@/components/Modals/ReportModal";
+import { useServiceActions } from "@/hooks/useServiceActions";
 
 // Booking form validation schema
 const bookingSchema = z.object({
@@ -60,6 +64,13 @@ const ServiceDetail = () => {
   const { reviews, loading: reviewsLoading } = useReviews(id || '');
   const { user } = useAuth();
   const { toast } = useToast();
+  const { saveService, shareService, reportService, isSaving, isReporting } = useServiceActions();
+
+  // Handle reviews refresh
+  const handleReviewSubmitted = () => {
+    // Simple refresh by reloading the component
+    window.location.reload();
+  };
 
   // Handle field blur for validation
   const handleFieldBlur = (fieldName: string) => {
@@ -458,10 +469,11 @@ const ServiceDetail = () => {
                     <TabsContent value="reviews" className="space-y-6 mt-6">
                       <div className="flex items-center justify-between">
                         <h3 className="text-2xl font-bold">Customer Reviews</h3>
-                        <Button variant="outline">
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Write Review
-                        </Button>
+                        <ReviewModal 
+                          serviceId={service.id}
+                          serviceName={service.title}
+                          onReviewSubmitted={handleReviewSubmitted}
+                        />
                       </div>
                       
                       <div className="space-y-6">
@@ -610,10 +622,11 @@ const ServiceDetail = () => {
                           {isBookingLoading ? "Sending..." : "Send Inquiry"}
                         </Button>
                         
-                        <Button variant="outline" className="w-full">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Check Availability
-                        </Button>
+                        <AvailabilityModal 
+                          serviceId={service.id}
+                          serviceName={service.title}
+                          basePrice={service.price_from}
+                        />
                       </div>
                     </div>
                   </Card>
@@ -648,17 +661,27 @@ const ServiceDetail = () => {
                   {/* Actions */}
                   <Card className="p-6">
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => saveService(service.id, service.title)}
+                        disabled={isSaving}
+                      >
                         <Heart className="w-4 h-4 mr-2" />
-                        Save
+                        {isSaving ? "Saving..." : "Save"}
                       </Button>
-                      <Button variant="outline" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => shareService(service.id, service.title)}
+                      >
                         <Share2 className="w-4 h-4 mr-2" />
                         Share
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <Flag className="w-4 h-4" />
-                      </Button>
+                      <ReportModal 
+                        onReport={(reason) => reportService(service.id, service.title, reason)}
+                        isReporting={isReporting}
+                      />
                     </div>
                   </Card>
                 </div>
