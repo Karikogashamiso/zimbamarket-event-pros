@@ -11,9 +11,10 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface AuthDialogProps {
   children: React.ReactNode;
+  defaultTab?: "login" | "register";
 }
 
-const AuthDialog = ({ children }: AuthDialogProps) => {
+const AuthDialog = ({ children, defaultTab = "login" }: AuthDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -109,7 +110,7 @@ const AuthDialog = ({ children }: AuthDialogProps) => {
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login" className="flex items-center gap-2">
               <LogIn className="w-4 h-4" />

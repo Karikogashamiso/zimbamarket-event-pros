@@ -30,12 +30,12 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             {/* Auth Buttons */}
             <div className="mb-6 space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <AuthDialog>
+                <AuthDialog defaultTab="register">
                   <Button variant="outline" className="w-full h-12 text-base font-medium">
                     Register
                   </Button>
                 </AuthDialog>
-                <AuthDialog>
+                <AuthDialog defaultTab="login">
                   <Button className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
                     Login
                   </Button>
