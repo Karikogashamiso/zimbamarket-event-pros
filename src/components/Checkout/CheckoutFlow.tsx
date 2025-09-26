@@ -13,6 +13,8 @@ import { CustomerInfo } from './CustomerInfo';
 import { PaymentOptions } from './PaymentOptions';
 import { OrderSummary } from './OrderSummary';
 import { TicketConfirmation } from './TicketConfirmation';
+import { useCheckout, CheckoutData } from '@/hooks/useCheckout';
+import { useToast } from '@/hooks/use-toast';
 
 export type CheckoutStep = 
   | 'event' 
@@ -23,17 +25,6 @@ export type CheckoutStep =
   | 'payment' 
   | 'summary' 
   | 'confirmation';
-
-interface CheckoutData {
-  event: any;
-  selectedSeats: any[];
-  ticketTiers: any[];
-  addOns: any[];
-  customerInfo: any;
-  paymentMethod: string;
-  totalAmount: number;
-  currency: string;
-}
 
 const STEPS: { key: CheckoutStep; title: string; description: string }[] = [
   { key: 'event', title: 'Select Event', description: 'Choose your event or trip' },
@@ -48,24 +39,54 @@ const STEPS: { key: CheckoutStep; title: string; description: string }[] = [
 
 export const CheckoutFlow: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('event');
-  const [checkoutData, setCheckoutData] = useState<Partial<CheckoutData>>({
+  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     selectedSeats: [],
     ticketTiers: [],
     addOns: [],
     totalAmount: 0,
     currency: 'USD'
   });
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { isProcessing, orderDetails, processCheckout, calculateTotal } = useCheckout();
+  const { toast } = useToast();
 
   const currentStepIndex = STEPS.findIndex(step => step.key === currentStep);
   const progressPercentage = ((currentStepIndex + 1) / STEPS.length) * 100;
 
   const updateCheckoutData = (updates: Partial<CheckoutData>) => {
-    setCheckoutData(prev => ({ ...prev, ...updates }));
+    const updatedData = { ...checkoutData, ...updates };
+    
+    // Recalculate total when ticket tiers or add-ons change
+    if (updates.ticketTiers || updates.addOns) {
+      const total = calculateTotal(
+        updatedData.ticketTiers || [], 
+        updatedData.addOns || []
+      );
+      updatedData.totalAmount = total;
+    }
+    
+    setCheckoutData(updatedData);
   };
 
-  const goToNextStep = () => {
+  const handleConfirmOrder = async () => {
+    try {
+      await processCheckout(checkoutData);
+      setCurrentStep('confirmation');
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error('Checkout failed:', error);
+    }
+  };
+
+  const goToNextStep = async () => {
     const nextIndex = currentStepIndex + 1;
+    
+    // Special handling for summary step - process the order
+    if (currentStep === 'summary') {
+      await handleConfirmOrder();
+      return;
+    }
+    
     if (nextIndex < STEPS.length) {
       setCurrentStep(STEPS[nextIndex].key);
     }
@@ -89,7 +110,9 @@ export const CheckoutFlow: React.FC = () => {
       case 'addons':
         return true; // Add-ons are optional
       case 'customer':
-        return !!checkoutData.customerInfo?.email && !!checkoutData.customerInfo?.firstName;
+        return !!checkoutData.customerInfo?.email && 
+               !!checkoutData.customerInfo?.firstName && 
+               !!checkoutData.customerInfo?.termsAccepted;
       case 'payment':
         return !!checkoutData.paymentMethod;
       case 'summary':
@@ -104,8 +127,8 @@ export const CheckoutFlow: React.FC = () => {
       case 'event':
         return (
           <EventSelection
-            onEventSelect={(event) => updateCheckoutData({ event })}
-            selectedEvent={checkoutData.event}
+            onEventSelect={(event) => updateCheckoutData({ event: event as any })}
+            selectedEvent={checkoutData.event as any}
           />
         );
       case 'seats':
@@ -153,13 +176,14 @@ export const CheckoutFlow: React.FC = () => {
         return (
           <OrderSummary
             checkoutData={checkoutData}
-            onConfirmOrder={() => setCurrentStep('confirmation')}
+            onConfirmOrder={handleConfirmOrder}
+            isProcessing={isProcessing}
           />
         );
       case 'confirmation':
         return (
           <TicketConfirmation
-            checkoutData={checkoutData}
+            orderDetails={orderDetails}
           />
         );
       default:
@@ -231,7 +255,7 @@ export const CheckoutFlow: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={goToPreviousStep}
-                    disabled={isLoading}
+                    disabled={isProcessing}
                   >
                     Back
                   </Button>
@@ -239,10 +263,10 @@ export const CheckoutFlow: React.FC = () => {
                 
                 <Button
                   onClick={goToNextStep}
-                  disabled={!canProceed() || isLoading}
+                  disabled={!canProceed() || isProcessing}
                   className="min-w-[100px]"
                 >
-                  {isLoading ? (
+                  {isProcessing ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   ) : currentStep === 'summary' ? (
                     'Confirm Order'
