@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { validateCSRFToken } from '../_shared/csrf-validation.ts'
+import { sanitizeFormData, validateSecureInput } from '../_shared/input-sanitization.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -116,9 +117,41 @@ serve(async (req) => {
       );
     }
 
-    const config = RATE_LIMITS[action];
+    // Sanitize input data to prevent injection attacks
+    const sanitizedData = sanitizeFormData({
+      action: action,
+      identifier: identifier,
+      email: additionalData?.email,
+      userAgent: additionalData?.userAgent
+    });
+
+    // Validate action name (only allow alphanumeric and underscores)
+    if (!/^[a-zA-Z0-9_]+$/.test(sanitizedData.action)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid action name' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Additional security validation for identifier
+    const validation = validateSecureInput(sanitizedData.identifier);
+    if (!validation.isValid) {
+      console.warn('Potentially malicious identifier detected:', validation.reason);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid identifier format',
+          message: 'The identifier contains invalid characters.'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const config = RATE_LIMITS[sanitizedData.action];
     if (!config) {
-      console.log(`Unknown action: ${action}, allowing request`);
+      console.log(`Unknown action: ${sanitizedData.action}, allowing request`);
       return new Response(
         JSON.stringify({ allowed: true, message: 'Action not configured, request allowed' }),
         { 
@@ -132,14 +165,14 @@ serve(async (req) => {
     const windowStart = new Date(now.getTime() - (config.windowMinutes * 60 * 1000));
     const blockEnd = new Date(now.getTime() + (config.blockMinutes * 60 * 1000));
 
-    console.log(`Rate limit check: ${action} for ${identifier}`);
+    console.log(`Rate limit check: ${sanitizedData.action} for ${sanitizedData.identifier}`);
 
     // Check current attempts in the window
     const { data: attempts, error: queryError } = await supabaseClient
       .from('rate_limit_attempts')
       .select('*')
-      .eq('action', action)
-      .eq('identifier', identifier)
+      .eq('action', sanitizedData.action)
+      .eq('identifier', sanitizedData.identifier)
       .gte('created_at', windowStart.toISOString())
       .order('created_at', { ascending: false });
 
@@ -162,7 +195,7 @@ serve(async (req) => {
     if (lastAttempt && lastAttempt.is_blocked && new Date(lastAttempt.block_until) > now) {
       const minutesLeft = Math.ceil((new Date(lastAttempt.block_until).getTime() - now.getTime()) / (1000 * 60));
       
-      console.log(`Blocked attempt: ${action} for ${identifier}, ${minutesLeft} minutes remaining`);
+      console.log(`Blocked attempt: ${sanitizedData.action} for ${sanitizedData.identifier}, ${minutesLeft} minutes remaining`);
       
       return new Response(
         JSON.stringify({ 
@@ -182,17 +215,17 @@ serve(async (req) => {
 
     // Check if rate limit exceeded
     if (attemptCount >= config.maxAttempts) {
-      console.log(`Rate limit exceeded: ${action} for ${identifier}, blocking for ${config.blockMinutes} minutes`);
+      console.log(`Rate limit exceeded: ${sanitizedData.action} for ${sanitizedData.identifier}, blocking for ${config.blockMinutes} minutes`);
       
       // Create blocked attempt record
       const { error: insertError } = await supabaseClient
         .from('rate_limit_attempts')
         .insert({
-          action,
-          identifier,
-          ip_address: additionalData?.userAgent ? identifier : null,
-          email: additionalData?.email || null,
-          user_agent: additionalData?.userAgent || null,
+          action: sanitizedData.action,
+          identifier: sanitizedData.identifier,
+          ip_address: sanitizedData.userAgent ? sanitizedData.identifier : null,
+          email: sanitizedData.email || null,
+          user_agent: sanitizedData.userAgent || null,
           is_blocked: true,
           block_until: blockEnd.toISOString(),
           metadata: {
@@ -225,11 +258,11 @@ serve(async (req) => {
     const { error: recordError } = await supabaseClient
       .from('rate_limit_attempts')
       .insert({
-        action,
-        identifier,
-        ip_address: additionalData?.userAgent ? identifier : null,
-        email: additionalData?.email || null,
-        user_agent: additionalData?.userAgent || null,
+        action: sanitizedData.action,
+        identifier: sanitizedData.identifier,
+        ip_address: sanitizedData.userAgent ? sanitizedData.identifier : null,
+        email: sanitizedData.email || null,
+        user_agent: sanitizedData.userAgent || null,
         is_blocked: false,
         metadata: {
           attemptNumber: attemptCount + 1,
@@ -243,7 +276,7 @@ serve(async (req) => {
     }
 
     const remainingAttempts = config.maxAttempts - (attemptCount + 1);
-    console.log(`Rate limit check passed: ${action} for ${identifier}, ${remainingAttempts} attempts remaining`);
+    console.log(`Rate limit check passed: ${sanitizedData.action} for ${sanitizedData.identifier}, ${remainingAttempts} attempts remaining`);
 
     return new Response(
       JSON.stringify({ 

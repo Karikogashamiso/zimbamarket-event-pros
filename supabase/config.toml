@@ -3,6 +3,12 @@ project_id = "pxpdjfkppgoaygdfmaqr"
 [functions.csrf-protection]
 verify_jwt = false
 
+[functions.secure-contact-form]
+verify_jwt = false
+
+[functions.secure-newsletter-signup]
+verify_jwt = false
+
 [functions.send-verification-email]
 verify_jwt = false
 
