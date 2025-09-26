@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,8 @@ import {
   DollarSign,
   Star,
   TrendingUp,
-  Clock
+  Clock,
+  AlertTriangle
 } from "lucide-react";
 
 // Mock data for suggestions
@@ -57,6 +59,7 @@ const EnhancedSearch = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Update active filters array when filters change
@@ -84,6 +87,9 @@ const EnhancedSearch = () => {
   };
 
   const handleSearch = () => {
+    // Clear any previous errors
+    setError(null);
+    
     const params = new URLSearchParams();
     
     if (searchQuery.trim()) params.set('q', searchQuery.trim());
@@ -93,8 +99,13 @@ const EnhancedSearch = () => {
     if (guestCount) params.set('capacity', guestCount);
     if (eventDate) params.set('date', eventDate);
     
-    navigate(`/search-results?${params.toString()}`);
-    setShowSuggestions(false);
+    try {
+      navigate(`/search-results?${params.toString()}`);
+      setShowSuggestions(false);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setError('Unable to perform search. Please try again.');
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -115,6 +126,24 @@ const EnhancedSearch = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto">
+      {/* Search Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-2" 
+              onClick={() => setError(null)}
+            >
+              Dismiss
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Main Search Bar */}
       <Card className="card-elegant p-6 mb-4">
         <div className="flex flex-col lg:flex-row gap-4">

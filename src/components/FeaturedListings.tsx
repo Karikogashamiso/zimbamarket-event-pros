@@ -8,17 +8,25 @@ import { useServices } from "@/hooks/useServices";
 import LazyImage from "@/components/LazyImage";
 import { trackServiceView } from "@/components/Analytics/GoogleAnalytics";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
+import { DataError, LoadingErrorBanner } from "@/components/ui/error-states";
 
 const FeaturedListings = () => {
-  const { services, loading, error } = useServices({ featured: true });
+  const { services, loading, error, retry, isRetrying } = useServices({ featured: true });
 
   if (error) {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-muted-foreground">Error loading featured services: {error}</p>
-          </div>
+          <LoadingErrorBanner
+            message="Unable to load featured services. You can still browse other sections."
+            onRetry={retry}
+            onDismiss={() => window.location.reload()}
+          />
+          <DataError
+            type="services"
+            onRetry={retry}
+            isRetrying={isRetrying}
+          />
         </div>
       </section>
     );

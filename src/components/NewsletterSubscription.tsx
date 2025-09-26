@@ -7,28 +7,29 @@ import { Loader2 } from "lucide-react";
 const NewsletterSubscription = () => {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [validationError, setValidationError] = useState<string>('');
   const { toast } = useToast();
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear previous validation errors
+    setValidationError('');
+    
+    // Comprehensive email validation
     if (!email.trim()) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address",
-        variant: "destructive",
-      });
+      setValidationError("Please enter your email address");
       return;
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email.trim())) {
+      setValidationError("Please enter a valid email address (e.g., you@example.com)");
+      return;
+    }
+
+    if (email.length > 255) {
+      setValidationError("Email address is too long");
       return;
     }
 
@@ -47,29 +48,37 @@ const NewsletterSubscription = () => {
         });
 
       if (error) {
+        console.error('Newsletter subscription error:', error);
+        
         if (error.code === '23505') { // Unique constraint violation
           toast({
             title: "Already subscribed",
-            description: "This email is already subscribed to our newsletter",
-            variant: "destructive",
+            description: "This email is already subscribed to our newsletter. Thank you for your interest!",
+            variant: "default",
           });
+        } else if (error.message.includes('violates row-level security')) {
+          throw new Error('Permission denied. Please try again or contact support.');
+        } else if (error.message.includes('connection')) {
+          throw new Error('Connection failed. Please check your internet connection and try again.');
         } else {
-          throw error;
+          throw new Error('Subscription failed. Please try again or contact support if the problem persists.');
         }
         return;
       }
 
       toast({
         title: "Successfully subscribed!",
-        description: "Thank you for subscribing to our newsletter. You'll receive the latest event planning tips and updates.",
+        description: "Thank you for subscribing! You'll receive event tips, exclusive offers, and the latest updates.",
       });
 
       setEmail(""); // Clear the form
-    } catch (error) {
+      setValidationError('');
+    } catch (error: any) {
       console.error('Newsletter subscription error:', error);
+      
       toast({
         title: "Subscription failed",
-        description: "Failed to subscribe to newsletter. Please try again later.",
+        description: error.message || "Unable to subscribe right now. Please try again later or contact support.",
         variant: "destructive",
       });
     } finally {
@@ -79,19 +88,33 @@ const NewsletterSubscription = () => {
 
   return (
     <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-      <input 
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Enter your email"
-        disabled={isSubscribing}
-        className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-      />
+      <div className="flex-1">
+        <input 
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (validationError) setValidationError('');
+          }}
+          placeholder="Enter your email"
+          disabled={isSubscribing}
+          className={`w-full px-4 py-3 rounded-lg bg-white/10 border text-white placeholder:text-white/60 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+            validationError 
+              ? 'border-red-400 focus:ring-red-400/50' 
+              : 'border-white/20 focus:ring-secondary'
+          }`}
+        />
+        {validationError && (
+          <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+            ⚠️ {validationError}
+          </p>
+        )}
+      </div>
       <Button 
         type="submit" 
         variant="secondary" 
-        className="px-6 py-3 font-semibold disabled:opacity-50"
-        disabled={isSubscribing}
+        className="px-6 py-3 font-semibold disabled:opacity-50 min-w-[120px]"
+        disabled={isSubscribing || !!validationError}
       >
         {isSubscribing ? (
           <>
