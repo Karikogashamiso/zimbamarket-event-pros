@@ -31,6 +31,7 @@ import {
 const ListBusiness = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedBusinessType, setSelectedBusinessType] = useState<string>("");
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
@@ -52,12 +53,26 @@ const ListBusiness = () => {
     description: z.string().trim().min(1, "Business description is required").max(1000, "Description must be less than 1000 characters")
   });
 
+  // Handle business type card selection
+  const handleBusinessTypeSelect = (businessType: string) => {
+    setSelectedBusinessType(businessType);
+    setFormData(prev => ({
+      ...prev,
+      businessType: businessType
+    }));
+  };
+
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    
+    // Update selected business type when manually typing
+    if (field === 'businessType') {
+      setSelectedBusinessType(value);
+    }
   };
 
   // Handle form submission
@@ -108,6 +123,9 @@ const ListBusiness = () => {
         email: "",
         description: ""
       });
+      
+      // Reset selected business type
+      setSelectedBusinessType("");
 
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -180,20 +198,20 @@ const ListBusiness = () => {
   ];
 
   const businessTypes = [
-    { name: "Wedding Venues", icon: Building2, popular: true },
-    { name: "Conference Centers", icon: Building2, popular: true },
-    { name: "Catering Companies", icon: Utensils, popular: true },
-    { name: "Professional DJs", icon: Music, popular: true },
-    { name: "Event Photographers", icon: Camera, popular: true },
-    { name: "Wedding Planners", icon: Heart, popular: false },
-    { name: "Event Decorators", icon: Star, popular: false },
-    { name: "Live Bands", icon: Music, popular: false },
-    { name: "Bartending Services", icon: Utensils, popular: false },
-    { name: "Lighting & Sound", icon: Zap, popular: false },
-    { name: "Private Chefs", icon: Utensils, popular: false },
-    { name: "Master of Ceremonies", icon: Users, popular: false },
-    { name: "Event Security", icon: Shield, popular: false },
-    { name: "Transportation", icon: Globe, popular: false }
+    { name: "Wedding Venues", icon: Building2, popular: true, color: "bg-gradient-to-br from-blue-500 to-blue-600" },
+    { name: "Conference Centers", icon: Building2, popular: true, color: "bg-gradient-to-br from-indigo-500 to-indigo-600" },
+    { name: "Catering Companies", icon: Utensils, popular: true, color: "bg-gradient-to-br from-green-500 to-green-600" },
+    { name: "Professional DJs", icon: Music, popular: true, color: "bg-gradient-to-br from-red-500 to-red-600" },
+    { name: "Event Photographers", icon: Camera, popular: true, color: "bg-gradient-to-br from-purple-500 to-purple-600" },
+    { name: "Wedding Planners", icon: Heart, popular: false, color: "bg-gradient-to-br from-pink-500 to-pink-600" },
+    { name: "Event Decorators", icon: Star, popular: false, color: "bg-gradient-to-br from-orange-500 to-orange-600" },
+    { name: "Live Bands", icon: Music, popular: false, color: "bg-gradient-to-br from-violet-500 to-violet-600" },
+    { name: "Bartending Services", icon: Utensils, popular: false, color: "bg-gradient-to-br from-emerald-500 to-emerald-600" },
+    { name: "Lighting & Sound", icon: Zap, popular: false, color: "bg-gradient-to-br from-yellow-500 to-yellow-600" },
+    { name: "Private Chefs", icon: Utensils, popular: false, color: "bg-gradient-to-br from-teal-500 to-teal-600" },
+    { name: "Master of Ceremonies", icon: Users, popular: false, color: "bg-gradient-to-br from-cyan-500 to-cyan-600" },
+    { name: "Event Security", icon: Shield, popular: false, color: "bg-gradient-to-br from-gray-500 to-gray-600" },
+    { name: "Transportation", icon: Globe, popular: false, color: "bg-gradient-to-br from-slate-500 to-slate-600" }
   ];
 
   const stats = [
@@ -280,19 +298,44 @@ const ListBusiness = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-12">
             {businessTypes.map((business, index) => (
-              <Card key={index} className="text-center hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer group">
+              <Card 
+                key={index} 
+                className={`text-center hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer group ${
+                  selectedBusinessType === business.name 
+                    ? 'ring-2 ring-primary bg-primary/5 border-primary shadow-lg' 
+                    : 'hover:shadow-xl'
+                }`}
+                onClick={() => handleBusinessTypeSelect(business.name)}
+              >
                 <CardContent className="p-6">
                   <div className="relative">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg ${
+                      selectedBusinessType === business.name 
+                        ? 'bg-gradient-to-br from-primary to-primary/80 scale-110' 
+                        : business.color
+                    }`}>
                       <business.icon className="w-8 h-8 text-white" />
                     </div>
                     {business.popular && (
-                      <Badge className="absolute -top-2 -right-2 bg-secondary text-white">
+                      <Badge className={`absolute -top-2 -right-2 ${
+                        selectedBusinessType === business.name 
+                          ? 'bg-primary text-white' 
+                          : 'bg-secondary text-white'
+                      }`}>
                         Popular
                       </Badge>
                     )}
+                    {selectedBusinessType === business.name && (
+                      <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary transition-colors">
+                  <h3 className={`font-semibold transition-colors ${
+                    selectedBusinessType === business.name 
+                      ? 'text-primary' 
+                      : 'group-hover:text-primary'
+                  }`}>
                     {business.name}
                   </h3>
                 </CardContent>
@@ -304,7 +347,12 @@ const ListBusiness = () => {
             <p className="text-muted-foreground mb-6">
               Don't see your business type? No problem! We welcome all event-related services.
             </p>
-            <Button variant="outline" size="lg" className="hover-scale">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="hover-scale"
+              onClick={() => handleBusinessTypeSelect("Other Business Types")}
+            >
               <Plus className="w-5 h-5 mr-2" />
               Other Business Types
             </Button>
@@ -380,6 +428,11 @@ const ListBusiness = () => {
                           onChange={(e) => handleInputChange('businessType', e.target.value)}
                           required
                         />
+                        {selectedBusinessType && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Selected: {selectedBusinessType}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
