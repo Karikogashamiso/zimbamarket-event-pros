@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { TicketDisplay } from '@/components/Tickets/TicketDisplay';
 import { CheckCircle, Download, Mail, MessageSquare, Share2, Receipt } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TicketConfirmationProps {
   orderDetails: any;
@@ -22,6 +24,15 @@ export const TicketConfirmation: React.FC<TicketConfirmationProps> = ({ orderDet
   const formatCurrency = (amount: number, currency = 'USD') => {
     const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
     return `${symbol}${amount.toFixed(2)}`;
+  };
+
+  const handleTicketDownload = (ticketId: string, format: 'pdf' | 'image') => {
+    // In a real implementation, this would trigger actual PDF/image generation
+    toast.success(`${format.toUpperCase()} download will be implemented with payment integration`);
+  };
+
+  const handleTicketShare = (ticketId: string, method: 'email' | 'whatsapp') => {
+    toast.success(`Ticket shared via ${method === 'whatsapp' ? 'WhatsApp' : 'Email'}`);
   };
 
   return (
@@ -84,46 +95,43 @@ export const TicketConfirmation: React.FC<TicketConfirmationProps> = ({ orderDet
             </div>
           </div>
 
-          {/* Tickets Information */}
+          {/* Enhanced Tickets Display */}
           {orderDetails.tickets && orderDetails.tickets.length > 0 && (
             <>
               <Separator />
-              <div>
-                <p className="text-sm text-muted-foreground mb-3">Your Tickets ({orderDetails.tickets.length})</p>
-                <div className="space-y-2">
-                  {orderDetails.tickets.map((ticket: any, index: number) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                      <span className="font-mono text-sm">{ticket.ticket_number}</span>
-                      <Badge variant="outline">{ticket.ticket_status}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <TicketDisplay
+                orderDetails={orderDetails}
+                tickets={orderDetails.tickets}
+                onDownload={handleTicketDownload}
+                onShare={handleTicketShare}
+              />
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download Tickets
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Share2 className="h-4 w-4" />
-            Share Booking
+      {/* Action Buttons - Only show if no tickets to avoid duplication */}
+      {(!orderDetails.tickets || orderDetails.tickets.length === 0) && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Download Receipt
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              Share Booking
+            </Button>
+          </div>
+
+          <Button 
+            onClick={() => window.location.href = '/'}
+            className="w-full"
+          >
+            Return to Home
           </Button>
         </div>
-
-        <Button 
-          onClick={() => window.location.href = '/'}
-          className="w-full"
-        >
-          Return to Home
-        </Button>
-      </div>
+      )}
 
       {/* Help Section */}
       <Card className="bg-blue-50 border-blue-200 text-left">

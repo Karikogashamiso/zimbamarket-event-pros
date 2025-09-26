@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { useTicketGeneration } from './useTicketGeneration';
 
 // Validation schemas
 const customerInfoSchema = z.object({
@@ -88,6 +89,7 @@ export const useCheckout = () => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { generateTickets, isGenerating } = useTicketGeneration();
 
   const calculateTotal = (ticketTiers: any[], addOns: any[] = []) => {
     const ticketTotal = ticketTiers.reduce((sum, tier) => sum + (tier.price * tier.quantity), 0);
@@ -172,56 +174,21 @@ export const useCheckout = () => {
     return order;
   };
 
-  const createTickets = async (orderId: string, ticketTiers: any[]) => {
-    const tickets = [];
+  const createTickets = async (orderId: string, ticketTiers: any[], checkoutData: CheckoutData) => {
+    console.log('Creating secure tickets with QR codes...');
 
-    for (const tier of ticketTiers) {
-      for (let i = 0; i < tier.quantity; i++) {
-        const ticketNumber = `${orderId.substr(0, 8)}-${tier.id.toUpperCase()}-${String(i + 1).padStart(3, '0')}`;
-        const qrCodeData = JSON.stringify({
-          orderId,
-          ticketNumber,
-          tier: tier.id,
-          timestamp: Date.now(),
-        });
+    const generationOptions = {
+      orderId,
+      ticketTiers,
+      customerInfo: checkoutData.customerInfo!,
+      eventInfo: checkoutData.event,
+    };
 
-        const ticketData = {
-          order_id: orderId,
-          ticket_type_id: tier.id, // This should map to actual ticket_types in your DB
-          ticket_number: ticketNumber,
-          original_price: tier.price,
-          paid_price: tier.price,
-          currency: tier.currency,
-          ticket_status: 'valid',
-          qr_code_data: qrCodeData,
-          holder_first_name: null, // Will be set when assigned
-          holder_last_name: null,
-          holder_email: null,
-          holder_phone: null,
-          metadata: {
-            tierName: tier.name,
-            position: i + 1,
-          },
-        };
-
-        tickets.push(ticketData);
-      }
-    }
-
-    console.log('Creating tickets:', tickets);
-
-    const { data: createdTickets, error: ticketsError } = await supabase
-      .from('tickets')
-      .insert(tickets)
-      .select();
-
-    if (ticketsError) {
-      console.error('Tickets creation error:', ticketsError);
-      throw new Error(`Failed to create tickets: ${ticketsError.message}`);
-    }
-
-    console.log('Tickets created:', createdTickets);
-    return createdTickets;
+    // Use the enhanced ticket generation service
+    const generatedTickets = await generateTickets(generationOptions);
+    
+    console.log(`Successfully generated ${generatedTickets.length} secure tickets`);
+    return generatedTickets;
   };
 
   const processPayment = async (orderId: string, paymentMethod: string, amount: number) => {
@@ -319,8 +286,8 @@ export const useCheckout = () => {
       // Step 1: Create order
       const order = await createOrder(checkoutData);
 
-      // Step 2: Create tickets
-      const tickets = await createTickets(order.id, checkoutData.ticketTiers!);
+      // Step 2: Create tickets with secure QR codes
+      const tickets = await createTickets(order.id, checkoutData.ticketTiers!, checkoutData);
 
       // Step 3: Process payment
       const payment = await processPayment(
@@ -366,7 +333,7 @@ export const useCheckout = () => {
   };
 
   return {
-    isProcessing,
+    isProcessing: isProcessing || isGenerating,
     orderDetails,
     processCheckout,
     validateCheckoutData,
