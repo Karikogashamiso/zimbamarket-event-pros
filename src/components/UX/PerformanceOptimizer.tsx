@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // Lazy load heavy components
-const LazyImage = lazy(() => import("@/components/LazyImage"));
+const LazyImageComponent = lazy(() => import("@/components/LazyImage"));
 
 interface PerformanceMetrics {
   lcp: number; // Largest Contentful Paint
@@ -187,7 +187,7 @@ const PerformanceOptimizer = () => {
                 <span className="text-xs">Loading...</span>
               </div>
             }>
-              <LazyImage 
+              <LazyImageComponent 
                 src="/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png" 
                 alt="Royal Gardens Venue"
                 className="w-full h-20 object-cover rounded"
