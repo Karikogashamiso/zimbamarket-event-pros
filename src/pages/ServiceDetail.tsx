@@ -33,22 +33,96 @@ import { useReviews } from "@/hooks/useReviews";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Booking form validation schema
+const bookingSchema = z.object({
+  selectedDate: z.string().optional(),
+  message: z.string().optional(),
+  guestName: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters").optional(),
+  guestEmail: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters").optional(),
+  guestPhone: z.string().max(20, "Phone number must be less than 20 characters").optional(),
+});
 
 const ServiceDetail = () => {
   const { id } = useParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState('');
   const [message, setMessage] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
   const [isBookingLoading, setIsBookingLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   
   const { service, loading: serviceLoading, error: serviceError } = useService(id || '');
   const { reviews, loading: reviewsLoading } = useReviews(id || '');
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Handle field blur for validation
+  const handleFieldBlur = (fieldName: string) => {
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
+  };
+
+  // Validate form data
+  const validateForm = () => {
+    const formData = {
+      selectedDate,
+      message,
+      ...(user ? {} : {
+        guestName: guestName.trim(),
+        guestEmail: guestEmail.trim(),
+        guestPhone: guestPhone.trim(),
+      })
+    };
+
+    try {
+      if (!user) {
+        // For guest users, require name and email
+        if (!guestName.trim()) {
+          throw new Error("Name is required");
+        }
+        if (!guestEmail.trim()) {
+          throw new Error("Email is required");
+        }
+        if (guestEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+          throw new Error("Invalid email address");
+        }
+      }
+
+      bookingSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      } else if (error instanceof Error) {
+        toast({
+          title: "Validation Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+      return false;
+    }
+  };
+
   // Handle booking submission
   const handleBookingSubmit = async () => {
     if (!service) return;
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
     
     setIsBookingLoading(true);
     
@@ -56,23 +130,29 @@ const ServiceDetail = () => {
       const bookingData = {
         service_id: service.id,
         event_date: selectedDate || null,
-        message: message || null,
+        message: message.trim() || null,
         ...(user ? {
           user_id: user.id,
         } : {
-          guest_name: '', // Will be handled by a form if user is not logged in
-          guest_email: '',
-          guest_phone: '',
+          guest_name: guestName.trim(),
+          guest_email: guestEmail.trim().toLowerCase(),
+          guest_phone: guestPhone.trim() || null,
         })
       };
 
-      const { error } = await supabase
+      console.log('Submitting booking data:', bookingData);
+
+      const { data, error } = await supabase
         .from('booking_requests')
-        .insert(bookingData);
+        .insert(bookingData)
+        .select();
 
       if (error) {
-        throw error;
+        console.error('Supabase error:', error);
+        throw new Error(error.message || 'Failed to submit booking request');
       }
+
+      console.log('Booking request created:', data);
 
       toast({
         title: "Inquiry sent!",
@@ -82,11 +162,16 @@ const ServiceDetail = () => {
       // Reset form
       setSelectedDate('');
       setMessage('');
-    } catch (error) {
+      setGuestName('');
+      setGuestEmail('');
+      setGuestPhone('');
+      setErrors({});
+      setTouchedFields({});
+    } catch (error: any) {
       console.error('Error submitting booking:', error);
       toast({
         title: "Error",
-        description: "Failed to send inquiry. Please try again.",
+        description: error.message || "Failed to send inquiry. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -442,12 +527,67 @@ const ServiceDetail = () => {
                       </div>
                       
                       <div className="space-y-4">
+                        {/* Guest user contact information */}
+                        {!user && (
+                          <>
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Your Name *</label>
+                              <Input 
+                                type="text"
+                                placeholder="Full name"
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                onBlur={() => handleFieldBlur('guestName')}
+                                className={errors.guestName || (touchedFields.guestName && !guestName.trim()) ? 'border-destructive' : ''}
+                              />
+                              {(errors.guestName || (touchedFields.guestName && !guestName.trim())) && (
+                                <p className="text-sm text-destructive mt-1">
+                                  {errors.guestName || 'Name is required'}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Email Address *</label>
+                              <Input 
+                                type="email"
+                                placeholder="your@email.com"
+                                value={guestEmail}
+                                onChange={(e) => setGuestEmail(e.target.value)}
+                                onBlur={() => handleFieldBlur('guestEmail')}
+                                className={errors.guestEmail || (touchedFields.guestEmail && !guestEmail.trim()) ? 'border-destructive' : ''}
+                              />
+                              {(errors.guestEmail || (touchedFields.guestEmail && !guestEmail.trim())) && (
+                                <p className="text-sm text-destructive mt-1">
+                                  {errors.guestEmail || 'Email is required'}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Phone Number</label>
+                              <Input 
+                                type="tel"
+                                placeholder="+1 (555) 123-4567"
+                                value={guestPhone}
+                                onChange={(e) => setGuestPhone(e.target.value)}
+                                onBlur={() => handleFieldBlur('guestPhone')}
+                                className={errors.guestPhone ? 'border-destructive' : ''}
+                              />
+                              {errors.guestPhone && (
+                                <p className="text-sm text-destructive mt-1">{errors.guestPhone}</p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                        
                         <div>
                           <label className="text-sm font-medium mb-2 block">Preferred Date</label>
                           <Input 
                             type="date" 
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
                           />
                         </div>
                         
