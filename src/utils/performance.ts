@@ -27,25 +27,47 @@ const getRating = (name: string, value: number): 'good' | 'needs-improvement' | 
   return 'poor';
 };
 
-// Core Web Vitals measurement
+// Core Web Vitals measurement with cleanup and debouncing
 export const measureWebVitals = (onMetric: (metric: WebVitalsMetric) => void) => {
+  const observers: PerformanceObserver[] = [];
+  const reportedMetrics = new Set<string>();
+  let clsValue = 0;
+  let clsTimeout: number | null = null;
+  
+  const cleanup = () => {
+    observers.forEach(observer => {
+      try {
+        observer.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting observer:', e);
+      }
+    });
+    if (clsTimeout) {
+      clearTimeout(clsTimeout);
+    }
+  };
+
   // Largest Contentful Paint (LCP)
   if ('PerformanceObserver' in window) {
     const lcpObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1] as PerformanceEntry & { startTime: number };
       
-      onMetric({
-        name: 'LCP',
-        value: lastEntry.startTime,
-        rating: getRating('LCP', lastEntry.startTime),
-        delta: lastEntry.startTime,
-        id: 'lcp',
-      });
+      if (!reportedMetrics.has('LCP')) {
+        reportedMetrics.add('LCP');
+        onMetric({
+          name: 'LCP',
+          value: lastEntry.startTime,
+          rating: getRating('LCP', lastEntry.startTime),
+          delta: lastEntry.startTime,
+          id: 'lcp',
+        });
+      }
     });
     
     try {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      observers.push(lcpObserver);
     } catch (e) {
       console.warn('LCP observation not supported');
     }
@@ -54,24 +76,27 @@ export const measureWebVitals = (onMetric: (metric: WebVitalsMetric) => void) =>
     const fidObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       entries.forEach((entry: any) => {
-        onMetric({
-          name: 'FID',
-          value: entry.processingStart - entry.startTime,
-          rating: getRating('FID', entry.processingStart - entry.startTime),
-          delta: entry.processingStart - entry.startTime,
-          id: 'fid',
-        });
+        if (!reportedMetrics.has('FID')) {
+          reportedMetrics.add('FID');
+          onMetric({
+            name: 'FID',
+            value: entry.processingStart - entry.startTime,
+            rating: getRating('FID', entry.processingStart - entry.startTime),
+            delta: entry.processingStart - entry.startTime,
+            id: 'fid',
+          });
+        }
       });
     });
 
     try {
       fidObserver.observe({ entryTypes: ['first-input'] });
+      observers.push(fidObserver);
     } catch (e) {
       console.warn('FID observation not supported');
     }
 
-    // Cumulative Layout Shift (CLS)
-    let clsValue = 0;
+    // Cumulative Layout Shift (CLS) - debounced reporting
     const clsObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       entries.forEach((entry: any) => {
@@ -80,21 +105,32 @@ export const measureWebVitals = (onMetric: (metric: WebVitalsMetric) => void) =>
         }
       });
       
-      onMetric({
-        name: 'CLS',
-        value: clsValue,
-        rating: getRating('CLS', clsValue),
-        delta: clsValue,
-        id: 'cls',
-      });
+      // Debounce CLS reporting to avoid excessive updates
+      if (clsTimeout) {
+        clearTimeout(clsTimeout);
+      }
+      
+      clsTimeout = window.setTimeout(() => {
+        onMetric({
+          name: 'CLS',
+          value: clsValue,
+          rating: getRating('CLS', clsValue),
+          delta: clsValue,
+          id: 'cls',
+        });
+      }, 500); // Report CLS after 500ms of inactivity
     });
 
     try {
       clsObserver.observe({ entryTypes: ['layout-shift'] });
+      observers.push(clsObserver);
     } catch (e) {
       console.warn('CLS observation not supported');
     }
   }
+
+  // Return cleanup function
+  return cleanup;
 
   // Navigation Timing metrics
   window.addEventListener('load', () => {

@@ -32,8 +32,10 @@ const PerformanceMonitor: React.FC = () => {
   const initializeMetrics = () => {
     setIsLoading(true);
     const collectedMetrics: Metric[] = [];
+    let metricsCount = 0;
+    const expectedMetrics = 5; // LCP, FID, CLS, FCP, TTFB
 
-    measureWebVitals((metric) => {
+    const cleanup = measureWebVitals((metric) => {
       const metricData: Metric = {
         name: metric.name,
         value: metric.value,
@@ -42,15 +44,33 @@ const PerformanceMonitor: React.FC = () => {
         threshold: getMetricThreshold(metric.name),
       };
 
-      collectedMetrics.push(metricData);
+      // Avoid duplicate metrics
+      const existingIndex = collectedMetrics.findIndex(m => m.name === metric.name);
+      if (existingIndex >= 0) {
+        collectedMetrics[existingIndex] = metricData;
+      } else {
+        collectedMetrics.push(metricData);
+        metricsCount++;
+      }
+      
       setMetrics([...collectedMetrics]);
+
+      // Complete loading when we have enough metrics or after timeout
+      if (metricsCount >= expectedMetrics - 2) { // Allow for 2 missing metrics
+        setTimeout(() => {
+          setIsLoading(false);
+          setLastUpdated(new Date());
+          cleanup(); // Clean up observers after collecting metrics
+        }, 100);
+      }
     });
 
-    // Simulate completion after collecting initial metrics
+    // Fallback timeout to prevent infinite loading
     setTimeout(() => {
       setIsLoading(false);
       setLastUpdated(new Date());
-    }, 2000);
+      cleanup();
+    }, 3000);
   };
 
   const getMetricUnit = (name: string): string => {

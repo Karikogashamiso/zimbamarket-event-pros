@@ -34,9 +34,12 @@ const FloatingActionButton = lazy(() => import("@/components/FloatingActionButto
 
 const Index = () => {
   useEffect(() => {
-    // Monitor Core Web Vitals
-    measureWebVitals((metric) => {
-      console.log('Web Vital:', metric);
+    // Monitor Core Web Vitals with cleanup
+    const cleanup = measureWebVitals((metric) => {
+      // Only log significant performance issues to reduce console noise
+      if (metric.rating === 'poor') {
+        console.warn(`Performance issue detected - ${metric.name}:`, metric);
+      }
       
       // Send to analytics
       if ((window as any).gtag) {
@@ -48,8 +51,11 @@ const Index = () => {
       }
     });
 
-    // Monitor performance budget
+    // Monitor performance budgets
     monitorPerformanceBudget();
+
+    // Cleanup observers when component unmounts
+    return cleanup;
   }, []);
 
   const organizationData = {
