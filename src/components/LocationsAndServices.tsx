@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { 
   MapPin,
   Building2,
@@ -13,38 +14,38 @@ import {
 
 const LocationsAndServices = () => {
   const venueLocations = [
-    { name: "All Venues", count: "150+" },
-    { name: "Venues in Harare", count: "65+" },
-    { name: "Venues in Bulawayo", count: "35+" },
-    { name: "Venues in Mutare", count: "15+" },
-    { name: "Venues in Gweru", count: "12+" },
-    { name: "Venues in Kwekwe", count: "8+" },
-    { name: "Venues in Masvingo", count: "10+" },
-    { name: "Venues in Chinhoyi", count: "6+" },
-    { name: "Venues in Victoria Falls", count: "20+" },
-    { name: "Wedding Venues in Harare", count: "45+" },
-    { name: "Wedding Venues in Bulawayo", count: "25+" },
-    { name: "Conference Centers in Harare", count: "30+" }
+    { name: "All Venues", count: "150+", url: "/search?category=venues" },
+    { name: "Venues in Harare", count: "65+", url: "/search?category=venues&location=Harare" },
+    { name: "Venues in Bulawayo", count: "35+", url: "/search?category=venues&location=Bulawayo" },
+    { name: "Venues in Mutare", count: "15+", url: "/search?category=venues&location=Mutare" },
+    { name: "Venues in Gweru", count: "12+", url: "/search?category=venues&location=Gweru" },
+    { name: "Venues in Kwekwe", count: "8+", url: "/search?category=venues&location=Kwekwe" },
+    { name: "Venues in Masvingo", count: "10+", url: "/search?category=venues&location=Masvingo" },
+    { name: "Venues in Chinhoyi", count: "6+", url: "/search?category=venues&location=Chinhoyi" },
+    { name: "Venues in Victoria Falls", count: "20+", url: "/search?category=venues&location=Victoria Falls" },
+    { name: "Wedding Venues in Harare", count: "45+", url: "/search?category=wedding-venues&location=Harare" },
+    { name: "Wedding Venues in Bulawayo", count: "25+", url: "/search?category=wedding-venues&location=Bulawayo" },
+    { name: "Conference Centers in Harare", count: "30+", url: "/search?category=conference-venues&location=Harare" }
   ];
 
   const serviceProviders = [
-    { name: "All Event Service Providers", count: "500+" },
-    { name: "Bakers & Cake Designers", count: "60+" },
-    { name: "Bartending Services", count: "35+" },
-    { name: "Catering Companies", count: "80+" },
-    { name: "Decor Services", count: "70+" },
-    { name: "Event Planners", count: "45+" },
-    { name: "Lighting & Sound Services", count: "40+" },
-    { name: "Photographers", count: "90+" },
-    { name: "Private Chefs", count: "25+" },
-    { name: "Wedding Planners", count: "35+" },
-    { name: "All Event Entertainers", count: "200+" },
-    { name: "Live Bands", count: "50+" },
-    { name: "Gospel Choirs", count: "25+" },
-    { name: "Professional DJs", count: "120+" },
-    { name: "Magicians", count: "15+" },
-    { name: "Master of Ceremonies", count: "30+" },
-    { name: "Solo Singers", count: "40+" }
+    { name: "All Event Service Providers", count: "500+", url: "/search?category=event-services" },
+    { name: "Bakers & Cake Designers", count: "60+", url: "/search?category=catering&q=bakers" },
+    { name: "Bartending Services", count: "35+", url: "/search?category=catering&q=bartending" },
+    { name: "Catering Companies", count: "80+", url: "/search?category=catering" },
+    { name: "Decor Services", count: "70+", url: "/search?category=decor" },
+    { name: "Event Planners", count: "45+", url: "/search?category=event-planning" },
+    { name: "Lighting & Sound Services", count: "40+", url: "/search?category=audio-visual" },
+    { name: "Photographers", count: "90+", url: "/search?category=photography" },
+    { name: "Private Chefs", count: "25+", url: "/search?category=catering&q=private chef" },
+    { name: "Wedding Planners", count: "35+", url: "/search?category=event-planning&q=wedding" },
+    { name: "All Event Entertainers", count: "200+", url: "/search?category=entertainment" },
+    { name: "Live Bands", count: "50+", url: "/search?category=entertainment&q=bands" },
+    { name: "Gospel Choirs", count: "25+", url: "/search?category=entertainment&q=gospel choir" },
+    { name: "Professional DJs", count: "120+", url: "/search?category=dj" },
+    { name: "Magicians", count: "15+", url: "/search?category=entertainment&q=magicians" },
+    { name: "Master of Ceremonies", count: "30+", url: "/search?category=entertainment&q=mc" },
+    { name: "Solo Singers", count: "40+", url: "/search?category=entertainment&q=singers" }
   ];
 
   return (
@@ -78,7 +79,11 @@ const LocationsAndServices = () => {
             
             <div className="space-y-3">
               {venueLocations.map((location, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer group">
+                <Link 
+                  key={index} 
+                  to={location.url}
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer group block"
+                >
                   <span className="text-foreground group-hover:text-primary transition-colors">
                     {location.name}
                   </span>
@@ -88,7 +93,7 @@ const LocationsAndServices = () => {
                     </Badge>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
@@ -107,7 +112,11 @@ const LocationsAndServices = () => {
             
             <div className="space-y-3">
               {serviceProviders.map((service, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/5 transition-colors cursor-pointer group">
+                <Link 
+                  key={index} 
+                  to={service.url}
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/5 transition-colors cursor-pointer group block"
+                >
                   <span className="text-foreground group-hover:text-secondary transition-colors">
                     {service.name}
                   </span>
@@ -117,7 +126,7 @@ const LocationsAndServices = () => {
                     </Badge>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all duration-200" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
