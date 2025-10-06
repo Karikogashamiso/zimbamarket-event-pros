@@ -145,7 +145,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   };
 
   const clearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       query: '',
       location: '',
       category: '',
@@ -156,8 +156,10 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
       amenities: [],
       featured: false,
       verified: false,
-      sortBy: 'relevance',
-    });
+      sortBy: 'relevance' as const,
+    };
+    setFilters(clearedFilters);
+    onSearch(clearedFilters);
   };
 
   const activeFiltersCount = [
