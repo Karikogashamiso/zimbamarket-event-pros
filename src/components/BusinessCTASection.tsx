@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Plus, Users, TrendingUp, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const BusinessCTASection = () => {
   return (
@@ -27,26 +28,26 @@ const BusinessCTASection = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
-              <Button 
-                size="lg" 
-                className="text-xl px-12 py-6 h-auto bg-secondary hover:bg-secondary/90 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover-scale"
-              >
-                <Plus className="w-6 h-6 mr-3" />
-                <a href="/list-business" className="flex items-center">
+              <Link to="/list-business">
+                <Button 
+                  size="lg" 
+                  className="text-xl px-12 py-6 h-auto bg-secondary hover:bg-secondary/90 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover-scale"
+                >
+                  <Plus className="w-6 h-6 mr-3" />
                   List My Business
-                </a>
-              </Button>
+                </Button>
+              </Link>
               
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-xl px-12 py-6 h-auto border-2 border-secondary text-secondary hover:bg-secondary hover:text-white rounded-full transition-all duration-300 hover-scale group"
-              >
-                <a href="/about" className="flex items-center">
+              <Link to="/about">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="text-xl px-12 py-6 h-auto border-2 border-secondary text-secondary hover:bg-secondary hover:text-white rounded-full transition-all duration-300 hover-scale group"
+                >
                   Learn more
                   <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
-                </a>
-              </Button>
+                </Button>
+              </Link>
             </div>
             
             {/* Trust Indicators */}

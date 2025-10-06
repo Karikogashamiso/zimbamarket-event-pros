@@ -2,9 +2,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Gift, Bell, Users } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState("");
+  const { toast } = useToast();
+
+  const handleSubscribe = () => {
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Navigate to contact page or show success
+    toast({
+      title: "Thank You!",
+      description: "Please visit our contact page to complete your subscription.",
+    });
+  };
 
   const benefits = [
     {
@@ -83,10 +103,15 @@ const NewsletterSection = () => {
                   variant="default" 
                   size="lg" 
                   className="h-14 px-8 text-lg font-semibold hover-scale"
+                  onClick={handleSubscribe}
                 >
                   Subscribe Now
                 </Button>
               </div>
+              
+              <Link to="/contact" className="text-sm text-primary hover:underline block mb-4">
+                Or subscribe via our contact form
+              </Link>
               
               <p className="text-sm text-muted-foreground">
                 We respect your privacy. Unsubscribe at any time. 

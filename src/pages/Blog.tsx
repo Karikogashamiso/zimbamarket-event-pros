@@ -18,10 +18,13 @@ import {
   Search
 } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const { toast } = useToast();
 
   const categories = [
     { id: "all", label: "All Posts" },
@@ -233,7 +236,12 @@ const Blog = () => {
                               </Badge>
                             ))}
                           </div>
-                          <Button variant="ghost" size="sm" className="group">
+                          <Button variant="ghost" size="sm" className="group" onClick={() => {
+                            toast({
+                              title: "Coming Soon",
+                              description: "Full blog articles are being prepared. Stay tuned!",
+                            });
+                          }}>
                             Read More
                             <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                           </Button>
@@ -298,7 +306,12 @@ const Blog = () => {
                             <Button variant="ghost" size="sm">
                               <Share2 className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="group">
+                            <Button variant="ghost" size="sm" className="group" onClick={() => {
+                              toast({
+                                title: "Coming Soon",
+                                description: "Full blog articles are being prepared. Stay tuned!",
+                              });
+                            }}>
                               Read More
                               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                             </Button>
@@ -325,12 +338,12 @@ const Blog = () => {
                   <p className="text-muted-foreground mb-4">
                     Subscribe to our newsletter to stay updated on events and news.
                   </p>
-                  <div className="space-y-3">
-                    <Input placeholder="Enter your email" type="email" />
+                  <Link to="/contact">
                     <Button className="w-full bg-secondary hover:bg-secondary/90">
-                      Subscribe
+                      Subscribe to Newsletter
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                  </div>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -349,7 +362,15 @@ const Blog = () => {
                           className="w-16 h-16 object-cover rounded-lg"
                         />
                         <div className="flex-1">
-                          <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                          <h4 
+                            className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2 cursor-pointer"
+                            onClick={() => {
+                              toast({
+                                title: "Coming Soon",
+                                description: "Full blog articles are being prepared. Stay tuned!",
+                              });
+                            }}
+                          >
                             {post.title}
                           </h4>
                           <p className="text-xs text-muted-foreground">

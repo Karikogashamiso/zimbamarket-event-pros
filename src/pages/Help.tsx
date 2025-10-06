@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -165,9 +166,28 @@ const Help = () => {
                     <p className="font-semibold text-primary">{method.details}</p>
                     <p className="text-sm text-muted-foreground">{method.hours}</p>
                   </div>
-                  <Button className="w-full">
-                    {method.action}
-                  </Button>
+                  {method.icon === Phone ? (
+                    <a href="tel:+2634123456 7">
+                      <Button className="w-full">
+                        {method.action}
+                      </Button>
+                    </a>
+                  ) : method.icon === Mail ? (
+                    <a href="mailto:support@zimeventpro.co.zw">
+                      <Button className="w-full">
+                        {method.action}
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button className="w-full" onClick={() => {
+                      const chatWidget = document.querySelector('[data-chat-widget]');
+                      if (chatWidget) {
+                        (chatWidget as HTMLElement).click();
+                      }
+                    }}>
+                      {method.action}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -246,36 +266,16 @@ const Help = () => {
             </div>
             
             <Card className="p-8">
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Name</label>
-                    <Input placeholder="Your full name" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Email</label>
-                    <Input type="email" placeholder="your@email.com" />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Subject</label>
-                  <Input placeholder="What do you need help with?" />
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Message</label>
-                  <Textarea 
-                    placeholder="Please describe your question or issue in detail..."
-                    className="min-h-32"
-                  />
-                </div>
-                
+              <p className="text-center text-muted-foreground mb-6">
+                For detailed inquiries, please use our full contact form.
+              </p>
+              <Link to="/contact">
                 <Button size="lg" className="w-full text-lg py-3 h-auto">
                   <Mail className="w-5 h-5 mr-2" />
-                  Send Message
+                  Go to Contact Page
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              </form>
+              </Link>
             </Card>
           </div>
         </div>

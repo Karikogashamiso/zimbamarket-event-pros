@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { 
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import {
   Facebook, 
   Instagram, 
   Twitter, 
@@ -22,6 +24,27 @@ import {
 } from "lucide-react";
 
 const Footer = () => {
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const { toast } = useToast();
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Thank You!",
+      description: "You've been subscribed to our newsletter.",
+    });
+    setNewsletterEmail("");
+  };
+
   const quickLinks = [
     { name: "Home", href: "/", icon: Home },
     { name: "Browse Services", href: "/categories", icon: Search },
@@ -244,16 +267,18 @@ const Footer = () => {
             <p className="text-white/80 mb-6">
               Get the latest event planning tips, vendor updates, and special offers delivered to your inbox.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <input 
                 type="email"
                 placeholder="Enter your email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-secondary"
               />
-              <Button variant="secondary" className="px-6 py-3 font-semibold">
+              <Button type="submit" variant="secondary" className="px-6 py-3 font-semibold">
                 Subscribe
               </Button>
-            </div>
+            </form>
           </div>
         </div>
         
