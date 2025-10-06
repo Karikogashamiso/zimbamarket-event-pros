@@ -96,7 +96,7 @@ const Index = () => {
       <ErrorBoundary showDetails={process.env.NODE_ENV === 'development'}>
         <div className="min-h-screen">
           <SectionErrorBoundary sectionName="header">
-            <Header />
+            <Header variant="transparent" />
           </SectionErrorBoundary>
           
           <SectionErrorBoundary sectionName="hero section">

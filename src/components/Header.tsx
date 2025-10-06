@@ -7,7 +7,11 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-const Header = () => {
+interface HeaderProps {
+  variant?: "transparent" | "solid";
+}
+
+const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -37,33 +41,53 @@ const Header = () => {
     }
   };
 
+  const headerStyles = variant === "solid" 
+    ? "bg-white dark:bg-card border-border shadow-md" 
+    : "bg-white/20 md:bg-white/10 backdrop-blur-md border-white/30 md:border-white/20 shadow-lg md:shadow-none";
+
+  const textStyles = variant === "solid"
+    ? "text-foreground"
+    : "text-white";
+
+  const logoAccentStyles = variant === "solid"
+    ? "text-secondary"
+    : "text-secondary";
+
+  const searchStyles = variant === "solid"
+    ? "bg-muted border-border text-foreground placeholder:text-muted-foreground"
+    : "bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20";
+
+  const buttonStyles = variant === "solid"
+    ? "hover:bg-muted"
+    : "hover:bg-white/20";
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/20 md:bg-white/10 backdrop-blur-md border-b border-white/30 md:border-white/20 shadow-lg md:shadow-none">
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles}`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
-              Zim<span className="text-secondary">EventPro</span>
+            <h1 className={`text-2xl md:text-3xl font-bold ${textStyles}`}>
+              Zim<span className={logoAccentStyles}>EventPro</span>
             </h1>
           </Link>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/categories" className="text-white hover:text-secondary transition-colors">Browse</Link>
-            <Link to="/tickets" className="text-white hover:text-secondary transition-colors">Tickets</Link>
-            <Link to="/about" className="text-white hover:text-secondary transition-colors">About</Link>
-            <Link to="/categories?category=services" className="text-white hover:text-secondary transition-colors">Services</Link>
-            <Link to="/contact" className="text-white hover:text-secondary transition-colors">Contact</Link>
+            <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors`}>Browse</Link>
+            <Link to="/tickets" className={`${textStyles} hover:text-secondary transition-colors`}>Tickets</Link>
+            <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors`}>About</Link>
+            <Link to="/categories?category=services" className={`${textStyles} hover:text-secondary transition-colors`}>Services</Link>
+            <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors`}>Contact</Link>
           </nav>
           
           {/* Desktop Search */}
           <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 w-4 h-4" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${variant === "solid" ? "text-muted-foreground" : "text-white/70"}`} />
               <Input
                 placeholder="Search services..."
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20"
+                className={`pl-10 ${searchStyles}`}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     const target = e.target as HTMLInputElement;
@@ -78,12 +102,12 @@ const Header = () => {
           
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+            <Button variant="ghost" size="icon" className={`${textStyles} ${buttonStyles}`}>
               <Heart className="w-5 h-5" />
             </Button>
             {user ? (
               <>
-                <div className="flex items-center gap-2 text-white">
+                <div className={`flex items-center gap-2 ${textStyles}`}>
                   <User className="w-4 h-4" />
                   <span className="text-sm">
                     {user.user_metadata?.first_name || user.email?.split('@')[0]}
@@ -92,7 +116,7 @@ const Header = () => {
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="text-white hover:bg-white/20"
+                  className={`${textStyles} ${buttonStyles}`}
                   onClick={handleSignOut}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -101,14 +125,14 @@ const Header = () => {
               </>
             ) : (
               <Link to="/auth?tab=login">
-                <Button variant="glass" size="sm">
+                <Button variant={variant === "solid" ? "default" : "glass"} size="sm">
                   <User className="w-4 h-4 mr-2" />
                   Sign In
                 </Button>
               </Link>
             )}
             <Link to="/list-business">
-              <Button variant="hero" size="sm">
+              <Button variant={variant === "solid" ? "default" : "hero"} size="sm">
                 List Business
               </Button>
             </Link>
@@ -117,7 +141,7 @@ const Header = () => {
           {/* Mobile Menu Button */}
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-white"
+            className={`md:hidden ${textStyles}`}
           >
             <Menu className="w-6 h-6" />
           </button>
