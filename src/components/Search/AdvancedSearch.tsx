@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -67,6 +67,25 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     verified: initialFilters?.verified || false,
     sortBy: initialFilters?.sortBy || 'relevance',
   });
+
+  // Sync filters with initialFilters when they change (e.g., from URL params)
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters({
+        query: initialFilters.query || '',
+        location: initialFilters.location || '',
+        category: initialFilters.category || '',
+        priceRange: initialFilters.priceRange || { min: 0, max: 10000 },
+        rating: initialFilters.rating || 0,
+        availability: initialFilters.availability || [],
+        capacity: initialFilters.capacity || { min: 1, max: 1000 },
+        amenities: initialFilters.amenities || [],
+        featured: initialFilters.featured || false,
+        verified: initialFilters.verified || false,
+        sortBy: initialFilters.sortBy || 'relevance',
+      });
+    }
+  }, [initialFilters]);
 
   const availabilityOptions = [
     'Available now',
