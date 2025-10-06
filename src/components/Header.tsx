@@ -92,7 +92,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                   if (e.key === 'Enter') {
                     const target = e.target as HTMLInputElement;
                     if (target.value.trim()) {
-                      window.location.href = `/search-results?q=${encodeURIComponent(target.value.trim())}`;
+                      window.location.href = `/search?q=${encodeURIComponent(target.value.trim())}`;
                     }
                   }
                 }}

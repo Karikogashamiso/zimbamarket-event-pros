@@ -34,7 +34,7 @@ const MobileFirstDesign = () => {
   // Handle search submission
   const handleSearchSubmit = () => {
     if (searchValue.trim()) {
-      navigate(`/search-results?q=${encodeURIComponent(searchValue.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
     }
   };
 

@@ -68,7 +68,7 @@ const Categories = () => {
 
   // Handle category card clicks - navigate to search results with category filter
   const handleCategoryCardClick = (category: any) => {
-    navigate(`/search-results?category=${category.category}`);
+    navigate(`/search?category=${category.category}`);
   };
 
   // Initialize search query from URL
@@ -96,7 +96,7 @@ const Categories = () => {
   // Handle search submission - navigate to search results
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
-      navigate(`/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -524,7 +524,7 @@ const Categories = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer"
-                  onClick={() => navigate('/search-results?category=venues')}>
+                  onClick={() => navigate('/search?category=venues')}>
               <div className="relative h-64 bg-gradient-to-br from-primary to-primary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
@@ -538,7 +538,7 @@ const Categories = () => {
             </Card>
             
             <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer"
-                  onClick={() => navigate('/search-results')}>
+                  onClick={() => navigate('/search')}>
               <div className="relative h-64 bg-gradient-to-br from-secondary to-secondary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
