@@ -100,7 +100,7 @@ const EnhancedSearch = () => {
     if (eventDate) params.set('date', eventDate);
     
     try {
-      navigate(`/search-results?${params.toString()}`);
+      navigate(`/search?${params.toString()}`);
       setShowSuggestions(false);
     } catch (error) {
       console.error('Navigation error:', error);
@@ -115,7 +115,7 @@ const EnhancedSearch = () => {
     const params = new URLSearchParams();
     params.set('q', suggestion);
     if (location.trim()) params.set('location', location.trim());
-    navigate(`/search-results?${params.toString()}`);
+    navigate(`/search?${params.toString()}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
