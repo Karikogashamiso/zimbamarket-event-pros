@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import { OrderConfirmation } from "./pages/OrderConfirmation";
+import Events from "./pages/Events";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -70,6 +71,7 @@ const App = () => {
                   <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
                   <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
                   <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
+                  <Route path="/events" element={<Layout><Events /></Layout>} />
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
                   <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                   <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />

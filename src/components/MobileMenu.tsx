@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle, User, LogOut } from "lucide-react";
+import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle, User, LogOut, Ticket } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +49,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     { icon: Building2, label: "Venues", href: "/categories?category=venues" },
     { icon: Users, label: "Service Providers", href: "/categories?category=services" },
     { icon: Music, label: "Entertainers", href: "/categories?category=entertainment" },
+    { icon: Ticket, label: "Events & Tickets", href: "/events" },
     { icon: PlusCircle, label: "List Your Business", href: "/list-business" },
   ];
 
