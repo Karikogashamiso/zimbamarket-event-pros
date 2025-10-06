@@ -71,7 +71,7 @@ const TrendingServices = () => {
             </p>
           </div>
           
-          <Link to="/search-results?category=venues" className="hidden md:block">
+          <Link to="/search?category=venues" className="hidden md:block">
             <Button variant="outline" className="hover-scale">
               View All
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -172,7 +172,7 @@ const TrendingServices = () => {
 
         {/* Mobile view all button */}
         <div className="text-center mt-12 md:hidden">
-          <Link to="/search-results?category=venues">
+          <Link to="/search?category=venues">
             <Button variant="outline" size="lg" className="hover-scale">
               View All Trending Services
               <ArrowRight className="w-4 h-4 ml-2" />

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const locations = [
   {
@@ -55,27 +56,31 @@ const LocationSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {locations.map((location, index) => (
-            <Card key={index} className="group cursor-pointer border-none shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden">
-              <div className={`bg-gradient-to-br ${location.gradient} p-6 text-white relative overflow-hidden`}>
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                <div className="relative z-10">
-                  <h3 className="text-2xl font-bold mb-2">{location.name}</h3>
-                  <p className="text-white/90 mb-4">{location.description}</p>
-                  <p className="text-sm font-medium text-white/80">{location.count}</p>
+            <Link key={index} to={`/search?location=${encodeURIComponent(location.name)}`}>
+              <Card className="group cursor-pointer border-none shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden">
+                <div className={`bg-gradient-to-br ${location.gradient} p-6 text-white relative overflow-hidden`}>
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                  <div className="relative z-10">
+                    <h3 className="text-2xl font-bold mb-2">{location.name}</h3>
+                    <p className="text-white/90 mb-4">{location.description}</p>
+                    <p className="text-sm font-medium text-white/80">{location.count}</p>
+                  </div>
+                  
+                  {/* Decorative elements */}
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full" />
+                  <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full" />
                 </div>
-                
-                {/* Decorative elements */}
-                <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full" />
-                <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full" />
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
         
         <div className="text-center mt-12">
-          <Button variant="default" size="lg">
-            Explore All Locations
-          </Button>
+          <Link to="/search">
+            <Button variant="default" size="lg">
+              Explore All Locations
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
