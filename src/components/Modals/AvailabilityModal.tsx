@@ -220,15 +220,34 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                         <Button
                           size="sm"
                           disabled={availabilityInfo.status !== 'available'}
-                          onClick={() => {
-                            toast({
-                              title: "Time Selected",
-                              description: `${formatTime(slot.time_slot)} on ${new Date(selectedDate).toLocaleDateString()} - Please proceed with booking.`,
-                            });
-                            setIsOpen(false);
+                          onClick={async () => {
+                            try {
+                              // Create booking request
+                              const { error } = await supabase
+                                .from('booking_requests')
+                                .insert({
+                                  service_id: serviceId,
+                                  event_date: selectedDate,
+                                  message: `Requested time: ${formatTime(slot.time_slot)} for ${guestCount} guests`,
+                                });
+
+                              if (error) throw error;
+
+                              toast({
+                                title: "Booking Request Sent",
+                                description: `Your request for ${formatTime(slot.time_slot)} on ${new Date(selectedDate).toLocaleDateString()} has been submitted.`,
+                              });
+                              setIsOpen(false);
+                            } catch (error: any) {
+                              toast({
+                                title: "Request Failed",
+                                description: error.message || "Failed to submit booking request. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
                           }}
                         >
-                          {availabilityInfo.status === 'available' ? 'Select' : 'Unavailable'}
+                          {availabilityInfo.status === 'available' ? 'Book Now' : 'Unavailable'}
                         </Button>
                       </div>
                     </div>

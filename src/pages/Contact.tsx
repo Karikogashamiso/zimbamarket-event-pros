@@ -140,26 +140,6 @@ const Contact = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Check rate limiting with CSRF protection
-      const rateLimitResponse = await makeSupabaseRequest('rate-limiter', {
-        action: 'contact_form',
-        identifier: validatedData.email,
-        additionalData: {
-          email: validatedData.email,
-          userAgent: navigator.userAgent
-        }
-      });
-
-      if (rateLimitResponse.error || !rateLimitResponse.data?.allowed) {
-        const errorMessage = rateLimitResponse.data?.message || 'Rate limit exceeded. Please try again later.';
-        toast({
-          title: "Too many attempts",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Sanitize data for database insertion
       const sanitizedData = sanitizeContactData({
         firstName: validatedData.firstName,
