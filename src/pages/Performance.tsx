@@ -23,7 +23,6 @@ const PerformancePage: React.FC = () => {
       />
 
       <div className="min-h-screen bg-background">
-        <div className="h-20"></div> {/* Header spacer */}
         
         <div className="container mx-auto px-4 py-8">
           <PerformanceMonitor />

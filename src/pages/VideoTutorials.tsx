@@ -159,8 +159,6 @@ const VideoTutorials = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Spacer */}
-      <div className="h-20"></div>
       
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-secondary/10 via-background to-primary/10">

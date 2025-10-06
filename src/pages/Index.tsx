@@ -1,5 +1,4 @@
 import React, { lazy, Suspense, useEffect } from 'react';
-import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import MetaTags from "@/components/SEO/MetaTags";
 import StructuredData from "@/components/SEO/StructuredData";
@@ -15,7 +14,6 @@ const LocationSection = lazy(() => import("@/components/LocationSection"));
 const TrustSection = lazy(() => import("@/components/TrustSection"));
 const BusinessCTASection = lazy(() => import("@/components/BusinessCTASection"));
 const NewsletterSection = lazy(() => import("@/components/NewsletterSection"));
-const Footer = lazy(() => import("@/components/Footer"));
 const SmartRecommendations = lazy(() => import("@/components/Recommendations/SmartRecommendations"));
 const StatsSection = lazy(() => import("@/components/StatsSection"));
 const TestimonialsCarousel = lazy(() => import("@/components/TestimonialsCarousel"));
@@ -78,7 +76,6 @@ const Index = () => {
       <StructuredData type="WebSite" data={websiteData} />
       
       <div className="min-h-screen">
-        <Header />
         <HeroSection />
         
         <Suspense fallback={
@@ -96,7 +93,6 @@ const Index = () => {
           <TrustSection />
           <BusinessCTASection />
           <NewsletterSection />
-          <Footer />
         </Suspense>
         
         <InstallPrompt />

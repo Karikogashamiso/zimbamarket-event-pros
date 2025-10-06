@@ -217,8 +217,6 @@ const SearchResults = () => {
       />
 
       <div className="min-h-screen bg-background">
-        {/* Header Spacer */}
-        <div className="h-20"></div>
         
         {/* Enhanced Search Header */}
         <section className="bg-gradient-primary text-white py-12">

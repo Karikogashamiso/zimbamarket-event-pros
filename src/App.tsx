@@ -22,6 +22,8 @@ import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
+import HomeLayout from "./layouts/HomeLayout";
+import MainLayout from "./layouts/MainLayout";
 
 const queryClient = new QueryClient();
 
@@ -33,22 +35,28 @@ const App: React.FC = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/service/:id" element={<ServiceDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/video-tutorials" element={<VideoTutorials />} />
-            <Route path="/list-business" element={<ListBusiness />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/tickets" element={<TicketDesign />} />
-            <Route path="/checkout" element={<CheckoutFlow />} />
-            <Route path="/launch-plan" element={<LaunchPlan />} />
-            <Route path="/ux-guide" element={<UXOptimizationGuide />} />
+            <Route path="/" element={<HomeLayout />}>
+              <Route index element={<Index />} />
+            </Route>
+
+            <Route element={<MainLayout />}>
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/service/:id" element={<ServiceDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/video-tutorials" element={<VideoTutorials />} />
+              <Route path="/list-business" element={<ListBusiness />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/tickets" element={<TicketDesign />} />
+              <Route path="/checkout" element={<CheckoutFlow />} />
+              <Route path="/launch-plan" element={<LaunchPlan />} />
+              <Route path="/ux-guide" element={<UXOptimizationGuide />} />
+            </Route>
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

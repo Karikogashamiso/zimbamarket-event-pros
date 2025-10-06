@@ -160,8 +160,6 @@ const ServiceDetail = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Header Spacer */}
-        <div className="h-20"></div>
         
         {/* Breadcrumb */}
         <section className="py-4 border-b">

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import LocationsAndServices from "@/components/LocationsAndServices";
+import Header from "@/components/Header";
 
 const About = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -104,9 +105,7 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Spacer */}
-      <div className="h-20"></div>
+    <div className="min-h-screen bg-background pt-20">
       
       {/* Hero Section */}
       <section className="relative py-24 bg-gradient-to-br from-primary/10 via-background to-secondary/10 overflow-hidden">
