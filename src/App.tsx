@@ -26,6 +26,7 @@ import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <ScrollToTop />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
