@@ -146,7 +146,7 @@ const TrustSection = () => {
               <CheckCircle className="w-5 h-5 mr-2" />
               Start Planning Now
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-3 h-auto border-white/30 text-white hover:bg-white hover:text-primary">
+            <Button variant="glass" size="lg" className="text-lg px-8 py-3 h-auto">
               Browse Services
             </Button>
           </div>
