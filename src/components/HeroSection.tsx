@@ -69,7 +69,7 @@ const HeroSection = () => {
               </Button>
             </Link>
             <Link to="/list-business">
-              <Button variant="outline" size="lg" className="text-lg px-10 py-4 h-auto border-white/40 text-white hover:bg-white hover:text-primary hover-scale">
+              <Button variant="glass" size="lg" className="text-lg px-10 py-4 h-auto hover-scale">
                 <TrendingUp className="w-5 h-5 mr-2" />
                 List Your Business
               </Button>
