@@ -1,0 +1,597 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, MapPin, Plus, Settings, Users, Bus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { Helmet } from "react-helmet-async";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const OrganizerDashboard = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [organizer, setOrganizer] = useState<any>(null);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
+  const [showOrganizerForm, setShowOrganizerForm] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access the organizer dashboard.",
+        variant: "destructive",
+      });
+      navigate('/auth?tab=login');
+      return;
+    }
+    checkOrganizerStatus();
+  }, [user]);
+
+  const checkOrganizerStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('organizers')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setOrganizer(data);
+        await fetchOrganizerData(data.id);
+      } else {
+        setShowOrganizerForm(true);
+      }
+    } catch (error: any) {
+      console.error('Error checking organizer status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load organizer information.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchOrganizerData = async (organizerId: string) => {
+    try {
+      // Fetch venues
+      const { data: venuesData } = await supabase
+        .from('venues')
+        .select('*')
+        .eq('organizer_id', organizerId);
+      setVenues(venuesData || []);
+
+      // Fetch events
+      const { data: eventsData } = await supabase
+        .from('events')
+        .select('*, venue:venues(name)')
+        .eq('organizer_id', organizerId);
+      setEvents(eventsData || []);
+
+      // Fetch routes
+      const { data: routesData } = await supabase
+        .from('transport_routes')
+        .select('*')
+        .eq('organizer_id', organizerId);
+      setRoutes(routesData || []);
+    } catch (error) {
+      console.error('Error fetching organizer data:', error);
+    }
+  };
+
+  const createOrganizer = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const { data, error } = await supabase
+        .from('organizers')
+        .insert({
+          user_id: user?.id,
+          business_name: formData.get('business_name') as string,
+          business_type: formData.get('business_type') as any,
+          email: formData.get('email') as string,
+          phone_number: formData.get('phone_number') as string,
+          description: formData.get('description') as string,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setOrganizer(data);
+      setShowOrganizerForm(false);
+      toast({
+        title: "Success!",
+        description: "Organizer profile created. You can now add events and transport.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create organizer profile.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createVenue = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .insert({
+          organizer_id: organizer.id,
+          name: formData.get('venue_name') as string,
+          venue_type: formData.get('venue_type') as string,
+          address: formData.get('address') as string,
+          city: formData.get('city') as string,
+          capacity: parseInt(formData.get('capacity') as string) || null,
+          description: formData.get('venue_description') as string,
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Venue created successfully!" });
+      await fetchOrganizerData(organizer.id);
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create venue.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .insert({
+          organizer_id: organizer.id,
+          venue_id: formData.get('venue_id') as string,
+          title: formData.get('title') as string,
+          description: formData.get('event_description') as string,
+          event_category: formData.get('event_category') as any,
+          start_datetime: formData.get('start_datetime') as string,
+          end_datetime: formData.get('end_datetime') as string,
+          is_published: true,
+        } as any);
+
+      if (error) throw error;
+
+      toast({ title: "Event created successfully!" });
+      await fetchOrganizerData(organizer.id);
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create event.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createRoute = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const { data: routeData, error: routeError } = await supabase
+        .from('transport_routes')
+        .insert({
+          organizer_id: organizer.id,
+          route_name: formData.get('route_name') as string,
+          transport_type: formData.get('transport_type') as any,
+          origin_venue_id: formData.get('origin_venue_id') as string,
+          destination_venue_id: formData.get('destination_venue_id') as string,
+        } as any)
+        .select()
+        .single();
+
+      if (routeError) throw routeError;
+
+      // Create a trip for this route
+      const { error: tripError } = await supabase
+        .from('transport_trips')
+        .insert({
+          route_id: routeData.id,
+          departure_datetime: formData.get('departure_datetime') as string,
+          arrival_datetime: formData.get('arrival_datetime') as string,
+          trip_number: formData.get('trip_number') as string,
+        } as any);
+
+      if (tripError) throw tripError;
+
+      toast({ title: "Route and trip created successfully!" });
+      await fetchOrganizerData(organizer.id);
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create route.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (showOrganizerForm) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        <div className="container mx-auto px-4 py-12">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Become an Organizer</CardTitle>
+              <CardDescription>
+                Create your organizer profile to start adding events and transport services
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={createOrganizer} className="space-y-4">
+                <div>
+                  <Label htmlFor="business_name">Business Name *</Label>
+                  <Input id="business_name" name="business_name" required />
+                </div>
+                <div>
+                  <Label htmlFor="business_type">Business Type *</Label>
+                  <Select name="business_type" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="event_organizer">Event Organizer</SelectItem>
+                      <SelectItem value="transport_operator">Transport Operator</SelectItem>
+                      <SelectItem value="venue_owner">Venue Owner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input id="email" name="email" type="email" defaultValue={user?.email} required />
+                </div>
+                <div>
+                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Input id="phone_number" name="phone_number" type="tel" />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" name="description" rows={3} />
+                </div>
+                <Button type="submit" className="w-full">Create Organizer Profile</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Organizer Dashboard | ZimEventPro</title>
+      </Helmet>
+
+      <div className="h-20"></div>
+
+      <section className="bg-gradient-primary text-white py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl font-bold mb-2">Organizer Dashboard</h1>
+          <p className="text-xl text-white/90">{organizer?.business_name}</p>
+        </div>
+      </section>
+
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Venues</CardTitle>
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{venues.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Events</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{events.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Routes</CardTitle>
+                <Bus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{routes.length}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="venues" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="venues">Venues</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="transport">Transport</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="venues" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Venue</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={createVenue} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="venue_name">Venue Name *</Label>
+                      <Input id="venue_name" name="venue_name" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="venue_type">Venue Type *</Label>
+                      <Input id="venue_type" name="venue_type" placeholder="e.g., Conference Hall" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="address">Address *</Label>
+                      <Input id="address" name="address" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input id="city" name="city" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="capacity">Capacity</Label>
+                      <Input id="capacity" name="capacity" type="number" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="venue_description">Description</Label>
+                      <Textarea id="venue_description" name="venue_description" rows={2} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Button type="submit" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Venue
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Venues</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {venues.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No venues yet. Add your first venue above.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {venues.map((venue) => (
+                        <div key={venue.id} className="border rounded-lg p-4">
+                          <h3 className="font-semibold">{venue.name}</h3>
+                          <p className="text-sm text-muted-foreground">{venue.address}, {venue.city}</p>
+                          {venue.capacity && <p className="text-sm">Capacity: {venue.capacity}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="events" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create New Event</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={createEvent} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="title">Event Title *</Label>
+                      <Input id="title" name="title" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="venue_id">Venue *</Label>
+                      <Select name="venue_id" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select venue" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {venues.map((venue) => (
+                            <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="event_category">Category *</Label>
+                      <Select name="event_category" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="concert">Concert</SelectItem>
+                          <SelectItem value="conference">Conference</SelectItem>
+                          <SelectItem value="festival">Festival</SelectItem>
+                          <SelectItem value="sports">Sports</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="start_datetime">Start Date & Time *</Label>
+                      <Input id="start_datetime" name="start_datetime" type="datetime-local" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="end_datetime">End Date & Time</Label>
+                      <Input id="end_datetime" name="end_datetime" type="datetime-local" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="event_description">Description</Label>
+                      <Textarea id="event_description" name="event_description" rows={3} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Button type="submit" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Event
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Events</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {events.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No events yet. Create your first event above.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {events.map((event) => (
+                        <div key={event.id} className="border rounded-lg p-4">
+                          <h3 className="font-semibold">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.start_datetime).toLocaleString()}
+                          </p>
+                          <p className="text-sm">Venue: {event.venue?.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="transport" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create Transport Route & Trip</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={createRoute} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="route_name">Route Name *</Label>
+                      <Input id="route_name" name="route_name" placeholder="e.g., Harare - Bulawayo Express" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="transport_type">Transport Type *</Label>
+                      <Select name="transport_type" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bus">Bus</SelectItem>
+                          <SelectItem value="shuttle">Shuttle</SelectItem>
+                          <SelectItem value="train">Train</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="trip_number">Trip Number</Label>
+                      <Input id="trip_number" name="trip_number" placeholder="e.g., TR001" />
+                    </div>
+                    <div>
+                      <Label htmlFor="origin_venue_id">Origin *</Label>
+                      <Select name="origin_venue_id" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select origin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {venues.map((venue) => (
+                            <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="destination_venue_id">Destination *</Label>
+                      <Select name="destination_venue_id" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select destination" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {venues.map((venue) => (
+                            <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="departure_datetime">Departure *</Label>
+                      <Input id="departure_datetime" name="departure_datetime" type="datetime-local" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="arrival_datetime">Arrival *</Label>
+                      <Input id="arrival_datetime" name="arrival_datetime" type="datetime-local" required />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Button type="submit" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Route & Trip
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Routes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {routes.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No routes yet. Create your first route above.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {routes.map((route) => (
+                        <div key={route.id} className="border rounded-lg p-4">
+                          <h3 className="font-semibold">{route.route_name}</h3>
+                          <p className="text-sm text-muted-foreground capitalize">{route.transport_type}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default OrganizerDashboard;

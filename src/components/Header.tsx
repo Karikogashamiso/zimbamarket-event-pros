@@ -76,8 +76,8 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors`}>Browse</Link>
             <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors`}>Events & Tickets</Link>
+            <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors`}>Organizer</Link>
             <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors`}>About</Link>
-            <Link to="/categories?category=services" className={`${textStyles} hover:text-secondary transition-colors`}>Services</Link>
             <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors`}>Contact</Link>
           </nav>
           

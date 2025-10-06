@@ -23,6 +23,7 @@ import TicketDesign from "./pages/TicketDesign";
 import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import { OrderConfirmation } from "./pages/OrderConfirmation";
 import Events from "./pages/Events";
+import OrganizerDashboard from "./pages/OrganizerDashboard";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -72,6 +73,7 @@ const App = () => {
                   <Route path="/terms-of-service" element={<Layout><TermsOfService /></Layout>} />
                   <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
                   <Route path="/events" element={<Layout><Events /></Layout>} />
+                  <Route path="/organizer" element={<Layout><OrganizerDashboard /></Layout>} />
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
                   <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                   <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
