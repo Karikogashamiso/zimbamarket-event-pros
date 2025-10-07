@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import MetaTags from "@/components/SEO/MetaTags";
@@ -47,6 +47,7 @@ const Categories = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const { categories, loading, error } = useCategories();
+  const searchSectionRef = useRef<HTMLElement>(null);
   
   // Get category from URL parameters
   const selectedCategory = searchParams.get('category') || 'all';
@@ -67,6 +68,14 @@ const Categories = () => {
     }
     
     setSearchParams(newParams);
+    
+    // Scroll to search section smoothly
+    setTimeout(() => {
+      searchSectionRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   };
 
   // Handle category card clicks - navigate to search results with category filter
@@ -231,7 +240,7 @@ const Categories = () => {
       </section>
 
       {/* Search and Filters */}
-      <section className="py-12 bg-background">
+      <section ref={searchSectionRef} className="py-12 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col lg:flex-row gap-4 mb-8">
