@@ -86,12 +86,11 @@ const Auth = () => {
     }
 
     // Check if this is a password reset callback
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
     
-    if (accessToken && refreshToken && type === 'recovery') {
-      console.log('Password reset callback detected');
+    if (type === 'recovery') {
+      // Supabase automatically handles the token exchange
+      // Just show the password update form
       setShowPasswordUpdate(true);
       setShowForgotPassword(false);
       setResetEmailSent(false);
@@ -282,14 +281,26 @@ const Auth = () => {
       });
 
       if (error) {
-        console.error('Supabase password reset error:', error);
-        toast({
-          title: "Reset Failed",
-          description: error.message.includes('rate limit') 
-            ? 'Too many password reset attempts. Please wait a moment before trying again.'
-            : error.message,
-          variant: "destructive",
-        });
+        if (error.message.includes('rate limit')) {
+          toast({
+            title: "Too Many Requests",
+            description: "Too many password reset attempts. Please wait a few minutes before trying again.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes('not found')) {
+          // Don't reveal if email exists for security
+          setResetEmailSent(true);
+          toast({
+            title: "Reset Link Sent!",
+            description: "If an account exists with that email, you'll receive a password reset link.",
+          });
+        } else {
+          toast({
+            title: "Reset Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else {
         setResetEmailSent(true);
         toast({
@@ -306,6 +317,12 @@ const Auth = () => {
           }
         });
         setFormErrors(newErrors);
+      } else {
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
       }
     } finally {
       setIsLoading(false);
@@ -320,14 +337,26 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
+      // First verify we have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Session Expired",
+          description: "Your reset link has expired. Please request a new password reset.",
+          variant: "destructive",
+        });
+        setShowPasswordUpdate(false);
+        setShowForgotPassword(true);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
 
       if (error) {
-        console.error('Password update error:', error);
-        
-        if (error.message.includes('session_not_found') || error.message.includes('invalid_token')) {
+        if (error.message.includes('session_not_found') || error.message.includes('invalid_token') || error.message.includes('expired')) {
           toast({
             title: "Reset Link Expired",
             description: "Your password reset link has expired. Please request a new one.",
@@ -335,6 +364,12 @@ const Auth = () => {
           });
           setShowPasswordUpdate(false);
           setShowForgotPassword(true);
+        } else if (error.message.includes('same password')) {
+          toast({
+            title: "Password Not Changed",
+            description: "Please choose a different password than your current one.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Password Update Failed",
@@ -344,9 +379,12 @@ const Auth = () => {
         }
       } else {
         toast({
-          title: "Password Updated Successfully",
-          description: "Your password has been updated. You can now sign in with your new password.",
+          title: "Password Updated Successfully!",
+          description: "You can now sign in with your new password.",
         });
+        
+        // Sign out to ensure clean state
+        await supabase.auth.signOut();
         
         // Clear the form and redirect to login
         setPasswordUpdateForm({ password: "", confirmPassword: "" });
@@ -365,6 +403,12 @@ const Auth = () => {
           }
         });
         setFormErrors(newErrors);
+      } else {
+        toast({
+          title: "Unexpected Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
       }
     } finally {
       setIsLoading(false);
