@@ -23,7 +23,11 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState(() => {
+    // Check immediately on mount if this is a recovery callback
+    const params = new URLSearchParams(window.location.search);
+    return params.get('type') === 'recovery';
+  });
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
     confirmPassword: "",
@@ -89,16 +93,21 @@ const Auth = () => {
     const type = searchParams.get('type');
     
     if (type === 'recovery') {
-      // Supabase automatically handles the token exchange
-      // Just show the password update form
+      // Ensure we show the password update form
       setShowPasswordUpdate(true);
       setShowForgotPassword(false);
       setResetEmailSent(false);
+      setActiveTab('login'); // Set to login tab to avoid confusion
     }
   }, [searchParams]);
 
   // Check if user is already logged in (but not during password reset)
   useEffect(() => {
+    // Skip redirect if we're showing password update form
+    if (showPasswordUpdate) {
+      return;
+    }
+    
     const checkUser = async () => {
       const type = searchParams.get('type');
       if (type === 'recovery') {
@@ -112,7 +121,7 @@ const Auth = () => {
       }
     };
     checkUser();
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, showPasswordUpdate]);
 
   // Handle auth state changes
   useEffect(() => {
