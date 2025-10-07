@@ -64,6 +64,7 @@ export const CheckoutFlow: React.FC = () => {
       setLoadingEvent(true);
       try {
         if (eventId) {
+          console.log('Fetching event with ID:', eventId);
           const { data, error } = await supabase
             .from('events')
             .select(`
@@ -81,9 +82,12 @@ export const CheckoutFlow: React.FC = () => {
             .eq('id', eventId)
             .single();
 
+          console.log('Event fetch result:', { data, error });
+
           if (error) throw error;
           
           if (data) {
+            console.log('Setting event data:', data);
             updateCheckoutData({ 
               event: data as any
             });

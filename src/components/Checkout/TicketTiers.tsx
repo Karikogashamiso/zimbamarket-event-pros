@@ -17,8 +17,12 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
   selectedTiers,
   onTiersChange
 }) => {
+  console.log('TicketTiers - event data:', event);
+  console.log('TicketTiers - ticket_types:', event?.ticket_types);
+  
   // Get ticket types from event
   const ticketTypes = event?.ticket_types?.filter((tt: any) => tt.is_active) || [];
+  console.log('TicketTiers - filtered ticket types:', ticketTypes);
 
   const handleTierSelect = (tier: any) => {
     const existingIndex = selectedTiers.findIndex(t => t.id === tier.id);
