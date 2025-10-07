@@ -65,6 +65,7 @@ const ServiceDetail = () => {
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set());
   
   const { service, loading: serviceLoading, error: serviceError } = useService(id || '');
   const { reviews, loading: reviewsLoading } = useReviews(id || '');
@@ -76,6 +77,47 @@ const ServiceDetail = () => {
   const handleReviewSubmitted = () => {
     // Simple refresh by reloading the component
     window.location.reload();
+  };
+
+  // Handle review helpful button
+  const handleReviewHelpful = async (reviewId: string) => {
+    if (likedReviews.has(reviewId)) {
+      toast({
+        title: "Already Marked",
+        description: "You've already marked this review as helpful.",
+      });
+      return;
+    }
+
+    try {
+      // Get current review
+      const currentReview = reviews.find(r => r.id === reviewId);
+      if (!currentReview) return;
+
+      // Increment helpful count
+      const { error } = await supabase
+        .from('reviews')
+        .update({ helpful_count: (currentReview.helpful_count || 0) + 1 })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+
+      setLikedReviews(prev => new Set(prev).add(reviewId));
+      toast({
+        title: "Thank you!",
+        description: "Your feedback has been recorded.",
+      });
+      
+      // Refresh the page to show updated count
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error('Error marking review as helpful:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record your feedback. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle field blur for validation
@@ -505,9 +547,17 @@ const ServiceDetail = () => {
                                 </div>
                               </div>
                               <p className="text-muted-foreground mb-4">{review.comment}</p>
-                              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
-                                <ThumbsUp className="w-4 h-4" />
-                                Helpful ({review.helpful_count || 0})
+                              <button 
+                                onClick={() => handleReviewHelpful(review.id)}
+                                disabled={likedReviews.has(review.id)}
+                                className={`flex items-center gap-2 text-sm transition-colors ${
+                                  likedReviews.has(review.id) 
+                                    ? 'text-primary cursor-not-allowed' 
+                                    : 'text-muted-foreground hover:text-primary cursor-pointer'
+                                }`}
+                              >
+                                <ThumbsUp className={`w-4 h-4 ${likedReviews.has(review.id) ? 'fill-primary' : ''}`} />
+                                {likedReviews.has(review.id) ? 'Marked as Helpful' : 'Helpful'} ({review.helpful_count || 0})
                               </button>
                             </CardContent>
                           </Card>
