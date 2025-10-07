@@ -2,49 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star, Crown, Users } from 'lucide-react';
-
-interface TicketTier {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  benefits: string[];
-  popular?: boolean;
-  icon: React.ReactNode;
-}
-
-const TICKET_TIERS: TicketTier[] = [
-  {
-    id: 'general',
-    name: 'General Admission',
-    description: 'Standard entry to the event',
-    price: 25,
-    currency: 'USD',
-    benefits: ['Event access', 'Basic seating', 'Standard entry'],
-    icon: <Users className="h-5 w-5" />
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    description: 'Enhanced experience with better seating',
-    price: 45,
-    currency: 'USD',
-    benefits: ['Priority seating', 'Complimentary drink', 'Premium entrance', 'Event program'],
-    popular: true,
-    icon: <Star className="h-5 w-5" />
-  },
-  {
-    id: 'vip',
-    name: 'VIP Experience',
-    description: 'Ultimate luxury experience',
-    price: 85,
-    currency: 'USD',
-    benefits: ['VIP lounge access', 'Meet & greet', 'Premium bar access', 'Dedicated concierge', 'VIP parking'],
-    icon: <Crown className="h-5 w-5" />
-  }
-];
+import { Check, Ticket } from 'lucide-react';
 
 interface TicketTiersProps {
   event: any;
@@ -59,7 +17,10 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
   selectedTiers,
   onTiersChange
 }) => {
-  const handleTierSelect = (tier: TicketTier) => {
+  // Get ticket types from event
+  const ticketTypes = event?.ticket_types?.filter((tt: any) => tt.is_active) || [];
+
+  const handleTierSelect = (tier: any) => {
     const existingIndex = selectedTiers.findIndex(t => t.id === tier.id);
     
     if (existingIndex >= 0) {
@@ -68,7 +29,15 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
       onTiersChange(updated);
     } else {
       // Add tier
-      onTiersChange([...selectedTiers, { ...tier, quantity: 1 }]);
+      onTiersChange([...selectedTiers, { 
+        id: tier.id,
+        name: tier.name,
+        description: tier.description,
+        price: tier.base_price,
+        currency: tier.currency,
+        quantity: 1,
+        max_quantity: tier.max_quantity
+      }]);
     }
   };
 
@@ -83,14 +52,24 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
     return selectedTiers.find(t => t.id === tierId);
   };
 
+  if (!ticketTypes || ticketTypes.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">No ticket types available for this event</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold mb-2">Choose Your Experience</h2>
-        <p className="text-muted-foreground">Select the ticket type that matches your preferences</p>
+        <h2 className="text-xl font-semibold mb-2">Choose Your Ticket</h2>
+        <p className="text-muted-foreground">Select the ticket type for this event</p>
       </div>
 
-      {TICKET_TIERS.map((tier) => {
+      {ticketTypes.map((tier: any) => {
         const selectedTier = getSelectedTier(tier.id);
         const isSelected = !!selectedTier;
 
@@ -102,41 +81,24 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
             }`}
             onClick={() => handleTierSelect(tier)}
           >
-            {tier.popular && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground px-4 py-1">
-                  Most Popular
-                </Badge>
-              </div>
-            )}
-
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    {tier.icon}
+                    <Ticket className="h-5 w-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">{tier.name}</h3>
-                    <p className="text-sm text-muted-foreground">{tier.description}</p>
+                    <p className="text-sm text-muted-foreground">{tier.description || 'Event ticket'}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold">
-                    ${tier.price}
+                    {tier.currency === 'USD' ? '$' : tier.currency === 'ZWL' ? 'Z$' : 'RTGS$'}
+                    {tier.base_price}
                   </div>
-                  <div className="text-xs text-muted-foreground">per person</div>
+                  <div className="text-xs text-muted-foreground">per ticket</div>
                 </div>
-              </div>
-
-              {/* Benefits */}
-              <div className="space-y-2 mb-4">
-                {tier.benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span>{benefit}</span>
-                  </div>
-                ))}
               </div>
 
               {/* Quantity Selector */}
@@ -161,9 +123,10 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuantity(tier.id, Math.min(10, selectedTier.quantity + 1));
+                        const maxQty = tier.max_quantity || 10;
+                        updateQuantity(tier.id, Math.min(maxQty, selectedTier.quantity + 1));
                       }}
-                      disabled={selectedTier.quantity >= 10}
+                      disabled={selectedTier.quantity >= (tier.max_quantity || 10)}
                     >
                       +
                     </Button>
