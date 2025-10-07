@@ -308,51 +308,92 @@ const OrganizerDashboard = () => {
 
       <section className="bg-gradient-primary text-white py-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-2">Organizer Dashboard</h1>
-          <p className="text-xl text-white/90">{organizer?.business_name}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{organizer?.business_name}</h1>
+              <p className="text-xl text-white/90 capitalize">
+                {organizer?.business_type?.replace('_', ' ')} • {organizer?.city}, {organizer?.country}
+              </p>
+              <p className="text-sm text-white/80 mt-1">
+                Status: {organizer?.status === 'approved' ? '✓ Verified' : 'Pending Verification'}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="py-8">
         <div className="container mx-auto px-4">
+          {/* Dynamic summary cards based on business type */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Venues</CardTitle>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{venues.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Events</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{events.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Routes</CardTitle>
-                <Bus className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{routes.length}</div>
-              </CardContent>
-            </Card>
+            {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Venues</CardTitle>
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{venues.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {venues.length === 0 ? 'No venues yet' : `${venues.filter(v => v.is_active).length} active`}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {organizer?.business_type === 'event_organizer' && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Events</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{events.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {events.length === 0 ? 'No events yet' : `${events.filter(e => e.is_published).length} published`}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+            {organizer?.business_type === 'transport_operator' && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Routes</CardTitle>
+                  <Bus className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{routes.length}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {routes.length === 0 ? 'No routes yet' : `${routes.filter(r => r.is_active).length} active`}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          <Tabs defaultValue="venues" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="venues">Venues</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
-              <TabsTrigger value="transport">Transport</TabsTrigger>
+          {/* Conditional tabs based on business type */}
+          <Tabs defaultValue={
+            organizer?.business_type === 'venue_owner' ? 'venues' :
+            organizer?.business_type === 'event_organizer' ? 'events' :
+            'transport'
+          } className="space-y-6">
+            <TabsList className={`grid w-full ${
+              organizer?.business_type === 'venue_owner' ? 'grid-cols-1' :
+              organizer?.business_type === 'event_organizer' ? 'grid-cols-2' :
+              'grid-cols-1'
+            }`}>
+              {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+                <TabsTrigger value="venues">Venues</TabsTrigger>
+              )}
+              {organizer?.business_type === 'event_organizer' && (
+                <TabsTrigger value="events">Events</TabsTrigger>
+              )}
+              {organizer?.business_type === 'transport_operator' && (
+                <TabsTrigger value="transport">Transport</TabsTrigger>
+              )}
             </TabsList>
 
-            <TabsContent value="venues" className="space-y-6">
+            {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+              <TabsContent value="venues" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Add New Venue</CardTitle>
@@ -413,9 +454,11 @@ const OrganizerDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+              </TabsContent>
+            )}
 
-            <TabsContent value="events" className="space-y-6">
+            {organizer?.business_type === 'event_organizer' && (
+              <TabsContent value="events" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Create New Event</CardTitle>
@@ -541,9 +584,11 @@ const OrganizerDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+              </TabsContent>
+            )}
 
-            <TabsContent value="transport" className="space-y-6">
+            {organizer?.business_type === 'transport_operator' && (
+              <TabsContent value="transport" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Create Transport Route & Trip</CardTitle>
@@ -634,7 +679,8 @@ const OrganizerDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </section>
