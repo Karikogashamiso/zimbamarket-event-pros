@@ -199,16 +199,6 @@ const OrganizerDashboard = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    // Check if organizer is a transport operator
-    if (organizer.business_type !== 'transport_operator') {
-      toast({
-        title: "Permission Denied",
-        description: "Only Transport Operators can create transport routes. Your organizer profile is set as: " + organizer.business_type.replace('_', ' '),
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const { data: routeData, error: routeError } = await supabase
         .from('transport_routes')
@@ -554,23 +544,6 @@ const OrganizerDashboard = () => {
             </TabsContent>
 
             <TabsContent value="transport" className="space-y-6">
-              {organizer.business_type !== 'transport_operator' && (
-                <Card className="border-yellow-500 bg-yellow-50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <div className="text-yellow-600">⚠️</div>
-                      <div>
-                        <p className="font-medium text-yellow-800">Transport Operator Access Required</p>
-                        <p className="text-sm text-yellow-700 mt-1">
-                          Your current organizer profile is set as "{organizer.business_type.replace('_', ' ')}". 
-                          To create transport routes, you need to create a new organizer profile with the "Transport Operator" business type.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              
               <Card>
                 <CardHeader>
                   <CardTitle>Create Transport Route & Trip</CardTitle>
