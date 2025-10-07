@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search, User, Shield, Settings, Package } from "lucide-react";
+import { Menu, Heart, LogOut, Search, User, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import MobileMenu from "./MobileMenu";
 import { Link } from "react-router-dom";
@@ -167,19 +167,6 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                       <DropdownMenuSeparator />
                     </>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link to="/organizer" className="flex items-center cursor-pointer">
-                      <Package className="mr-2 h-4 w-4" />
-                      <span>My Events</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleSignOut}
                     className="cursor-pointer text-destructive focus:text-destructive"
