@@ -97,21 +97,33 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  // Check if user is already logged in
+  // Check if user is already logged in (but not during password reset)
   useEffect(() => {
     const checkUser = async () => {
+      const type = searchParams.get('type');
+      if (type === 'recovery') {
+        // Don't redirect during password recovery
+        return;
+      }
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         navigate("/");
       }
     };
     checkUser();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   // Handle auth state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      // Don't redirect during password recovery
+      const type = new URLSearchParams(window.location.search).get('type');
+      if (type === 'recovery') {
+        return;
+      }
+      
+      if (event === 'SIGNED_IN' && session && !showPasswordUpdate) {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
@@ -121,7 +133,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+  }, [navigate, toast, showPasswordUpdate]);
 
   const validateField = (schema: z.ZodSchema, data: any, field: string) => {
     try {
