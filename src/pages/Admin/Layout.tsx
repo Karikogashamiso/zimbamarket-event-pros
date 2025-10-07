@@ -79,7 +79,7 @@ function AdminSidebar() {
 }
 
 const AdminLayout = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -87,8 +87,10 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const initializeAdmin = async () => {
-      // Wait a bit for auth to initialize
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for auth to fully load
+      if (authLoading) {
+        return;
+      }
       
       if (!user) {
         console.log('No user found, redirecting to login');
@@ -102,14 +104,17 @@ const AdminLayout = () => {
         return;
       }
       
+      console.log('User found, checking admin status for:', user.email);
       await checkAdminStatus();
     };
 
     initializeAdmin();
-  }, [user]);
+  }, [user, authLoading]);
 
   const checkAdminStatus = async () => {
     try {
+      console.log('Checking admin status for user ID:', user?.id);
+      
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -117,9 +122,15 @@ const AdminLayout = () => {
         .eq('role', 'admin')
         .maybeSingle();
 
-      if (roleError && roleError.code !== 'PGRST116') throw roleError;
+      console.log('Role check result:', { roleData, roleError });
+
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error('Role query error:', roleError);
+        throw roleError;
+      }
 
       if (!roleData) {
+        console.log('No admin role found for user');
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges.",
@@ -129,6 +140,7 @@ const AdminLayout = () => {
         return;
       }
 
+      console.log('Admin access granted');
       setIsAdmin(true);
     } catch (error: any) {
       console.error('Error checking admin status:', error);
@@ -143,10 +155,11 @@ const AdminLayout = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">Loading admin panel...</p>
       </div>
     );
   }
