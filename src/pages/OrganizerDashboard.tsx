@@ -656,8 +656,9 @@ const OrganizerDashboard = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="bus">Bus</SelectItem>
-                          <SelectItem value="shuttle">Shuttle</SelectItem>
                           <SelectItem value="train">Train</SelectItem>
+                          <SelectItem value="flight">Flight</SelectItem>
+                          <SelectItem value="ferry">Ferry</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
