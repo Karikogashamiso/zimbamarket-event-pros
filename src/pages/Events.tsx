@@ -58,12 +58,17 @@ const Events = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"events" | "transport">("events");
+  const [eventsPage, setEventsPage] = useState(1);
+  const [tripsPage, setTripsPage] = useState(1);
+  const [hasMoreEvents, setHasMoreEvents] = useState(true);
+  const [hasMoreTrips, setHasMoreTrips] = useState(true);
+  const ITEMS_PER_PAGE = 12;
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchEventsAndTrips();
-  }, []);
+  }, [eventsPage, tripsPage]);
 
   const fetchEventsAndTrips = async () => {
     setLoading(true);
@@ -86,9 +91,10 @@ const Events = () => {
         .eq('is_cancelled', false)
         .gte('start_datetime', new Date().toISOString())
         .order('start_datetime', { ascending: true })
-        .limit(20);
+        .range((eventsPage - 1) * ITEMS_PER_PAGE, eventsPage * ITEMS_PER_PAGE - 1);
 
       if (eventsError) throw eventsError;
+      setHasMoreEvents((eventsData?.length || 0) === ITEMS_PER_PAGE);
 
       // Fetch transport trips with routes and ticket types
       const { data: tripsData, error: tripsError } = await supabase
@@ -109,9 +115,10 @@ const Events = () => {
         .eq('is_cancelled', false)
         .gte('departure_datetime', new Date().toISOString())
         .order('departure_datetime', { ascending: true })
-        .limit(20);
+        .range((tripsPage - 1) * ITEMS_PER_PAGE, tripsPage * ITEMS_PER_PAGE - 1);
 
       if (tripsError) throw tripsError;
+      setHasMoreTrips((tripsData?.length || 0) === ITEMS_PER_PAGE);
 
       setEvents(eventsData || []);
       setTrips(tripsData || []);
@@ -253,9 +260,32 @@ const Events = () => {
                           </Button>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination for Events */}
+                  {events.length > 0 && (
+                    <div className="flex justify-center items-center gap-4 mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={() => setEventsPage(p => Math.max(1, p - 1))}
+                        disabled={eventsPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {eventsPage}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => setEventsPage(p => p + 1)}
+                        disabled={!hasMoreEvents}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
               </SectionErrorBoundary>
             </TabsContent>
 
@@ -346,9 +376,32 @@ const Events = () => {
                           </Button>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination for Transport */}
+                  {trips.length > 0 && (
+                    <div className="flex justify-center items-center gap-4 mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={() => setTripsPage(p => Math.max(1, p - 1))}
+                        disabled={tripsPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {tripsPage}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => setTripsPage(p => p + 1)}
+                        disabled={!hasMoreTrips}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
               </SectionErrorBoundary>
             </TabsContent>
           </Tabs>

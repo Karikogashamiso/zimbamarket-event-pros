@@ -4,6 +4,7 @@ import { Calendar, MapPin, Plus, Settings, Users, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -90,10 +91,21 @@ const OrganizerDashboard = () => {
         .eq('organizer_id', organizerId);
       setEvents(eventsData || []);
 
-      // Fetch routes
+      // Fetch routes with trips
       const { data: routesData } = await supabase
         .from('transport_routes')
-        .select('*')
+        .select(`
+          *,
+          origin_venue:venues!transport_routes_origin_venue_id_fkey(name, city),
+          destination_venue:venues!transport_routes_destination_venue_id_fkey(name, city),
+          transport_trips(
+            id,
+            trip_number,
+            departure_datetime,
+            arrival_datetime,
+            ticket_types(id, name, base_price, max_quantity)
+          )
+        `)
         .eq('organizer_id', organizerId);
       setRoutes(routesData || []);
     } catch (error) {
@@ -235,18 +247,33 @@ const OrganizerDashboard = () => {
       if (routeError) throw routeError;
 
       // Create a trip for this route
-      const { error: tripError } = await supabase
+      const { data: tripData, error: tripError } = await supabase
         .from('transport_trips')
         .insert({
           route_id: routeData.id,
           departure_datetime: formData.get('departure_datetime') as string,
           arrival_datetime: formData.get('arrival_datetime') as string,
           trip_number: formData.get('trip_number') as string,
-        } as any);
+        } as any)
+        .select()
+        .single();
 
       if (tripError) throw tripError;
 
-      toast({ title: "Route and trip created successfully!" });
+      // Create ticket type for the trip
+      const { error: ticketError } = await supabase
+        .from('ticket_types')
+        .insert({
+          trip_id: tripData.id,
+          name: formData.get('ticket_type_name') as string,
+          base_price: parseFloat(formData.get('ticket_price') as string),
+          max_quantity: parseInt(formData.get('seat_capacity') as string),
+          currency: 'USD',
+        } as any);
+
+      if (ticketError) throw ticketError;
+
+      toast({ title: "Route, trip, and ticket type created successfully!" });
       await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
       setSelectedOriginId('');
@@ -743,6 +770,38 @@ const OrganizerDashboard = () => {
                         min={new Date().toISOString().slice(0, 16)}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="ticket_type_name">Ticket Type Name *</Label>
+                      <Input 
+                        id="ticket_type_name" 
+                        name="ticket_type_name" 
+                        placeholder="e.g., Standard Seat" 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ticket_price">Ticket Price (USD) *</Label>
+                      <Input 
+                        id="ticket_price" 
+                        name="ticket_price" 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        placeholder="e.g., 25.00" 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="seat_capacity">Seat Capacity *</Label>
+                      <Input 
+                        id="seat_capacity" 
+                        name="seat_capacity" 
+                        type="number" 
+                        min="1"
+                        placeholder="e.g., 50" 
+                        required 
+                      />
+                    </div>
                     <div className="md:col-span-2">
                       <Button type="submit" className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -761,11 +820,74 @@ const OrganizerDashboard = () => {
                   {routes.length === 0 ? (
                     <p className="text-muted-foreground text-center py-4">No routes yet. Create your first route above.</p>
                   ) : (
-                    <div className="space-y-3">
-                      {routes.map((route) => (
-                        <div key={route.id} className="border rounded-lg p-4">
-                          <h3 className="font-semibold">{route.route_name}</h3>
-                          <p className="text-sm text-muted-foreground capitalize">{route.transport_type}</p>
+                    <div className="space-y-4">
+                      {routes.map((route: any) => (
+                        <div key={route.id} className="border rounded-lg p-4 space-y-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">{route.route_name}</h3>
+                            <Badge variant="outline" className="mt-1 capitalize">
+                              {route.transport_type}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="font-medium text-muted-foreground">From</p>
+                              <p>{route.origin_venue?.name}</p>
+                              <p className="text-xs text-muted-foreground">{route.origin_venue?.city}</p>
+                            </div>
+                            <div>
+                              <p className="font-medium text-muted-foreground">To</p>
+                              <p>{route.destination_venue?.name}</p>
+                              <p className="text-xs text-muted-foreground">{route.destination_venue?.city}</p>
+                            </div>
+                          </div>
+
+                          {route.transport_trips && route.transport_trips.length > 0 && (
+                            <div className="border-t pt-3 space-y-2">
+                              <p className="font-medium text-sm">Upcoming Trips:</p>
+                              {route.transport_trips.slice(0, 3).map((trip: any) => (
+                                <div key={trip.id} className="bg-muted/50 rounded p-3 text-sm">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <span className="font-medium">Trip #{trip.trip_number}</span>
+                                    {trip.ticket_types?.[0] && (
+                                      <span className="font-bold">${trip.ticket_types[0].base_price}</span>
+                                    )}
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                                    <div>
+                                      <p className="font-medium">Departure</p>
+                                      <p>{new Date(trip.departure_datetime).toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit'
+                                      })}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">Arrival</p>
+                                      <p>{new Date(trip.arrival_datetime).toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit'
+                                      })}</p>
+                                    </div>
+                                  </div>
+                                  {trip.ticket_types?.[0] && (
+                                    <div className="mt-2 flex justify-between text-xs">
+                                      <span>{trip.ticket_types[0].name}</span>
+                                      <span className="text-muted-foreground">
+                                        {trip.ticket_types[0].max_quantity} seats
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
