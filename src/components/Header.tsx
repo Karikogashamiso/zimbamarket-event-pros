@@ -1,12 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search, User, Shield } from "lucide-react";
+import { Menu, Heart, LogOut, Search, User, Shield, Settings, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import MobileMenu from "./MobileMenu";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   variant?: "transparent" | "solid";
@@ -104,12 +112,6 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
             <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors`}>Browse</Link>
             <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors`}>Events & Tickets</Link>
             <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors`}>Organizer</Link>
-            {isAdmin && (
-              <Link to="/admin" className={`${textStyles} hover:text-secondary transition-colors flex items-center gap-1`}>
-                <Shield className="w-4 h-4" />
-                Admin
-              </Link>
-            )}
             <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors`}>About</Link>
             <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors`}>Contact</Link>
           </nav>
@@ -139,23 +141,54 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
               <Heart className="w-5 h-5" />
             </Button>
             {user ? (
-              <>
-                <div className={`flex items-center gap-2 ${textStyles}`}>
-                  <User className="w-4 h-4" />
-                  <span className="text-sm">
-                    {user.user_metadata?.first_name || user.email?.split('@')[0]}
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className={`${textStyles} ${buttonStyles}`}
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className={`${textStyles} ${buttonStyles} flex items-center gap-2`}
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">
+                      {user.user_metadata?.first_name || user.email?.split('@')[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center cursor-pointer">
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link to="/organizer" className="flex items-center cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" />
+                      <span>My Events</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleSignOut}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link to="/auth?tab=login">
                 <Button variant={variant === "solid" ? "default" : "glass"} size="sm">

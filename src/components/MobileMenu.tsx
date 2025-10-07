@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle, User, LogOut, Ticket, Settings } from "lucide-react";
+import { Home, Building2, Users, Music, PlusCircle, Heart, HelpCircle, User, LogOut, Ticket, Settings, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -15,6 +16,32 @@ interface MobileMenuProps {
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -108,6 +135,17 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
             {/* Navigation Items */}
             <nav className="space-y-2">
+              {isAdmin && (
+                <Link to="/admin" onClick={onClose}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-12 text-base font-medium text-primary hover:bg-primary/10"
+                  >
+                    <Shield className="mr-3 h-5 w-5" />
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
               {menuItems.map((item) => (
                 <Link key={item.href} to={item.href} onClick={onClose}>
                   <Button
