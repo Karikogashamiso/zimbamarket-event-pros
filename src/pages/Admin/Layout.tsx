@@ -1,0 +1,180 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
+import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Helmet } from "react-helmet-async";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const adminMenuItems = [
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Venues", url: "/admin/venues", icon: MapPin },
+  { title: "Events", url: "/admin/events", icon: Calendar },
+  { title: "Orders", url: "/admin/orders", icon: Package },
+];
+
+function AdminSidebar() {
+  const location = useLocation();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-lg font-bold px-4 py-6">
+            {!isCollapsed && "Admin Panel"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminMenuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link
+                        to={item.url}
+                        className={
+                          isActive
+                            ? "bg-muted text-primary font-medium"
+                            : "hover:bg-muted/50"
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <div className="mt-auto p-4">
+          <Link to="/">
+            <Button variant="outline" className="w-full" size="sm">
+              <ChevronLeft className="h-4 w-4" />
+              {!isCollapsed && <span className="ml-2">Back to Site</span>}
+            </Button>
+          </Link>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+
+const AdminLayout = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access the admin panel.",
+        variant: "destructive",
+      });
+      navigate('/auth?tab=login');
+      return;
+    }
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (roleError && roleError.code !== 'PGRST116') throw roleError;
+
+      if (!roleData) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges.",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+
+      setIsAdmin(true);
+    } catch (error: any) {
+      console.error('Error checking admin status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to verify admin status.",
+        variant: "destructive",
+      });
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
+
+  return (
+    <>
+      <Helmet>
+        <title>Admin Panel | ZimEventPro</title>
+      </Helmet>
+
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AdminSidebar />
+          
+          <main className="flex-1 overflow-auto">
+            <header className="sticky top-0 z-10 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="flex h-16 items-center gap-4 px-6">
+                <SidebarTrigger>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SidebarTrigger>
+                <div className="flex-1">
+                  <h1 className="text-lg font-semibold">Admin Panel</h1>
+                </div>
+              </div>
+            </header>
+            
+            <div className="p-6">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </>
+  );
+};
+
+export default AdminLayout;

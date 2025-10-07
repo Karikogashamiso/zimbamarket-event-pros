@@ -24,7 +24,11 @@ import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import { OrderConfirmation } from "./pages/OrderConfirmation";
 import Events from "./pages/Events";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
-import AdminPanel from "./pages/AdminPanel";
+import AdminLayout from "./pages/Admin/Layout";
+import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminVenues from "./pages/Admin/Venues";
+import AdminEvents from "./pages/Admin/Events";
+import AdminOrders from "./pages/Admin/Orders";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -75,7 +79,15 @@ const App = () => {
                   <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
                   <Route path="/events" element={<Layout><Events /></Layout>} />
                   <Route path="/organizer" element={<Layout><OrganizerDashboard /></Layout>} />
-                  <Route path="/admin" element={<Layout><AdminPanel /></Layout>} />
+                  
+                  {/* Admin Routes with nested structure */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="venues" element={<AdminVenues />} />
+                    <Route path="events" element={<AdminEvents />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                  </Route>
+                  
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
                   <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
                   <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
