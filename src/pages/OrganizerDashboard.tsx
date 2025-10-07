@@ -485,12 +485,23 @@ const OrganizerDashboard = () => {
                   ) : (
                     <div className="space-y-3">
                       {events.map((event) => (
-                        <div key={event.id} className="border rounded-lg p-4">
-                          <h3 className="font-semibold">{event.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(event.start_datetime).toLocaleString()}
-                          </p>
-                          <p className="text-sm">Venue: {event.venue?.name}</p>
+                        <div key={event.id} className="border rounded-lg p-4 space-y-3">
+                          <div>
+                            <h3 className="font-semibold">{event.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(event.start_datetime).toLocaleString()}
+                            </p>
+                            <p className="text-sm">Venue: {event.venue?.name}</p>
+                            <p className="text-sm">
+                              Status: <span className={event.is_published ? "text-green-600" : "text-yellow-600"}>
+                                {event.is_published ? "Published" : "Draft"}
+                              </span>
+                            </p>
+                          </div>
+                          <AddTicketTypeForm 
+                            eventId={event.id} 
+                            onSuccess={() => fetchOrganizerData(organizer.id)} 
+                          />
                         </div>
                       ))}
                     </div>
