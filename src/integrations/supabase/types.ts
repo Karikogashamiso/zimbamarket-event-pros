@@ -2483,6 +2483,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_organizer_for_order: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
       refresh_business_metrics: {
         Args: Record<PropertyKey, never>
         Returns: undefined
