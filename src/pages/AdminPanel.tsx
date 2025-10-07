@@ -101,7 +101,7 @@ const AdminPanel = () => {
         .from('orders')
         .select(`
           *,
-          tickets(count)
+          tickets(id, ticket_number, ticket_status)
         `)
         .order('created_at', { ascending: false });
       setOrders(ordersData || []);
@@ -200,6 +200,34 @@ const AdminPanel = () => {
     const formData = new FormData(e.currentTarget);
 
     try {
+      // First, ensure user has an organizer profile
+      const { data: organizerData, error: organizerError } = await supabase
+        .from('organizers')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (organizerError) throw organizerError;
+
+      let organizerId = organizerData?.id;
+
+      // Create organizer profile if doesn't exist
+      if (!organizerId) {
+        const { data: newOrganizer, error: createError } = await supabase
+          .from('organizers')
+          .insert({
+            user_id: user?.id,
+            business_name: 'Admin Organization',
+            email: user?.email || '',
+            business_type: 'event_organizer' as any,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        organizerId = newOrganizer.id;
+      }
+
       const eventData = {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
@@ -208,6 +236,7 @@ const AdminPanel = () => {
         start_datetime: formData.get('start_datetime') as string,
         end_datetime: formData.get('end_datetime') as string,
         is_published: formData.get('is_published') === 'true',
+        organizer_id: organizerId,
       };
 
       if (editingEvent) {
@@ -229,6 +258,7 @@ const AdminPanel = () => {
       setEditingEvent(null);
       await fetchAdminData();
     } catch (error: any) {
+      console.error('Error saving event:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save event.",
@@ -239,8 +269,27 @@ const AdminPanel = () => {
 
   const handleResendTickets = async (orderId: string, customerEmail: string) => {
     try {
+      // Fetch complete order details with tickets
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          tickets(*)
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (orderError) throw orderError;
+      if (!orderData) throw new Error('Order not found');
+
+      // Send order confirmation email with full details
       const { error } = await supabase.functions.invoke('send-order-confirmation', {
-        body: { orderId }
+        body: { 
+          orderDetails: {
+            ...orderData,
+            tickets: orderData.tickets || []
+          }
+        }
       });
 
       if (error) throw error;
@@ -250,6 +299,7 @@ const AdminPanel = () => {
         description: `Tickets have been sent to ${customerEmail}`,
       });
     } catch (error: any) {
+      console.error('Error resending tickets:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to resend tickets.",
@@ -571,6 +621,7 @@ const AdminPanel = () => {
                         <TableHead>Order #</TableHead>
                         <TableHead>Customer</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Tickets</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Date</TableHead>
@@ -578,30 +629,61 @@ const AdminPanel = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.order_number}</TableCell>
-                          <TableCell>{order.customer_first_name} {order.customer_last_name}</TableCell>
-                          <TableCell>{order.customer_email}</TableCell>
-                          <TableCell>${order.total_amount}</TableCell>
-                          <TableCell>
-                            <Badge variant={order.order_status === 'completed' ? 'default' : 'secondary'}>
-                              {order.order_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleResendTickets(order.id, order.customer_email)}
-                            >
-                              <Send className="h-4 w-4 mr-2" />
-                              Resend Tickets
-                            </Button>
+                      {orders.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                            No orders found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        orders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium font-mono">{order.order_number}</TableCell>
+                            <TableCell>{order.customer_first_name} {order.customer_last_name}</TableCell>
+                            <TableCell className="text-sm">{order.customer_email}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {order.tickets?.length || 0} ticket{order.tickets?.length !== 1 ? 's' : ''}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              {order.currency === 'USD' ? '$' : order.currency === 'ZWL' ? 'Z$' : 'RTGS$'}
+                              {order.total_amount}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  order.booking_status === 'confirmed' || order.booking_status === 'completed' 
+                                    ? 'default' 
+                                    : order.booking_status === 'cancelled' 
+                                    ? 'destructive'
+                                    : 'secondary'
+                                }
+                              >
+                                {order.booking_status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {new Date(order.created_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleResendTickets(order.id, order.customer_email)}
+                                disabled={!order.tickets || order.tickets.length === 0}
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Resend
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>

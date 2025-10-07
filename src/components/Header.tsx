@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search, User } from "lucide-react";
-import { useState } from "react";
+import { Menu, Heart, LogOut, Search, User, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
 import MobileMenu from "./MobileMenu";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeaderProps {
   variant?: "transparent" | "solid";
@@ -13,8 +14,34 @@ interface HeaderProps {
 
 const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -77,6 +104,12 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
             <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors`}>Browse</Link>
             <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors`}>Events & Tickets</Link>
             <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors`}>Organizer</Link>
+            {isAdmin && (
+              <Link to="/admin" className={`${textStyles} hover:text-secondary transition-colors flex items-center gap-1`}>
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
             <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors`}>About</Link>
             <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors`}>Contact</Link>
           </nav>
