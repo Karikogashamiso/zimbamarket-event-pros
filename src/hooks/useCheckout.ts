@@ -204,9 +204,29 @@ export const useCheckout = () => {
     return generatedTickets;
   };
 
-  const processPayment = async (orderId: string, paymentMethod: string, amount: number) => {
-    // Mock payment processing - in real implementation, this would integrate with payment providers
-    console.log('Processing payment:', { orderId, paymentMethod, amount });
+  const processPayment = async (orderId: string, paymentMethod: string, amount: number, customerEmail: string, customerName: string) => {
+    console.log('Processing Stripe payment:', { orderId, paymentMethod, amount });
+
+    // Call Stripe payment processing edge function
+    const { data: paymentResult, error: paymentError } = await supabase.functions.invoke('process-stripe-payment', {
+      body: {
+        orderId,
+        amount,
+        currency: 'USD',
+        customerEmail,
+        customerName,
+        paymentMethod,
+      }
+    });
+
+    if (paymentError) {
+      console.error('Stripe payment error:', paymentError);
+      throw new Error(`Payment processing failed: ${paymentError.message}`);
+    }
+
+    if (!paymentResult?.configured) {
+      throw new Error('Stripe payment not configured. Please add your Stripe API key.');
+    }
 
     // Create payment transaction record
     const transactionData = {
@@ -215,12 +235,12 @@ export const useCheckout = () => {
       currency: 'USD' as 'USD' | 'ZWL' | 'RTGS',
       transaction_type: 'payment',
       payment_method: paymentMethod,
-      payment_provider: paymentMethod === 'visa' ? 'stripe' : paymentMethod,
-      status: 'completed' as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'partially_refunded',
-      provider_transaction_id: `mock_${Date.now()}`,
+      payment_provider: 'stripe',
+      status: paymentResult.status === 'succeeded' ? 'completed' : 'pending' as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'partially_refunded',
+      provider_transaction_id: paymentResult.paymentIntentId,
       metadata: {
         processed_at: new Date().toISOString(),
-        mock_payment: true,
+        client_secret: paymentResult.clientSecret,
       },
     };
 
@@ -232,7 +252,7 @@ export const useCheckout = () => {
 
     if (transactionError) {
       console.error('Payment transaction error:', transactionError);
-      throw new Error(`Failed to process payment: ${transactionError.message}`);
+      throw new Error(`Failed to record payment: ${transactionError.message}`);
     }
 
     console.log('Payment processed:', transaction);
@@ -297,7 +317,9 @@ export const useCheckout = () => {
       const payment = await processPayment(
         order.id, 
         checkoutData.paymentMethod!, 
-        checkoutData.totalAmount!
+        checkoutData.totalAmount!,
+        checkoutData.customerInfo!.email,
+        `${checkoutData.customerInfo!.firstName} ${checkoutData.customerInfo!.lastName}`
       );
 
       // Step 4: Update order status to confirmed
