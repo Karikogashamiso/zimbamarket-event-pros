@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +22,7 @@ const Events = () => {
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -50,14 +52,14 @@ const Events = () => {
     }
   };
 
-  const handleDelete = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+  const handleDelete = async () => {
+    if (!deleteEventId) return;
 
     try {
       const { error } = await supabase
         .from('events')
         .delete()
-        .eq('id', eventId);
+        .eq('id', deleteEventId);
 
       if (error) throw error;
 
@@ -69,6 +71,8 @@ const Events = () => {
         description: error.message || "Failed to delete event.",
         variant: "destructive",
       });
+    } finally {
+      setDeleteEventId(null);
     }
   };
 
@@ -297,7 +301,7 @@ const Events = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDelete(event.id)}
+                            onClick={() => setDeleteEventId(event.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -311,6 +315,23 @@ const Events = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteEventId} onOpenChange={(open) => !open && setDeleteEventId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

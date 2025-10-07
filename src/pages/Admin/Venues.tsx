@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ const Venues = () => {
   const [editingVenue, setEditingVenue] = useState<any>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteVenueId, setDeleteVenueId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVenues();
@@ -36,14 +38,14 @@ const Venues = () => {
     }
   };
 
-  const handleDelete = async (venueId: string) => {
-    if (!confirm('Are you sure you want to delete this venue?')) return;
+  const handleDelete = async () => {
+    if (!deleteVenueId) return;
 
     try {
       const { error } = await supabase
         .from('venues')
         .delete()
-        .eq('id', venueId);
+        .eq('id', deleteVenueId);
 
       if (error) throw error;
 
@@ -55,6 +57,8 @@ const Venues = () => {
         description: error.message || "Failed to delete venue.",
         variant: "destructive",
       });
+    } finally {
+      setDeleteVenueId(null);
     }
   };
 
@@ -202,7 +206,7 @@ const Venues = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDelete(venue.id)}
+                            onClick={() => setDeleteVenueId(venue.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -216,6 +220,23 @@ const Venues = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteVenueId} onOpenChange={(open) => !open && setDeleteVenueId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Venue</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this venue? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
