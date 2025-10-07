@@ -266,7 +266,19 @@ export const useCheckout = () => {
       const order = await createOrder(checkoutData);
 
       // Step 2: Create tickets with secure QR codes
-      const tickets = await createTickets(order.id, checkoutData.ticketTiers!, checkoutData);
+      await createTickets(order.id, checkoutData.ticketTiers!, checkoutData);
+
+      // Fetch complete ticket records from database
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('order_id', order.id);
+
+      if (ticketsError || !tickets) {
+        throw new Error('Failed to fetch generated tickets');
+      }
+
+      console.log('Fetched complete tickets:', tickets);
 
       // Step 3: Process payment
       const payment = await processPayment(
