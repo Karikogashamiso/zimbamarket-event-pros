@@ -195,29 +195,6 @@ export const useCheckout = () => {
     // Mock payment processing - in real implementation, this would integrate with payment providers
     console.log('Processing payment:', { orderId, paymentMethod, amount });
 
-    const paymentData = {
-      order_id: orderId,
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      payment_type: paymentMethod,
-      status: 'succeeded' as 'succeeded' | 'pending' | 'failed', // Mock successful payment
-      metadata: {
-        payment_method: paymentMethod,
-        processed_at: new Date().toISOString(),
-      },
-    };
-
-    const { data: payment, error: paymentError } = await supabase
-      .from('payments')
-      .insert([paymentData])
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Payment creation error:', paymentError);
-      throw new Error(`Failed to process payment: ${paymentError.message}`);
-    }
-
     // Create payment transaction record
     const transactionData = {
       order_id: orderId,
@@ -234,17 +211,19 @@ export const useCheckout = () => {
       },
     };
 
-    const { error: transactionError } = await supabase
+    const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
-      .insert([transactionData]);
+      .insert([transactionData])
+      .select()
+      .single();
 
     if (transactionError) {
-      console.warn('Transaction record creation failed:', transactionError);
-      // Don't fail the whole process for this
+      console.error('Payment transaction error:', transactionError);
+      throw new Error(`Failed to process payment: ${transactionError.message}`);
     }
 
-    console.log('Payment processed:', payment);
-    return payment;
+    console.log('Payment processed:', transaction);
+    return transaction;
   };
 
   const updateOrderStatus = async (orderId: string, status: 'confirmed' | 'cancelled' | 'failed') => {
