@@ -13,7 +13,20 @@ const customerInfoSchema = z.object({
   phone: z.string().min(1, "Phone number is required").max(20, "Phone number must be less than 20 characters"),
   country: z.string().min(1, "Country is required"),
   city: z.string().min(1, "City is required"),
-  specialRequests: z.string().max(1000, "Special requests must be less than 1000 characters").optional(),
+  specialRequests: z.string()
+    .trim()
+    .max(1000, "Special requests must be less than 1000 characters")
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const lowerVal = val.toLowerCase();
+        const loremIpsumKeywords = ['lorem', 'ipsum', 'dolor', 'sit amet', 'consectetur', 'adipiscing', 'quia', 'quibusdam'];
+        return !loremIpsumKeywords.some(keyword => lowerVal.includes(keyword));
+      },
+      { message: "Please enter actual special requests, not placeholder text" }
+    )
+    .transform(val => val === '' ? undefined : val)
+    .optional(),
   marketingConsent: z.boolean(),
   termsAccepted: z.boolean().refine(val => val === true, "You must accept the terms and conditions"),
 });
