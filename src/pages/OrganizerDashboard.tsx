@@ -725,11 +725,23 @@ const OrganizerDashboard = () => {
                     </div>
                     <div>
                       <Label htmlFor="departure_datetime">Departure *</Label>
-                      <Input id="departure_datetime" name="departure_datetime" type="datetime-local" required />
+                      <Input 
+                        id="departure_datetime" 
+                        name="departure_datetime" 
+                        type="datetime-local" 
+                        required 
+                        min={new Date().toISOString().slice(0, 16)}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="arrival_datetime">Arrival *</Label>
-                      <Input id="arrival_datetime" name="arrival_datetime" type="datetime-local" required />
+                      <Input 
+                        id="arrival_datetime" 
+                        name="arrival_datetime" 
+                        type="datetime-local" 
+                        required 
+                        min={new Date().toISOString().slice(0, 16)}
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <Button type="submit" className="w-full">
