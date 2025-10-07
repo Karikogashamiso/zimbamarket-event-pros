@@ -26,9 +26,7 @@ const Auth = () => {
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(() => {
     // Check immediately on mount if this is a recovery callback
     const params = new URLSearchParams(window.location.search);
-    const isRecovery = params.get('type') === 'recovery';
-    console.log('Initial mount - Recovery mode:', isRecovery);
-    return isRecovery;
+    return params.get('type') === 'recovery';
   });
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
@@ -89,11 +87,8 @@ const Auth = () => {
     const tab = searchParams.get('tab');
     const type = searchParams.get('type');
     
-    console.log('URL params changed:', { tab, type });
-    
     if (type === 'recovery') {
       // PRIORITY: Handle password recovery first
-      console.log('Recovery mode detected - showing password update form');
       setShowPasswordUpdate(true);
       setShowForgotPassword(false);
       setResetEmailSent(false);
@@ -111,17 +106,13 @@ const Auth = () => {
     // CRITICAL: Check URL first before any redirect
     const type = searchParams.get('type');
     
-    console.log('Check user effect:', { showPasswordUpdate, type });
-    
     // Skip redirect if we're in recovery mode or showing password update form
     if (showPasswordUpdate || type === 'recovery') {
-      console.log('Skipping redirect - in recovery mode');
       return;
     }
     
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('User check result:', user ? 'logged in' : 'not logged in');
       if (user) {
         navigate("/");
       }
@@ -132,19 +123,18 @@ const Auth = () => {
   // Handle auth state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // CRITICAL: Check if we're in password recovery mode
-      const type = new URLSearchParams(window.location.search).get('type');
+      // CRITICAL: Check URL synchronously - don't rely on state
+      const urlParams = new URLSearchParams(window.location.search);
+      const type = urlParams.get('type');
       
-      console.log('Auth state changed:', { event, hasSession: !!session, type, showPasswordUpdate });
-      
-      // Don't redirect during password recovery
-      if (type === 'recovery' || showPasswordUpdate) {
-        console.log('Blocking redirect - in recovery mode');
-        return;
+      // BLOCK ANY REDIRECT if we're in recovery mode
+      if (type === 'recovery') {
+        // Ensure password update form is shown
+        setShowPasswordUpdate(true);
+        return; // Exit immediately
       }
       
       if (event === 'SIGNED_IN' && session) {
-        console.log('User signed in - redirecting to home');
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
@@ -154,7 +144,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast, showPasswordUpdate]);
+  }, [navigate, toast]);
 
   const validateField = (schema: z.ZodSchema, data: any, field: string) => {
     try {
