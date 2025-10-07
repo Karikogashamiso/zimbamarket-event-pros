@@ -26,7 +26,9 @@ const Auth = () => {
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(() => {
     // Check immediately on mount if this is a recovery callback
     const params = new URLSearchParams(window.location.search);
-    return params.get('type') === 'recovery';
+    const isRecovery = params.get('type') === 'recovery';
+    console.log('Initial mount - Recovery mode:', isRecovery);
+    return isRecovery;
   });
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
@@ -85,37 +87,41 @@ const Auth = () => {
   // Check URL parameters for tab and password reset
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'signup' || tab === 'login') {
-      setActiveTab(tab);
-    }
-
-    // Check if this is a password reset callback
     const type = searchParams.get('type');
     
+    console.log('URL params changed:', { tab, type });
+    
     if (type === 'recovery') {
-      // Ensure we show the password update form
+      // PRIORITY: Handle password recovery first
+      console.log('Recovery mode detected - showing password update form');
       setShowPasswordUpdate(true);
       setShowForgotPassword(false);
       setResetEmailSent(false);
-      setActiveTab('login'); // Set to login tab to avoid confusion
+      setActiveTab('login');
+      return; // Exit early to prevent other tab logic
+    }
+    
+    if (tab === 'signup' || tab === 'login') {
+      setActiveTab(tab);
     }
   }, [searchParams]);
 
   // Check if user is already logged in (but not during password reset)
   useEffect(() => {
-    // Skip redirect if we're showing password update form
-    if (showPasswordUpdate) {
+    // CRITICAL: Check URL first before any redirect
+    const type = searchParams.get('type');
+    
+    console.log('Check user effect:', { showPasswordUpdate, type });
+    
+    // Skip redirect if we're in recovery mode or showing password update form
+    if (showPasswordUpdate || type === 'recovery') {
+      console.log('Skipping redirect - in recovery mode');
       return;
     }
     
     const checkUser = async () => {
-      const type = searchParams.get('type');
-      if (type === 'recovery') {
-        // Don't redirect during password recovery
-        return;
-      }
-      
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('User check result:', user ? 'logged in' : 'not logged in');
       if (user) {
         navigate("/");
       }
@@ -126,13 +132,19 @@ const Auth = () => {
   // Handle auth state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Don't redirect during password recovery
+      // CRITICAL: Check if we're in password recovery mode
       const type = new URLSearchParams(window.location.search).get('type');
-      if (type === 'recovery') {
+      
+      console.log('Auth state changed:', { event, hasSession: !!session, type, showPasswordUpdate });
+      
+      // Don't redirect during password recovery
+      if (type === 'recovery' || showPasswordUpdate) {
+        console.log('Blocking redirect - in recovery mode');
         return;
       }
       
-      if (event === 'SIGNED_IN' && session && !showPasswordUpdate) {
+      if (event === 'SIGNED_IN' && session) {
+        console.log('User signed in - redirecting to home');
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
