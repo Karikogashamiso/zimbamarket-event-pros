@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import { TicketConfirmation } from './TicketConfirmation';
 import { useCheckout, CheckoutData } from '@/hooks/useCheckout';
 import { useToast } from '@/hooks/use-toast';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
+import { supabase } from '@/integrations/supabase/client';
 
 export type CheckoutStep = 
   | 'event' 
@@ -39,7 +41,11 @@ const STEPS: { key: CheckoutStep; title: string; description: string }[] = [
 ];
 
 export const CheckoutFlow: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>('event');
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get('eventId');
+  const tripId = searchParams.get('tripId');
+  
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>('tiers');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     selectedSeats: [],
     ticketTiers: [],
@@ -47,9 +53,90 @@ export const CheckoutFlow: React.FC = () => {
     totalAmount: 0,
     currency: 'USD'
   });
+  const [loadingEvent, setLoadingEvent] = useState(true);
   
   const { isProcessing, orderDetails, processCheckout, calculateTotal } = useCheckout();
   const { toast } = useToast();
+
+  // Fetch event/trip data on mount
+  useEffect(() => {
+    const fetchEventData = async () => {
+      setLoadingEvent(true);
+      try {
+        if (eventId) {
+          const { data, error } = await supabase
+            .from('events')
+            .select(`
+              id,
+              title,
+              description,
+              start_datetime,
+              end_datetime,
+              event_category,
+              featured_image,
+              venue:venues(name, city, address),
+              ticket_types(id, name, description, base_price, currency, max_quantity, is_active)
+            `)
+            .eq('id', eventId)
+            .single();
+
+          if (error) throw error;
+          
+          if (data) {
+            updateCheckoutData({ 
+              event: data as any
+            });
+          }
+        } else if (tripId) {
+          const { data, error } = await supabase
+            .from('transport_trips')
+            .select(`
+              id,
+              trip_number,
+              departure_datetime,
+              arrival_datetime,
+              route:transport_routes(
+                route_name,
+                transport_type,
+                origin_venue:venues!transport_routes_origin_venue_id_fkey(name, city),
+                destination_venue:venues!transport_routes_destination_venue_id_fkey(name, city)
+              ),
+              ticket_types(id, name, description, base_price, currency, is_active)
+            `)
+            .eq('id', tripId)
+            .single();
+
+          if (error) throw error;
+          
+          if (data) {
+            updateCheckoutData({ 
+              event: data as any
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching event:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load event details. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingEvent(false);
+      }
+    };
+
+    if (eventId || tripId) {
+      fetchEventData();
+    } else {
+      setLoadingEvent(false);
+      toast({
+        title: "No Event Selected",
+        description: "Please select an event or trip first.",
+        variant: "destructive",
+      });
+    }
+  }, [eventId, tripId]);
 
   const currentStepIndex = STEPS.findIndex(step => step.key === currentStep);
   const progressPercentage = ((currentStepIndex + 1) / STEPS.length) * 100;
@@ -102,10 +189,6 @@ export const CheckoutFlow: React.FC = () => {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 'event':
-        return !!checkoutData.event;
-      case 'seats':
-        return checkoutData.selectedSeats && checkoutData.selectedSeats.length > 0;
       case 'tiers':
         return checkoutData.ticketTiers && checkoutData.ticketTiers.length > 0;
       case 'addons':
@@ -124,22 +207,28 @@ export const CheckoutFlow: React.FC = () => {
   };
 
   const renderStepContent = () => {
+    if (loadingEvent) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading event details...</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (!checkoutData.event) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">No event selected</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     switch (currentStep) {
-      case 'event':
-        return (
-          <EventSelection
-            onEventSelect={(event) => updateCheckoutData({ event: event as any })}
-            selectedEvent={checkoutData.event as any}
-          />
-        );
-      case 'seats':
-        return (
-          <SeatSelection
-            event={checkoutData.event}
-            selectedSeats={checkoutData.selectedSeats || []}
-            onSeatsChange={(seats) => updateCheckoutData({ selectedSeats: seats })}
-          />
-        );
       case 'tiers':
         return (
           <TicketTiers
@@ -198,7 +287,7 @@ export const CheckoutFlow: React.FC = () => {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            {currentStep !== 'event' && (
+            {!['tiers', 'confirmation'].includes(currentStep) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -254,7 +343,7 @@ export const CheckoutFlow: React.FC = () => {
               
               {/* Navigation Buttons */}
               <div className="flex gap-2">
-                {!['event', 'confirmation'].includes(currentStep) && (
+                {!['tiers', 'confirmation'].includes(currentStep) && (
                   <Button
                     variant="outline"
                     onClick={goToPreviousStep}

@@ -78,10 +78,10 @@ const OrganizerDashboard = () => {
         .eq('organizer_id', organizerId);
       setVenues(venuesData || []);
 
-      // Fetch events
+      // Fetch events with ticket types
       const { data: eventsData } = await supabase
         .from('events')
-        .select('*, venue:venues(name)')
+        .select('*, venue:venues(name), ticket_types(*)')
         .eq('organizer_id', organizerId);
       setEvents(eventsData || []);
 
@@ -497,6 +497,20 @@ const OrganizerDashboard = () => {
                                 {event.is_published ? "Published" : "Draft"}
                               </span>
                             </p>
+                            
+                            {event.ticket_types && event.ticket_types.length > 0 && (
+                              <div className="mt-2 pt-2 border-t">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Ticket Types:</p>
+                                <div className="space-y-1">
+                                  {event.ticket_types.map((ticket: any) => (
+                                    <div key={ticket.id} className="text-xs flex justify-between items-center">
+                                      <span>{ticket.name}</span>
+                                      <span className="font-medium">${ticket.base_price}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <AddTicketTypeForm 
                             eventId={event.id} 
