@@ -75,7 +75,8 @@ export const CheckoutFlow: React.FC = () => {
               event_category,
               featured_image,
               venue:venues(name, city, address),
-              ticket_types(id, name, description, base_price, currency, max_quantity, is_active)
+              ticket_types(id, name, description, base_price, currency, max_quantity, is_active),
+              event_addons(id, name, description, price, currency, category, max_quantity, is_active)
             `)
             .eq('id', eventId)
             .single();

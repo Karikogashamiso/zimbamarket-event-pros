@@ -1,78 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Utensils, Car, Luggage, Wifi, Coffee, Gift } from 'lucide-react';
-
-interface AddOn {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  category: 'dining' | 'transport' | 'comfort' | 'experience';
-  icon: React.ReactNode;
-  popular?: boolean;
-}
-
-const ADD_ONS: AddOn[] = [
-  {
-    id: 'vip-table',
-    name: 'VIP Table Reservation',
-    description: 'Reserved table with premium location and bottle service',
-    price: 150,
-    currency: 'USD',
-    category: 'experience',
-    icon: <Gift className="h-5 w-5" />,
-    popular: true
-  },
-  {
-    id: 'meal-package',
-    name: 'Gourmet Meal Package',
-    description: 'Three-course meal with complimentary drinks',
-    price: 35,
-    currency: 'USD',
-    category: 'dining',
-    icon: <Utensils className="h-5 w-5" />
-  },
-  {
-    id: 'vip-parking',
-    name: 'VIP Parking',
-    description: 'Priority parking close to venue entrance',
-    price: 20,
-    currency: 'USD',
-    category: 'transport',
-    icon: <Car className="h-5 w-5" />
-  },
-  {
-    id: 'extra-luggage',
-    name: 'Extra Luggage (Transport)',
-    description: 'Additional 20kg luggage allowance for transport tickets',
-    price: 15,
-    currency: 'USD',
-    category: 'transport',
-    icon: <Luggage className="h-5 w-5" />
-  },
-  {
-    id: 'wifi-access',
-    name: 'Premium WiFi',
-    description: 'High-speed internet access throughout the event',
-    price: 10,
-    currency: 'USD',
-    category: 'comfort',
-    icon: <Wifi className="h-5 w-5" />
-  },
-  {
-    id: 'refreshments',
-    name: 'Refreshment Package',
-    description: 'Unlimited soft drinks and snacks',
-    price: 25,
-    currency: 'USD',
-    category: 'dining',
-    icon: <Coffee className="h-5 w-5" />
-  }
-];
+import { Utensils, Car, Luggage, Wifi, Coffee, Gift, Ticket } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddOnsSelectionProps {
   event: any;
@@ -85,7 +18,51 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
   selectedAddOns,
   onAddOnsChange
 }) => {
-  const toggleAddOn = (addOn: AddOn) => {
+  const { toast } = useToast();
+  const [addOns, setAddOns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAddOns = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('event_addons')
+          .select('*')
+          .eq('event_id', event?.id)
+          .eq('is_active', true);
+
+        if (error) throw error;
+        setAddOns(data || []);
+      } catch (error: any) {
+        console.error('Error fetching add-ons:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load add-ons",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (event?.id) {
+      fetchAddOns();
+    } else {
+      setLoading(false);
+    }
+  }, [event?.id]);
+
+  const getIcon = (category: string) => {
+    switch (category) {
+      case 'dining': return <Utensils className="h-5 w-5" />;
+      case 'transport': return <Car className="h-5 w-5" />;
+      case 'comfort': return <Wifi className="h-5 w-5" />;
+      case 'experience': return <Gift className="h-5 w-5" />;
+      default: return <Ticket className="h-5 w-5" />;
+    }
+  };
+  const toggleAddOn = (addOn: any) => {
     const existingIndex = selectedAddOns.findIndex(a => a.id === addOn.id);
     
     if (existingIndex >= 0) {
@@ -119,17 +96,40 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
     }
   };
 
-  const groupedAddOns = ADD_ONS.reduce((groups, addOn) => {
+  const groupedAddOns = addOns.reduce((groups, addOn) => {
     if (!groups[addOn.category]) {
       groups[addOn.category] = [];
     }
     groups[addOn.category].push(addOn);
     return groups;
-  }, {} as Record<string, AddOn[]>);
+  }, {} as Record<string, any[]>);
 
   const totalAddOnsPrice = selectedAddOns.reduce((sum, addOn) => {
     return sum + (addOn.price * addOn.quantity);
   }, 0);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading add-ons...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (addOns.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">
+            No add-ons available for this event
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -138,11 +138,11 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
         <p className="text-muted-foreground">Add optional extras to make your event even better</p>
       </div>
 
-      {Object.entries(groupedAddOns).map(([category, addOns]) => (
+      {Object.entries(groupedAddOns).map(([category, categoryAddOns]: [string, any[]]) => (
         <div key={category}>
           <h3 className="font-semibold text-lg mb-3">{getCategoryTitle(category)}</h3>
           <div className="space-y-3">
-            {addOns.map((addOn) => {
+            {categoryAddOns.map((addOn: any) => {
               const selectedAddOn = getSelectedAddOn(addOn.id);
               const isSelected = !!selectedAddOn;
 
@@ -157,7 +157,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
                       <div className="p-2 rounded-lg bg-accent/20 text-accent-foreground flex-shrink-0">
-                        {addOn.icon}
+                        {getIcon(addOn.category)}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -165,14 +165,14 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
                           <div>
                             <h4 className="font-medium flex items-center gap-2">
                               {addOn.name}
-                              {addOn.popular && (
-                                <Badge variant="secondary" className="text-xs">Popular</Badge>
-                              )}
                             </h4>
-                            <p className="text-sm text-muted-foreground">{addOn.description}</p>
+                            <p className="text-sm text-muted-foreground">{addOn.description || 'Event add-on'}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <div className="font-semibold">${addOn.price}</div>
+                            <div className="font-semibold">
+                              {addOn.currency === 'USD' ? '$' : addOn.currency === 'ZWL' ? 'Z$' : 'RTGS$'}
+                              {addOn.price}
+                            </div>
                           </div>
                         </div>
 
@@ -200,9 +200,10 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  updateQuantity(addOn.id, Math.min(10, selectedAddOn.quantity + 1));
+                                  const maxQty = addOn.max_quantity || 10;
+                                  updateQuantity(addOn.id, Math.min(maxQty, selectedAddOn.quantity + 1));
                                 }}
-                                disabled={selectedAddOn.quantity >= 10}
+                                disabled={selectedAddOn.quantity >= (addOn.max_quantity || 10)}
                               >
                                 +
                               </Button>
@@ -245,15 +246,6 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
         </Card>
       )}
 
-      {selectedAddOns.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">
-              No add-ons selected. You can continue without any extras or choose from the options above.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

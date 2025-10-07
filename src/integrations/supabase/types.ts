@@ -508,6 +508,69 @@ export type Database = {
         }
         Relationships: []
       }
+      event_addons: {
+        Row: {
+          category: string
+          created_at: string
+          currency: Database["public"]["Enums"]["currency_code"]
+          description: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean | null
+          max_quantity: number | null
+          metadata: Json | null
+          name: string
+          price: number
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          currency?: Database["public"]["Enums"]["currency_code"]
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_quantity?: number | null
+          metadata?: Json | null
+          name: string
+          price: number
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: Database["public"]["Enums"]["currency_code"]
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_quantity?: number | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_addons_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_addons_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "transport_trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           age_restriction: number | null

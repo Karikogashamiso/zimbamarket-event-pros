@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddTicketTypeForm } from "@/components/AddTicketTypeForm";
+import { AddEventAddonForm } from "@/components/AddEventAddonForm";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -78,10 +79,10 @@ const OrganizerDashboard = () => {
         .eq('organizer_id', organizerId);
       setVenues(venuesData || []);
 
-      // Fetch events with ticket types
+      // Fetch events with ticket types and add-ons
       const { data: eventsData } = await supabase
         .from('events')
-        .select('*, venue:venues(name), ticket_types(*)')
+        .select('*, venue:venues(name), ticket_types(*), event_addons(*)')
         .eq('organizer_id', organizerId);
       setEvents(eventsData || []);
 
@@ -511,10 +512,28 @@ const OrganizerDashboard = () => {
                                 </div>
                               </div>
                             )}
+
+                            {event.event_addons && event.event_addons.length > 0 && (
+                              <div className="mt-2 pt-2 border-t">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Event Add-Ons:</p>
+                                <div className="space-y-1">
+                                  {event.event_addons.map((addon: any) => (
+                                    <div key={addon.id} className="text-xs flex justify-between items-center">
+                                      <span>{addon.name} ({addon.category})</span>
+                                      <span className="font-medium">${addon.price}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <AddTicketTypeForm 
                             eventId={event.id} 
                             onSuccess={() => fetchOrganizerData(organizer.id)} 
+                          />
+                          <AddEventAddonForm
+                            eventId={event.id}
+                            onAddonAdded={() => fetchOrganizerData(organizer.id)}
                           />
                         </div>
                       ))}
