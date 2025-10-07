@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddTicketTypeForm } from "@/components/AddTicketTypeForm";
 import { AddEventAddonForm } from "@/components/AddEventAddonForm";
+import { AddTripTicketTypeForm } from "@/components/AddTripTicketTypeForm";
+import { AddTripAddonForm } from "@/components/AddTripAddonForm";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -91,7 +93,7 @@ const OrganizerDashboard = () => {
         .eq('organizer_id', organizerId);
       setEvents(eventsData || []);
 
-      // Fetch routes with trips
+      // Fetch routes with trips, ticket types, and addons
       const { data: routesData } = await supabase
         .from('transport_routes')
         .select(`
@@ -103,7 +105,8 @@ const OrganizerDashboard = () => {
             trip_number,
             departure_datetime,
             arrival_datetime,
-            ticket_types(id, name, base_price, max_quantity)
+            ticket_types(id, name, base_price, max_quantity, description),
+            addons:event_addons(id, name, price, category, description)
           )
         `)
         .eq('organizer_id', organizerId);
@@ -260,20 +263,7 @@ const OrganizerDashboard = () => {
 
       if (tripError) throw tripError;
 
-      // Create ticket type for the trip
-      const { error: ticketError } = await supabase
-        .from('ticket_types')
-        .insert({
-          trip_id: tripData.id,
-          name: formData.get('ticket_type_name') as string,
-          base_price: parseFloat(formData.get('ticket_price') as string),
-          max_quantity: parseInt(formData.get('seat_capacity') as string),
-          currency: 'USD',
-        } as any);
-
-      if (ticketError) throw ticketError;
-
-      toast({ title: "Route, trip, and ticket type created successfully!" });
+      toast({ title: "Route and trip created successfully! Now add ticket types." });
       await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
       setSelectedOriginId('');
@@ -770,38 +760,6 @@ const OrganizerDashboard = () => {
                         min={new Date().toISOString().slice(0, 16)}
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="ticket_type_name">Ticket Type Name *</Label>
-                      <Input 
-                        id="ticket_type_name" 
-                        name="ticket_type_name" 
-                        placeholder="e.g., Standard Seat" 
-                        required 
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="ticket_price">Ticket Price (USD) *</Label>
-                      <Input 
-                        id="ticket_price" 
-                        name="ticket_price" 
-                        type="number" 
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g., 25.00" 
-                        required 
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="seat_capacity">Seat Capacity *</Label>
-                      <Input 
-                        id="seat_capacity" 
-                        name="seat_capacity" 
-                        type="number" 
-                        min="1"
-                        placeholder="e.g., 50" 
-                        required 
-                      />
-                    </div>
                     <div className="md:col-span-2">
                       <Button type="submit" className="w-full">
                         <Plus className="w-4 h-4 mr-2" />
@@ -844,16 +802,17 @@ const OrganizerDashboard = () => {
                           </div>
 
                           {route.transport_trips && route.transport_trips.length > 0 && (
-                            <div className="border-t pt-3 space-y-2">
+                            <div className="border-t pt-3 space-y-3">
                               <p className="font-medium text-sm">Upcoming Trips:</p>
                               {route.transport_trips.slice(0, 3).map((trip: any) => (
-                                <div key={trip.id} className="bg-muted/50 rounded p-3 text-sm">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <span className="font-medium">Trip #{trip.trip_number}</span>
+                                <div key={trip.id} className="bg-muted/50 rounded p-3 space-y-3">
+                                  <div className="flex justify-between items-start">
+                                    <span className="font-medium text-sm">Trip #{trip.trip_number}</span>
                                     {trip.ticket_types?.[0] && (
                                       <span className="font-bold">${trip.ticket_types[0].base_price}</span>
                                     )}
                                   </div>
+                                  
                                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                                     <div>
                                       <p className="font-medium">Departure</p>
@@ -876,14 +835,57 @@ const OrganizerDashboard = () => {
                                       })}</p>
                                     </div>
                                   </div>
-                                  {trip.ticket_types?.[0] && (
-                                    <div className="mt-2 flex justify-between text-xs">
-                                      <span>{trip.ticket_types[0].name}</span>
-                                      <span className="text-muted-foreground">
-                                        {trip.ticket_types[0].max_quantity} seats
-                                      </span>
+
+                                  {/* Ticket Types */}
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <p className="font-medium text-xs">Ticket Types</p>
+                                      <AddTripTicketTypeForm 
+                                        tripId={trip.id} 
+                                        onSuccess={() => fetchOrganizerData(selectedOrganizer.id)} 
+                                      />
                                     </div>
-                                  )}
+                                    {trip.ticket_types && trip.ticket_types.length > 0 ? (
+                                      <div className="space-y-1">
+                                        {trip.ticket_types.map((ticket: any) => (
+                                          <div key={ticket.id} className="flex justify-between text-xs bg-background rounded p-2">
+                                            <span>{ticket.name}</span>
+                                            <div className="flex gap-2">
+                                              <span className="font-medium">${ticket.base_price}</span>
+                                              <span className="text-muted-foreground">
+                                                {ticket.max_quantity} seats
+                                              </span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-muted-foreground italic">No ticket types yet</p>
+                                    )}
+                                  </div>
+
+                                  {/* Add-ons */}
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <p className="font-medium text-xs">Add-ons</p>
+                                      <AddTripAddonForm 
+                                        tripId={trip.id} 
+                                        onAddonAdded={() => fetchOrganizerData(selectedOrganizer.id)} 
+                                      />
+                                    </div>
+                                    {trip.addons && trip.addons.length > 0 ? (
+                                      <div className="space-y-1">
+                                        {trip.addons.map((addon: any) => (
+                                          <div key={addon.id} className="flex justify-between text-xs bg-background rounded p-2">
+                                            <span>{addon.name}</span>
+                                            <span className="font-medium">${addon.price}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-muted-foreground italic">No add-ons yet</p>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>
