@@ -59,9 +59,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate ticket list HTML
     const ticketsHtml = orderDetails.tickets?.map(ticket => `
       <div style="background: #f8f9fa; padding: 16px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4f46e5;">
-        <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 16px;">${ticket.ticket_type_name}</h4>
-        <p style="margin: 0; color: #6b7280; font-size: 14px;">Ticket #${ticket.ticket_number}</p>
-        <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 12px;">QR Code: ${ticket.qr_code_data.substring(0, 20)}...</p>
+        <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 16px;">${ticket.ticket_type_name || 'General Admission'}</h4>
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">Ticket #${ticket.ticket_number || 'N/A'}</p>
+        ${ticket.qr_code_data ? `<p style="margin: 4px 0 0 0; color: #6b7280; font-size: 12px;">QR Code: ${ticket.qr_code_data.substring(0, 20)}...</p>` : ''}
       </div>
     `).join('') || '<p>No tickets generated</p>';
 

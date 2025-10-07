@@ -42,14 +42,19 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
   const convertTicketToDisplayFormat = (ticket: any, order: any) => {
     const eventInfo = ticket.metadata?.eventInfo || {};
     
+    // Get customer name from ticket holder fields or fallback to order customer info
+    const firstName = ticket.holder_first_name || order.customer_first_name || '';
+    const lastName = ticket.holder_last_name || order.customer_last_name || '';
+    const customerName = `${firstName} ${lastName}`.trim() || 'Guest';
+    
     return {
-      ticketNumber: ticket.ticket_number,
+      ticketNumber: ticket.ticket_number || 'N/A',
       eventTitle: eventInfo.title || 'General Event',
       eventType: 'event' as const,
       dateTime: eventInfo.date || new Date().toISOString(),
       venue: eventInfo.venue || 'TBA',
       location: eventInfo.location || 'Zimbabwe',
-      customerName: `${ticket.holder_first_name} ${ticket.holder_last_name}`,
+      customerName: customerName,
       ticketType: ticket.metadata?.tierName || 'General Admission',
       price: ticket.paid_price || 0,
       currency: ticket.currency || 'USD',
@@ -58,7 +63,7 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
         seat: '1',
         section: 'General'
       } : undefined,
-      qrCodeData: ticket.qr_code_data,
+      qrCodeData: ticket.qr_code_data || '',
       organizerName: 'ZEP Events',
       specialInstructions: order.special_requests || undefined,
     };

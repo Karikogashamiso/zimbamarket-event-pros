@@ -249,7 +249,7 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
           </div>
 
           <div className="text-center">
-            <div className="text-xs text-muted-foreground">Ticket #{ticket.ticketNumber}</div>
+            <div className="text-xs text-muted-foreground">Ticket #{ticket.ticketNumber || 'N/A'}</div>
             {ticket.specialInstructions && (
               <div className="text-xs text-muted-foreground mt-1 p-2 bg-yellow-50 rounded border">
                 ⚠️ {ticket.specialInstructions}
