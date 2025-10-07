@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const OrganizerDashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -25,6 +25,9 @@ const OrganizerDashboard = () => {
   const [showOrganizerForm, setShowOrganizerForm] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (authLoading) return;
+    
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -35,7 +38,7 @@ const OrganizerDashboard = () => {
       return;
     }
     checkOrganizerStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   const checkOrganizerStatus = async () => {
     try {
@@ -233,7 +236,7 @@ const OrganizerDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
