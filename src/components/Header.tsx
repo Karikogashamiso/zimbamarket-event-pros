@@ -145,7 +145,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className={`${textStyles} ${buttonStyles} flex items-center gap-2`}
+                    className={`flex items-center gap-2 ${variant === "solid" ? "text-foreground hover:bg-muted hover:text-foreground" : "text-white hover:bg-white/20 hover:text-white"}`}
                   >
                     <User className="w-4 h-4" />
                     <span className="text-sm">
