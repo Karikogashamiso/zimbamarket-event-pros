@@ -26,6 +26,8 @@ const OrganizerDashboard = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
   const [showOrganizerForm, setShowOrganizerForm] = useState(false);
+  const [selectedOriginId, setSelectedOriginId] = useState<string>('');
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string>('');
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -204,6 +206,19 @@ const OrganizerDashboard = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    const originId = formData.get('origin_venue_id') as string;
+    const destinationId = formData.get('destination_venue_id') as string;
+
+    // Validate that origin and destination are different
+    if (originId === destinationId) {
+      toast({
+        title: "Invalid Route",
+        description: "Origin and destination must be different venues.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { data: routeData, error: routeError } = await supabase
         .from('transport_routes')
@@ -211,8 +226,8 @@ const OrganizerDashboard = () => {
           organizer_id: selectedOrganizer.id,
           route_name: formData.get('route_name') as string,
           transport_type: formData.get('transport_type') as any,
-          origin_venue_id: formData.get('origin_venue_id') as string,
-          destination_venue_id: formData.get('destination_venue_id') as string,
+          origin_venue_id: originId,
+          destination_venue_id: destinationId,
         } as any)
         .select()
         .single();
@@ -234,6 +249,8 @@ const OrganizerDashboard = () => {
       toast({ title: "Route and trip created successfully!" });
       await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
+      setSelectedOriginId('');
+      setSelectedDestinationId('');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -668,27 +685,41 @@ const OrganizerDashboard = () => {
                     </div>
                     <div>
                       <Label htmlFor="origin_venue_id">Origin *</Label>
-                      <Select name="origin_venue_id" required>
+                      <Select 
+                        name="origin_venue_id" 
+                        required 
+                        value={selectedOriginId}
+                        onValueChange={setSelectedOriginId}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select origin" />
                         </SelectTrigger>
                         <SelectContent>
-                          {venues.map((venue) => (
-                            <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
-                          ))}
+                          {venues
+                            .filter(venue => !selectedDestinationId || venue.id !== selectedDestinationId)
+                            .map((venue) => (
+                              <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label htmlFor="destination_venue_id">Destination *</Label>
-                      <Select name="destination_venue_id" required>
+                      <Select 
+                        name="destination_venue_id" 
+                        required
+                        value={selectedDestinationId}
+                        onValueChange={setSelectedDestinationId}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select destination" />
                         </SelectTrigger>
                         <SelectContent>
-                          {venues.map((venue) => (
-                            <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
-                          ))}
+                          {venues
+                            .filter(venue => !selectedOriginId || venue.id !== selectedOriginId)
+                            .map((venue) => (
+                              <SelectItem key={venue.id} value={venue.id}>{venue.name}, {venue.city}</SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
