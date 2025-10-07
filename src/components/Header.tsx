@@ -101,7 +101,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center mr-8">
             <h1 className={`text-2xl md:text-3xl font-bold ${textStyles}`}>
               Zim<span className={logoAccentStyles}>EventPro</span>
             </h1>

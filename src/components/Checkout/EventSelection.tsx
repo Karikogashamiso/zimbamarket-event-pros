@@ -4,75 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, Calendar, Clock, Users, Plane, Bus, Music, Trophy } from 'lucide-react';
-
-interface Event {
-  id: string;
-  title: string;
-  type: 'event' | 'transport';
-  category: string;
-  date: string;
-  time: string;
-  venue: string;
-  location: string;
-  price_from: number;
-  currency: string;
-  capacity: number;
-  available: number;
-  image: string;
-  featured: boolean;
-}
-
-const MOCK_EVENTS: Event[] = [
-  {
-    id: '1',
-    title: 'Harare Music Festival 2024',
-    type: 'event',
-    category: 'music',
-    date: '2024-02-15',
-    time: '18:00',
-    venue: 'Rainbow Towers',
-    location: 'Harare',
-    price_from: 25,
-    currency: 'USD',
-    capacity: 5000,
-    available: 2500,
-    image: '/placeholder-event.jpg',
-    featured: true
-  },
-  {
-    id: '2', 
-    title: 'Harare to Bulawayo Express',
-    type: 'transport',
-    category: 'bus',
-    date: '2024-02-16',
-    time: '06:00',
-    venue: 'City Terminal',
-    location: 'Harare → Bulawayo',
-    price_from: 15,
-    currency: 'USD',
-    capacity: 50,
-    available: 32,
-    image: '/placeholder-bus.jpg',
-    featured: false
-  },
-  {
-    id: '3',
-    title: 'FC Platinum vs Dynamos',
-    type: 'event', 
-    category: 'sports',
-    date: '2024-02-17',
-    time: '15:00',
-    venue: 'National Sports Stadium',
-    location: 'Harare',
-    price_from: 5,
-    currency: 'USD',
-    capacity: 60000,
-    available: 45000,
-    image: '/placeholder-sports.jpg',
-    featured: false
-  }
-];
+import { useEvents, Event } from '@/hooks/useEvents';
 
 interface EventSelectionProps {
   onEventSelect: (event: Event) => void;
@@ -85,8 +19,9 @@ export const EventSelection: React.FC<EventSelectionProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const { events, loading, error } = useEvents();
 
-  const filteredEvents = MOCK_EVENTS.filter(event => {
+  const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'all' || 
@@ -135,7 +70,37 @@ export const EventSelection: React.FC<EventSelectionProps> = ({
 
       {/* Event List */}
       <div className="space-y-3">
-        {filteredEvents.map((event) => {
+        {loading ? (
+          <>
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <Skeleton className="w-16 h-16 rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : error ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-destructive">{error}</p>
+            </CardContent>
+          </Card>
+        ) : filteredEvents.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">No events found matching your search.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredEvents.map((event) => {
           const availability = formatAvailability(event.available, event.capacity);
           const isSelected = selectedEvent?.id === event.id;
 
@@ -207,16 +172,9 @@ export const EventSelection: React.FC<EventSelectionProps> = ({
               </CardContent>
             </Card>
           );
-        })}
+        })
+        )}
       </div>
-
-      {filteredEvents.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">No events found matching your search.</p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

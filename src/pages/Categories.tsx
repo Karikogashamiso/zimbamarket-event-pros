@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import MetaTags from "@/components/SEO/MetaTags";
 import StructuredData from "@/components/SEO/StructuredData";
+import { useCategories } from "@/hooks/useCategories";
 import { 
   Building2, 
   Utensils, 
@@ -38,12 +39,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Categories = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const { categories, loading, error } = useCategories();
   
   // Get category from URL parameters
   const selectedCategory = searchParams.get('category') || 'all';
@@ -68,7 +71,7 @@ const Categories = () => {
 
   // Handle category card clicks - navigate to search results with category filter
   const handleCategoryCardClick = (category: any) => {
-    navigate(`/search?category=${category.category}`);
+    navigate(`/search?category=${category.slug}`);
   };
 
   // Initialize search query from URL
@@ -107,198 +110,49 @@ const Categories = () => {
     }
   };
 
-  const allCategories = [
-    {
-      icon: Building2,
-      title: "Venues",
-      description: "Wedding halls, conference centers, outdoor spaces",
-      count: "150+ venues",
-      color: "bg-gradient-to-br from-blue-500 to-blue-600",
-      trending: true,
-      category: "venues"
-    },
-    {
-      icon: Utensils,
-      title: "Catering",
-      description: "Professional catering services for all occasions",
-      count: "80+ caterers",
-      color: "bg-gradient-to-br from-green-500 to-green-600",
-      category: "food"
-    },
-    {
-      icon: Wine,
-      title: "Bar Services",
-      description: "Professional bartending and beverage services",
-      count: "45+ bartenders",
-      color: "bg-gradient-to-br from-purple-500 to-purple-600",
-      category: "food"
-    },
-    {
-      icon: Music,
-      title: "DJs",
-      description: "Professional DJs and music entertainment",
-      count: "120+ DJs",
-      color: "bg-gradient-to-br from-red-500 to-red-600",
-      trending: true,
-      category: "entertainment"
-    },
-    {
-      icon: Mic2,
-      title: "Entertainers",
-      description: "Performers, magicians, and specialty acts",
-      count: "85+ entertainers",
-      color: "bg-gradient-to-br from-pink-500 to-pink-600",
-      category: "entertainment"
-    },
-    {
-      icon: Flower,
-      title: "Flowers",
-      description: "Beautiful floral arrangements and designs",
-      count: "70+ florists",
-      color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
-      trending: true,
-      category: "decor"
-    },
-    {
-      icon: Palette,
-      title: "Decor",
-      description: "Event styling and decoration services",
-      count: "60+ decorators",
-      color: "bg-gradient-to-br from-orange-500 to-orange-600",
-      category: "decor"
-    },
-    {
-      icon: Camera,
-      title: "Photographers",
-      description: "Capture your special moments professionally",
-      count: "90+ photographers",
-      color: "bg-gradient-to-br from-indigo-500 to-indigo-600",
-      category: "media"
-    },
-    {
-      icon: Video,
-      title: "Videographers",
-      description: "Professional video production services",
-      count: "55+ videographers",
-      color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
-      category: "media"
-    },
-    {
-      icon: Cake,
-      title: "Bakers",
-      description: "Custom cakes and desserts for celebrations",
-      count: "60+ bakers",
-      color: "bg-gradient-to-br from-yellow-500 to-yellow-600",
-      category: "food"
-    },
-    {
-      icon: Guitar,
-      title: "Musicians",
-      description: "Live music bands and solo artists",
-      count: "75+ musicians",
-      color: "bg-gradient-to-br from-violet-500 to-violet-600",
-      category: "entertainment"
-    },
-    {
-      icon: Users,
-      title: "Event Planners",
-      description: "Full-service event planning and coordination",
-      count: "45+ planners",
-      color: "bg-gradient-to-br from-teal-500 to-teal-600",
-      category: "planning"
-    },
-    {
-      icon: Sparkles,
-      title: "Beauty Services",
-      description: "Hair, makeup, and beauty professionals",
-      count: "40+ stylists",
-      color: "bg-gradient-to-br from-rose-500 to-rose-600",
-      category: "services"
-    },
-    {
-      icon: Mic2,
-      title: "Event Speakers",
-      description: "Keynote speakers and presenters",
-      count: "30+ speakers",
-      color: "bg-gradient-to-br from-slate-500 to-slate-600",
-      category: "services"
-    },
-    {
-      icon: Shield,
-      title: "Event Safety",
-      description: "Security and safety management services",
-      count: "25+ providers",
-      color: "bg-gradient-to-br from-gray-500 to-gray-600",
-      category: "services"
-    },
-    {
-      icon: Guitar,
-      title: "Bands",
-      description: "Live music bands for all genres",
-      count: "50+ bands",
-      color: "bg-gradient-to-br from-amber-500 to-amber-600",
-      category: "entertainment"
-    },
-    {
-      icon: Sun,
-      title: "Lighting",
-      description: "Professional lighting design and setup",
-      count: "35+ providers",
-      color: "bg-gradient-to-br from-lime-500 to-lime-600",
-      category: "technical"
-    },
-    {
-      icon: Volume2,
-      title: "Sound",
-      description: "Audio equipment and sound engineering",
-      count: "40+ providers",
-      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
-      category: "technical"
-    },
-    {
-      icon: ImageIcon,
-      title: "Photo Booths",
-      description: "Interactive photo booth rentals",
-      count: "20+ providers",
-      color: "bg-gradient-to-br from-fuchsia-500 to-pink-500",
-      category: "entertainment"
-    },
-    {
-      icon: ChefHat,
-      title: "Private Chefs",
-      description: "Personal chef services for intimate events",
-      count: "15+ chefs",
-      color: "bg-gradient-to-br from-green-600 to-emerald-600",
-      category: "food"
-    },
-    {
-      icon: Utensils,
-      title: "Food Stands",
-      description: "Mobile food vendors and specialty stands",
-      count: "30+ vendors",
-      color: "bg-gradient-to-br from-orange-600 to-red-500",
-      category: "food"
-    },
-    {
-      icon: Clock,
-      title: "Officiants",
-      description: "Wedding and ceremony officiants",
-      count: "18+ officiants",
-      color: "bg-gradient-to-br from-purple-600 to-indigo-600",
-      category: "services"
-    }
-  ];
+  // Icon mapping for categories
+  const iconMap: { [key: string]: any } = {
+    'Building2': Building2,
+    'Utensils': Utensils,
+    'Music': Music,
+    'Camera': Camera,
+    'Users': Users,
+    'Cake': Cake,
+    'Car': Car,
+    'Flower': Flower,
+    'Palette': Palette,
+    'Mic2': Mic2,
+    'Video': Video,
+    'Wine': Wine,
+    'Sparkles': Sparkles,
+    'Shield': Shield,
+    'Guitar': Guitar,
+    'Sun': Sun,
+    'Volume2': Volume2,
+    'ImageIcon': ImageIcon,
+    'ChefHat': ChefHat,
+    'Clock': Clock,
+  };
+
+  // Transform database categories to display format
+  const allCategories = categories.map((cat, index) => ({
+    icon: iconMap[cat.icon] || Building2,
+    title: cat.name,
+    description: cat.description || '',
+    count: `${cat.service_count || 0} services`,
+    color: `bg-gradient-to-br from-${['blue', 'green', 'red', 'indigo', 'pink', 'emerald', 'orange', 'cyan', 'yellow', 'violet', 'teal', 'rose', 'slate', 'gray', 'amber', 'lime', 'fuchsia'][index % 17]}-500 to-${['blue', 'green', 'red', 'indigo', 'pink', 'emerald', 'orange', 'cyan', 'yellow', 'violet', 'teal', 'rose', 'slate', 'gray', 'amber', 'lime', 'fuchsia'][index % 17]}-600`,
+    trending: cat.service_count && cat.service_count > 10,
+    slug: cat.slug,
+    category: cat.slug
+  }));
 
   const categoryTabs = [
     { id: "all", label: "All Services", count: allCategories.length },
-    { id: "venues", label: "Venues", count: allCategories.filter(c => c.category === "venues").length },
-    { id: "food", label: "Food & Beverage", count: allCategories.filter(c => c.category === "food").length },
-    { id: "entertainment", label: "Entertainment", count: allCategories.filter(c => c.category === "entertainment").length },
-    { id: "decor", label: "Decor & Design", count: allCategories.filter(c => c.category === "decor").length },
-    { id: "media", label: "Photo & Video", count: allCategories.filter(c => c.category === "media").length },
-    { id: "technical", label: "Audio & Lighting", count: allCategories.filter(c => c.category === "technical").length },
-    { id: "services", label: "Professional Services", count: allCategories.filter(c => c.category === "services").length },
-    { id: "planning", label: "Event Planning", count: allCategories.filter(c => c.category === "planning").length }
+    ...categories.slice(0, 8).map(cat => ({
+      id: cat.slug,
+      label: cat.name,
+      count: cat.service_count || 0
+    }))
   ];
 
   const filteredCategories = allCategories.filter(category => {
@@ -458,21 +312,40 @@ const Categories = () => {
       {/* Categories Grid */}
       <section className="pb-16">
         <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">
-              {filteredCategories.length} Services Available
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="w-4 h-4" />
-              <span>Trending services marked</span>
+          {loading ? (
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {[...Array(8)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <Skeleton className="h-16 w-16 rounded-2xl mb-4" />
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive">Error loading categories. Please try again.</p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 flex items-center justify-between">
+                <h2 className="text-2xl font-bold">
+                  {filteredCategories.length} Services Available
+                </h2>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Trending services marked</span>
+                </div>
+              </div>
 
-          <div className={`grid gap-6 ${
-            viewMode === "grid" 
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-              : "grid-cols-1 max-w-4xl mx-auto"
-          }`}>
+              <div className={`grid gap-6 ${
+                viewMode === "grid" 
+                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                  : "grid-cols-1 max-w-4xl mx-auto"
+              }`}>
             {filteredCategories.map((category, index) => (
               <Card 
                 key={index} 
@@ -511,7 +384,9 @@ const Categories = () => {
                 </CardContent>
               </Card>
             ))}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
