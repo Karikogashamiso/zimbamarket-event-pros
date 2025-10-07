@@ -106,7 +106,8 @@ export const CheckoutFlow: React.FC = () => {
                 origin_venue:venues!transport_routes_origin_venue_id_fkey(name, city),
                 destination_venue:venues!transport_routes_destination_venue_id_fkey(name, city)
               ),
-              ticket_types(id, name, description, base_price, currency, is_active)
+              ticket_types(id, name, description, base_price, currency, is_active),
+              addons:event_addons(id, name, description, price, currency, category, is_active)
             `)
             .eq('id', tripId)
             .single();
@@ -114,8 +115,26 @@ export const CheckoutFlow: React.FC = () => {
           if (error) throw error;
           
           if (data) {
+            // Format transport trip data to match event structure
+            const route = data.route as any;
+            const originVenue = route?.origin_venue;
+            const destVenue = route?.destination_venue;
+            
+            const formattedEvent = {
+              id: data.id,
+              title: `${route?.route_name || 'Transport'} - ${originVenue?.city || ''} to ${destVenue?.city || ''}`,
+              type: 'transport' as const,
+              date: data.departure_datetime,
+              venue: `${originVenue?.name || ''} → ${destVenue?.name || ''}`,
+              ticket_types: data.ticket_types,
+              event_addons: data.addons,
+              trip_number: data.trip_number,
+              departure_datetime: data.departure_datetime,
+              arrival_datetime: data.arrival_datetime,
+            };
+            
             updateCheckoutData({ 
-              event: data as any
+              event: formattedEvent as any
             });
           }
         }
