@@ -15,13 +15,6 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    sendVerificationEmail, 
-    sendPasswordResetEmail, 
-    isLoading: emailLoading,
-    lastError: emailError,
-    retryLastEmail 
-  } = useEmailService();
   
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -175,9 +168,10 @@ const Auth = () => {
             variant: "destructive",
           });
         } else if (error.message.includes("Email not confirmed")) {
+          setFormErrors({ email: "Please verify your email first" });
           toast({
             title: "Email Not Verified",
-            description: "Please check your email and click the verification link before signing in.",
+            description: "Please check your email inbox and spam folder for the verification link. You can also request a new verification email from the signup page.",
             variant: "destructive",
           });
         } else {
@@ -212,7 +206,7 @@ const Auth = () => {
       const validatedData = signupSchema.parse(signupForm);
       const redirectUrl = `${window.location.origin}/`;
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
         options: {
@@ -241,29 +235,22 @@ const Auth = () => {
           });
         }
       } else {
-        // Send verification email with enhanced error handling
-        const emailResult = await sendVerificationEmail(
-          validatedData.email,
-          redirectUrl,
-          validatedData.firstName
-        );
-
-        if (emailResult.success) {
+        // Check if email confirmation is required
+        const needsEmailConfirmation = data.user && !data.session;
+        
+        if (needsEmailConfirmation) {
           setIsEmailSent(true);
           toast({
             title: "Account Created!",
             description: "Please check your email for a verification link to complete your registration.",
           });
         } else {
-          // Email sending failed, but account was created
+          // Email confirmation is disabled, user is automatically logged in
           toast({
-            title: "Account Created (Email Issue)",
-            description: `Your account was created successfully, but we couldn't send the verification email. ${emailResult.error?.message || 'Please try again.'}`,
-            variant: "destructive",
+            title: "Account Created Successfully!",
+            description: "Welcome to ZimEventPro! You're now signed in.",
           });
-          
-          // Still show email sent screen so user can retry
-          setIsEmailSent(true);
+          navigate("/");
         }
       }
     } catch (error) {
@@ -304,29 +291,11 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        // Send confirmation email with enhanced error handling
-        const emailResult = await sendPasswordResetEmail(
-          validatedData.email,
-          redirectUrl
-        );
-
-        if (emailResult.success) {
-          setResetEmailSent(true);
-          toast({
-            title: "Reset Link Sent!",
-            description: "Please check your email for a password reset link.",
-          });
-        } else {
-          // Supabase reset was successful but email notification failed
-          toast({
-            title: "Reset Initiated (Email Issue)",
-            description: `Password reset was initiated, but we couldn't send the confirmation email. ${emailResult.error?.message || 'Please check your email anyway.'}`,
-            variant: "destructive",
-          });
-          
-          // Still show success screen since reset was initiated
-          setResetEmailSent(true);
-        }
+        setResetEmailSent(true);
+        toast({
+          title: "Reset Link Sent!",
+          description: "Please check your email for a password reset link.",
+        });
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -429,48 +398,50 @@ const Auth = () => {
               </AlertDescription>
             </Alert>
 
-            {emailError && emailError.retryable && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {emailError.message}
-                </AlertDescription>
-              </Alert>
-            )}
             
             <div className="flex flex-col gap-2">
-              {emailError?.retryable && (
-                <Button 
-                  variant="default" 
-                  onClick={async () => {
-                    const result = await sendVerificationEmail(
-                      signupForm.email,
-                      `${window.location.origin}/`,
-                      signupForm.firstName
-                    );
-                    if (result.success) {
-                      toast({
-                        title: "Email Resent!",
-                        description: "Please check your email for the verification link.",
-                      });
+              <Button 
+                variant="default" 
+                onClick={async () => {
+                  setIsLoading(true);
+                  const { error } = await supabase.auth.resend({
+                    type: 'signup',
+                    email: signupForm.email,
+                    options: {
+                      emailRedirectTo: `${window.location.origin}/`,
                     }
-                  }}
-                  disabled={emailLoading}
-                  className="w-full"
-                >
-                  {emailLoading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Resending...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Resend Verification Email
-                    </>
-                  )}
-                </Button>
-              )}
+                  });
+                  
+                  setIsLoading(false);
+                  
+                  if (error) {
+                    toast({
+                      title: "Failed to Resend",
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: "Email Resent!",
+                      description: "Please check your email for the verification link.",
+                    });
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Resend Verification Email
+                  </>
+                )}
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -521,48 +492,46 @@ const Auth = () => {
                 Didn't receive the email? Check your spam folder or wait a few minutes.
               </AlertDescription>
             </Alert>
-
-            {emailError && emailError.retryable && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {emailError.message}
-                </AlertDescription>
-              </Alert>
-            )}
             
             <div className="flex flex-col gap-2">
-              {emailError?.retryable && (
-                <Button 
-                  variant="default" 
-                  onClick={async () => {
-                    const result = await sendPasswordResetEmail(
-                      resetEmail,
-                      `${window.location.origin}/auth`
-                    );
-                    if (result.success) {
-                      toast({
-                        title: "Reset Email Resent!",
-                        description: "Please check your email for the password reset link.",
-                      });
-                    }
-                  }}
-                  disabled={emailLoading}
-                  className="w-full"
-                >
-                  {emailLoading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Resending...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Resend Reset Email
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button 
+                variant="default" 
+                onClick={async () => {
+                  setIsLoading(true);
+                  const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                    redirectTo: `${window.location.origin}/auth`,
+                  });
+                  
+                  setIsLoading(false);
+                  
+                  if (error) {
+                    toast({
+                      title: "Failed to Resend",
+                      description: error.message,
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: "Reset Email Resent!",
+                      description: "Please check your email for the password reset link.",
+                    });
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Resend Reset Email
+                  </>
+                )}
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={() => {
