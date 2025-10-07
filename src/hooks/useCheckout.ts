@@ -71,6 +71,8 @@ export interface CheckoutData {
     available?: number;
     image?: string;
     featured?: boolean;
+    event_addons?: any[];
+    ticket_types?: any[];
   };
   selectedSeats?: any[];
   ticketTiers?: Array<{

@@ -191,23 +191,50 @@ export const CheckoutFlow: React.FC = () => {
   };
 
   const goToNextStep = async () => {
-    const nextIndex = currentStepIndex + 1;
-    
     // Special handling for summary step - process the order
     if (currentStep === 'summary') {
       await handleConfirmOrder();
       return;
     }
     
+    // Get next step, skipping add-ons if none available
+    let nextIndex = currentStepIndex + 1;
+    
+    // Skip add-ons step if no add-ons available
     if (nextIndex < STEPS.length) {
-      setCurrentStep(STEPS[nextIndex].key);
+      const nextStep = STEPS[nextIndex].key;
+      if (nextStep === 'addons') {
+        const hasAddOns = checkoutData.event?.event_addons && 
+                         checkoutData.event.event_addons.length > 0;
+        if (!hasAddOns) {
+          nextIndex++; // Skip to the step after add-ons
+        }
+      }
+      
+      if (nextIndex < STEPS.length) {
+        setCurrentStep(STEPS[nextIndex].key);
+      }
     }
   };
 
   const goToPreviousStep = () => {
-    const prevIndex = currentStepIndex - 1;
+    // Get previous step, skipping add-ons if none available
+    let prevIndex = currentStepIndex - 1;
+    
+    // Skip add-ons step if no add-ons available
     if (prevIndex >= 0) {
-      setCurrentStep(STEPS[prevIndex].key);
+      const prevStep = STEPS[prevIndex].key;
+      if (prevStep === 'addons') {
+        const hasAddOns = checkoutData.event?.event_addons && 
+                         checkoutData.event.event_addons.length > 0;
+        if (!hasAddOns) {
+          prevIndex--; // Skip to the step before add-ons
+        }
+      }
+      
+      if (prevIndex >= 0) {
+        setCurrentStep(STEPS[prevIndex].key);
+      }
     }
   };
 

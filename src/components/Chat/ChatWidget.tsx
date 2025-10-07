@@ -138,7 +138,7 @@ const ChatWidget = () => {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-24 right-6 z-[60]">
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
@@ -155,7 +155,7 @@ const ChatWidget = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-24 right-6 z-[60]">
       <Card className={`transition-all duration-300 shadow-2xl ${
         isMinimized 
           ? "w-80 h-12" 
