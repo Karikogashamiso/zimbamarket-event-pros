@@ -86,16 +86,26 @@ const AdminLayout = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to access the admin panel.",
-        variant: "destructive",
-      });
-      navigate('/auth?tab=login');
-      return;
-    }
-    checkAdminStatus();
+    const initializeAdmin = async () => {
+      // Wait a bit for auth to initialize
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (!user) {
+        console.log('No user found, redirecting to login');
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to access the admin panel.",
+          variant: "destructive",
+        });
+        navigate('/auth?tab=login', { replace: true });
+        setLoading(false);
+        return;
+      }
+      
+      await checkAdminStatus();
+    };
+
+    initializeAdmin();
   }, [user]);
 
   const checkAdminStatus = async () => {
