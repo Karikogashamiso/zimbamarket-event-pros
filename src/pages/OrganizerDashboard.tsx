@@ -375,7 +375,7 @@ const OrganizerDashboard = () => {
         <div className="container mx-auto px-4">
           {/* Dynamic summary cards based on business type */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer') && (
+            {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Venues</CardTitle>
@@ -423,14 +423,14 @@ const OrganizerDashboard = () => {
           <Tabs defaultValue={
             selectedOrganizer?.business_type === 'venue_operator' ? 'venues' :
             selectedOrganizer?.business_type === 'event_organizer' ? 'events' :
-            'transport'
+            'venues'
           } className="space-y-6">
             <TabsList className={`grid w-full ${
               selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-1' :
               selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-2' :
-              'grid-cols-1'
+              'grid-cols-2'
             }`}>
-              {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer') && (
+              {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
                 <TabsTrigger value="venues">Venues</TabsTrigger>
               )}
               {selectedOrganizer?.business_type === 'event_organizer' && (
@@ -441,7 +441,7 @@ const OrganizerDashboard = () => {
               )}
             </TabsList>
 
-            {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer') && (
+            {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
               <TabsContent value="venues" className="space-y-6">
               <Card>
                 <CardHeader>
