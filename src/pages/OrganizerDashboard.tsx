@@ -20,7 +20,8 @@ const OrganizerDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [organizer, setOrganizer] = useState<any>(null);
+  const [organizers, setOrganizers] = useState<any[]>([]);
+  const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null);
   const [venues, setVenues] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
@@ -48,13 +49,14 @@ const OrganizerDashboard = () => {
         .from('organizers')
         .select('*')
         .eq('user_id', user?.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
-      if (data) {
-        setOrganizer(data);
-        await fetchOrganizerData(data.id);
+      if (data && data.length > 0) {
+        setOrganizers(data);
+        setSelectedOrganizer(data[0]); // Select the first/newest organizer by default
+        await fetchOrganizerData(data[0].id);
       } else {
         setShowOrganizerForm(true);
       }
@@ -117,11 +119,14 @@ const OrganizerDashboard = () => {
 
       if (error) throw error;
 
-      setOrganizer(data);
+      const updatedOrganizers = [...organizers, data];
+      setOrganizers(updatedOrganizers);
+      setSelectedOrganizer(data);
       setShowOrganizerForm(false);
+      await fetchOrganizerData(data.id);
       toast({
         title: "Success!",
-        description: "Organizer profile created. You can now add events and transport.",
+        description: "Organizer profile created. You can now manage your business.",
       });
     } catch (error: any) {
       toast({
@@ -140,7 +145,7 @@ const OrganizerDashboard = () => {
       const { error } = await supabase
         .from('venues')
         .insert({
-          organizer_id: organizer.id,
+          organizer_id: selectedOrganizer.id,
           name: formData.get('venue_name') as string,
           venue_type: formData.get('venue_type') as string,
           address: formData.get('address') as string,
@@ -152,7 +157,7 @@ const OrganizerDashboard = () => {
       if (error) throw error;
 
       toast({ title: "Venue created successfully!" });
-      await fetchOrganizerData(organizer.id);
+      await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
       toast({
@@ -171,7 +176,7 @@ const OrganizerDashboard = () => {
       const { error } = await supabase
         .from('events')
         .insert({
-          organizer_id: organizer.id,
+          organizer_id: selectedOrganizer.id,
           venue_id: formData.get('venue_id') as string,
           title: formData.get('title') as string,
           description: formData.get('event_description') as string,
@@ -184,7 +189,7 @@ const OrganizerDashboard = () => {
       if (error) throw error;
 
       toast({ title: "Event created successfully!" });
-      await fetchOrganizerData(organizer.id);
+      await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
       toast({
@@ -203,7 +208,7 @@ const OrganizerDashboard = () => {
       const { data: routeData, error: routeError } = await supabase
         .from('transport_routes')
         .insert({
-          organizer_id: organizer.id,
+          organizer_id: selectedOrganizer.id,
           route_name: formData.get('route_name') as string,
           transport_type: formData.get('transport_type') as any,
           origin_venue_id: formData.get('origin_venue_id') as string,
@@ -227,7 +232,7 @@ const OrganizerDashboard = () => {
       if (tripError) throw tripError;
 
       toast({ title: "Route and trip created successfully!" });
-      await fetchOrganizerData(organizer.id);
+      await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
       toast({
@@ -253,10 +258,24 @@ const OrganizerDashboard = () => {
         <div className="container mx-auto px-4 py-12">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle>Become an Organizer</CardTitle>
+              <CardTitle>
+                {organizers.length > 0 ? 'Add Another Organizer Profile' : 'Become an Organizer'}
+              </CardTitle>
               <CardDescription>
-                Create your organizer profile to start adding events and transport services
+                {organizers.length > 0 
+                  ? 'Create additional organizer profiles for different business types'
+                  : 'Create your organizer profile to start adding events and transport services'
+                }
               </CardDescription>
+              {organizers.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowOrganizerForm(false)}
+                  className="mt-2"
+                >
+                  ← Back to Dashboard
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <form onSubmit={createOrganizer} className="space-y-4">
@@ -309,14 +328,44 @@ const OrganizerDashboard = () => {
       <section className="bg-gradient-primary text-white py-12">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">{organizer?.business_name}</h1>
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-2">{selectedOrganizer?.business_name}</h1>
               <p className="text-xl text-white/90 capitalize">
-                {organizer?.business_type?.replace('_', ' ')} • {organizer?.city}, {organizer?.country}
+                {selectedOrganizer?.business_type?.replace('_', ' ')} • {selectedOrganizer?.city}, {selectedOrganizer?.country}
               </p>
               <p className="text-sm text-white/80 mt-1">
-                Status: {organizer?.status === 'approved' ? '✓ Verified' : 'Pending Verification'}
+                Status: {selectedOrganizer?.status === 'approved' ? '✓ Verified' : 'Pending Verification'}
               </p>
+            </div>
+            <div className="flex gap-3">
+              {organizers.length > 1 && (
+                <Select
+                  value={selectedOrganizer?.id}
+                  onValueChange={(value) => {
+                    const org = organizers.find(o => o.id === value);
+                    setSelectedOrganizer(org);
+                    fetchOrganizerData(org.id);
+                  }}
+                >
+                  <SelectTrigger className="w-64 bg-white text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizers.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.business_name} ({org.business_type.replace('_', ' ')})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button 
+                variant="secondary" 
+                onClick={() => setShowOrganizerForm(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Profile
+              </Button>
             </div>
           </div>
         </div>
@@ -326,7 +375,7 @@ const OrganizerDashboard = () => {
         <div className="container mx-auto px-4">
           {/* Dynamic summary cards based on business type */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+            {(selectedOrganizer?.business_type === 'venue_owner' || selectedOrganizer?.business_type === 'event_organizer') && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Venues</CardTitle>
@@ -340,7 +389,7 @@ const OrganizerDashboard = () => {
                 </CardContent>
               </Card>
             )}
-            {organizer?.business_type === 'event_organizer' && (
+            {selectedOrganizer?.business_type === 'event_organizer' && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Events</CardTitle>
@@ -354,7 +403,7 @@ const OrganizerDashboard = () => {
                 </CardContent>
               </Card>
             )}
-            {organizer?.business_type === 'transport_operator' && (
+            {selectedOrganizer?.business_type === 'transport_operator' && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Routes</CardTitle>
@@ -372,27 +421,27 @@ const OrganizerDashboard = () => {
 
           {/* Conditional tabs based on business type */}
           <Tabs defaultValue={
-            organizer?.business_type === 'venue_owner' ? 'venues' :
-            organizer?.business_type === 'event_organizer' ? 'events' :
+            selectedOrganizer?.business_type === 'venue_owner' ? 'venues' :
+            selectedOrganizer?.business_type === 'event_organizer' ? 'events' :
             'transport'
           } className="space-y-6">
             <TabsList className={`grid w-full ${
-              organizer?.business_type === 'venue_owner' ? 'grid-cols-1' :
-              organizer?.business_type === 'event_organizer' ? 'grid-cols-2' :
+              selectedOrganizer?.business_type === 'venue_owner' ? 'grid-cols-1' :
+              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-2' :
               'grid-cols-1'
             }`}>
-              {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+              {(selectedOrganizer?.business_type === 'venue_owner' || selectedOrganizer?.business_type === 'event_organizer') && (
                 <TabsTrigger value="venues">Venues</TabsTrigger>
               )}
-              {organizer?.business_type === 'event_organizer' && (
+              {selectedOrganizer?.business_type === 'event_organizer' && (
                 <TabsTrigger value="events">Events</TabsTrigger>
               )}
-              {organizer?.business_type === 'transport_operator' && (
+              {selectedOrganizer?.business_type === 'transport_operator' && (
                 <TabsTrigger value="transport">Transport</TabsTrigger>
               )}
             </TabsList>
 
-            {(organizer?.business_type === 'venue_owner' || organizer?.business_type === 'event_organizer') && (
+            {(selectedOrganizer?.business_type === 'venue_owner' || selectedOrganizer?.business_type === 'event_organizer') && (
               <TabsContent value="venues" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -457,7 +506,7 @@ const OrganizerDashboard = () => {
               </TabsContent>
             )}
 
-            {organizer?.business_type === 'event_organizer' && (
+            {selectedOrganizer?.business_type === 'event_organizer' && (
               <TabsContent value="events" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -572,11 +621,11 @@ const OrganizerDashboard = () => {
                           </div>
                           <AddTicketTypeForm 
                             eventId={event.id} 
-                            onSuccess={() => fetchOrganizerData(organizer.id)} 
+                            onSuccess={() => fetchOrganizerData(selectedOrganizer.id)} 
                           />
                           <AddEventAddonForm
                             eventId={event.id}
-                            onAddonAdded={() => fetchOrganizerData(organizer.id)}
+                            onAddonAdded={() => fetchOrganizerData(selectedOrganizer.id)}
                           />
                         </div>
                       ))}
@@ -587,7 +636,7 @@ const OrganizerDashboard = () => {
               </TabsContent>
             )}
 
-            {organizer?.business_type === 'transport_operator' && (
+            {selectedOrganizer?.business_type === 'transport_operator' && (
               <TabsContent value="transport" className="space-y-6">
               <Card>
                 <CardHeader>
