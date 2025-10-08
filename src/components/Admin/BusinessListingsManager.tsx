@@ -68,7 +68,14 @@ export const BusinessListingsManager = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setListings(data || []);
+      
+      // Filter out any null or undefined services
+      const cleanedData = data?.map(listing => ({
+        ...listing,
+        services: listing.services?.filter((s: any) => s && s.id) || []
+      }));
+      
+      setListings(cleanedData || []);
     } catch (error: any) {
       console.error('Error fetching listings:', error);
       toast({
