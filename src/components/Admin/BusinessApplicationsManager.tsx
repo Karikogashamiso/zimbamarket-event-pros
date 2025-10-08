@@ -92,54 +92,52 @@ export const BusinessApplicationsManager = () => {
     }
 
     try {
-      // Use the applicant's user_id from the application, not the admin's user_id
       const applicantUserId = selectedApp.user_id;
       
-      if (!applicantUserId) {
-        throw new Error('Application does not have an associated user. Please ask the applicant to resubmit.');
+      // If application has a user_id, create listing and service
+      if (applicantUserId) {
+        // Create business listing for the applicant
+        const { data: listingData, error: listingError } = await supabase
+          .from('business_listings')
+          .insert({
+            user_id: applicantUserId,
+            category_id: selectedCategoryId,
+            business_name: selectedApp.business_name,
+            description: selectedApp.description,
+            location: selectedApp.location,
+            phone_number: selectedApp.phone_number,
+            email: selectedApp.email,
+            status: 'approved',
+            featured: false
+          })
+          .select()
+          .single();
+
+        if (listingError) throw listingError;
+
+        // Create default service for the business
+        const { error: serviceError } = await supabase
+          .from('services')
+          .insert({
+            category_id: selectedCategoryId,
+            business_listing_id: listingData.id,
+            title: selectedApp.business_name,
+            description: selectedApp.description,
+            location: selectedApp.location,
+            active: true,
+            rating: 0,
+            review_count: 0,
+            response_time: '24h',
+            availability_status: 'available',
+            featured: false,
+            verified: false,
+            price_unit: 'service'
+          });
+
+        if (serviceError) throw serviceError;
       }
 
-      // Create business listing for the applicant
-      const { data: listingData, error: listingError } = await supabase
-        .from('business_listings')
-        .insert({
-          user_id: applicantUserId,  // Use applicant's user_id, not admin's
-          category_id: selectedCategoryId,
-          business_name: selectedApp.business_name,
-          description: selectedApp.description,
-          location: selectedApp.location,
-          phone_number: selectedApp.phone_number,
-          email: selectedApp.email,
-          status: 'approved',
-          featured: false
-        })
-        .select()
-        .single();
-
-      if (listingError) throw listingError;
-
-      // Create default service for the business
-      const { error: serviceError } = await supabase
-        .from('services')
-        .insert({
-          category_id: selectedCategoryId,
-          business_listing_id: listingData.id,
-          title: selectedApp.business_name,
-          description: selectedApp.description,
-          location: selectedApp.location,
-          active: true,
-          rating: 0,
-          review_count: 0,
-          response_time: '24h',
-          availability_status: 'available',
-          featured: false,
-          verified: false,
-          price_unit: 'service'
-        });
-
-      if (serviceError) throw serviceError;
-
-      // Update application status
+      // Update application status (works for both user and guest applications)
       const { error: updateError } = await supabase
         .from('business_applications')
         .update({ status: 'approved' })
@@ -164,9 +162,13 @@ export const BusinessApplicationsManager = () => {
         // Don't block success if email fails
       }
 
+      const successMessage = applicantUserId 
+        ? "Business approved! They can now manage their listing."
+        : "Application approved! Business will be listed once owner claims it.";
+      
       toast({
         title: "Success",
-        description: "Business approved! They can now claim and manage their listing.",
+        description: successMessage,
       });
 
       setShowApprovalDialog(false);
