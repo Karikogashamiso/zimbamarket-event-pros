@@ -26,17 +26,16 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
 
   const handleTierSelect = (tier: any) => {
     console.log('Selecting tier:', tier);
-    const existingIndex = selectedTiers.findIndex(t => t.id === tier.id);
+    const existingIndex = selectedTiers.findIndex(t => t.ticketTypeId === tier.id);
     
     if (existingIndex >= 0) {
       // Remove tier
-      const updated = selectedTiers.filter(t => t.id !== tier.id);
+      const updated = selectedTiers.filter(t => t.ticketTypeId !== tier.id);
       console.log('Removed tier, updated tiers:', updated);
       onTiersChange(updated);
     } else {
       // Add tier with ticketTypeId
       const newTier = { 
-        id: tier.id,
         ticketTypeId: tier.id, // This is the critical field for order creation
         name: tier.name,
         description: tier.description,
@@ -54,13 +53,13 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
 
   const updateQuantity = (tierId: string, quantity: number) => {
     const updated = selectedTiers.map(tier => 
-      tier.id === tierId ? { ...tier, quantity } : tier
+      tier.ticketTypeId === tierId ? { ...tier, quantity } : tier
     );
     onTiersChange(updated);
   };
 
   const getSelectedTier = (tierId: string) => {
-    return selectedTiers.find(t => t.id === tierId);
+    return selectedTiers.find(t => t.ticketTypeId === tierId);
   };
 
   if (!ticketTypes || ticketTypes.length === 0) {
@@ -113,7 +112,7 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
               </div>
 
               {/* Quantity Selector */}
-              {isSelected && (
+              {isSelected && selectedTier && (
                 <div className="flex items-center justify-between pt-4 border-t">
                   <span className="text-sm font-medium">Quantity:</span>
                   <div className="flex items-center gap-3">
@@ -156,7 +155,7 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
             <h3 className="font-semibold mb-3">Your Selection</h3>
             <div className="space-y-2">
               {selectedTiers.map((tier) => (
-                <div key={tier.id} className="flex items-center justify-between">
+                <div key={tier.ticketTypeId} className="flex items-center justify-between">
                   <span className="text-sm">{tier.name} × {tier.quantity}</span>
                   <span className="font-semibold">${(tier.price * tier.quantity).toFixed(2)}</span>
                 </div>
