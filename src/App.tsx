@@ -28,6 +28,7 @@ import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminVenues from "./pages/Admin/Venues";
 import AdminEvents from "./pages/Admin/Events";
+import AdminServices from "./pages/Admin/Services";
 import AdminOrders from "./pages/Admin/Orders";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
@@ -86,6 +87,7 @@ const App = () => {
                     <Route index element={<AdminDashboard />} />
                     <Route path="venues" element={<AdminVenues />} />
                     <Route path="events" element={<AdminEvents />} />
+                    <Route path="services" element={<AdminServices />} />
                     <Route path="orders" element={<AdminOrders />} />
                   </Route>
                   

@@ -10,12 +10,23 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useServiceManagement } from '@/hooks/useServiceManagement';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const ServiceCreationForm = () => {
   const { user } = useAuth();
   const { services, createService, deleteService, loading } = useServiceManagement();
   const [businessListings, setBusinessListings] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -284,7 +295,7 @@ export const ServiceCreationForm = () => {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteService(service.id)}
+                    onClick={() => setDeleteServiceId(service.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -294,6 +305,32 @@ export const ServiceCreationForm = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteServiceId} onOpenChange={() => setDeleteServiceId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this service. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteServiceId) {
+                  deleteService(deleteServiceId);
+                  setDeleteServiceId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
