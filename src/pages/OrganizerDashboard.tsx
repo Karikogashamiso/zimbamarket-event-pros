@@ -18,6 +18,7 @@ import { AddEventAddonForm } from "@/components/AddEventAddonForm";
 import { AddTripTicketTypeForm } from "@/components/AddTripTicketTypeForm";
 import { AddTripAddonForm } from "@/components/AddTripAddonForm";
 import { BookingRequestsManager } from "@/components/BookingRequestsManager";
+import { ServiceCreationForm } from "@/components/ServiceCreationForm";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -461,9 +462,9 @@ const OrganizerDashboard = () => {
             'venues'
           } className="space-y-6">
             <TabsList className={`grid w-full ${
-              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-2' :
-              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-3' :
-              'grid-cols-3'
+              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-3' :
+              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-4' :
+              'grid-cols-4'
             }`}>
               {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
                 <TabsTrigger value="venues">Venues</TabsTrigger>
@@ -474,7 +475,8 @@ const OrganizerDashboard = () => {
               {selectedOrganizer?.business_type === 'transport_operator' && (
                 <TabsTrigger value="transport">Transport</TabsTrigger>
               )}
-              <TabsTrigger value="requests">Booking Requests</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="requests">Requests</TabsTrigger>
             </TabsList>
 
             {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
@@ -900,6 +902,11 @@ const OrganizerDashboard = () => {
               </Card>
               </TabsContent>
             )}
+
+            {/* Services Tab */}
+            <TabsContent value="services" className="space-y-6">
+              <ServiceCreationForm />
+            </TabsContent>
 
             {/* Booking Requests Tab */}
             <TabsContent value="requests" className="space-y-6">

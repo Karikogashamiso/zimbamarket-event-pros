@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, Package, Users, TrendingUp, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Package, Users, TrendingUp, DollarSign, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { BusinessApplicationsManager } from "@/components/Admin/BusinessApplicationsManager";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -92,9 +94,17 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">Overview of your platform statistics</p>
+        <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+        <p className="text-muted-foreground">Manage your platform and business applications</p>
       </div>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="applications">Business Applications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat) => (
@@ -160,6 +170,12 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="applications">
+          <BusinessApplicationsManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
