@@ -28,6 +28,31 @@ export const OrderConfirmation: React.FC = () => {
       try {
         console.log('Fetching order details for:', orderNumber);
         
+        // Check if returning from Stripe payment
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment');
+        
+        if (paymentStatus === 'success') {
+          console.log('Payment successful, verifying with Stripe...');
+          
+          try {
+            // Verify payment and update order status
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+              body: { orderNumber }
+            });
+
+            if (verifyError) {
+              console.error('Payment verification error:', verifyError);
+              toast.error('Failed to verify payment. Please contact support.');
+            } else if (verifyData?.success) {
+              console.log('Payment verified and order updated');
+              toast.success('Payment confirmed! Your order has been processed.');
+            }
+          } catch (verifyErr) {
+            console.error('Verification request failed:', verifyErr);
+          }
+        }
+        
         // Fetch order details
         const { data: order, error: orderError } = await supabase
           .from('orders')
