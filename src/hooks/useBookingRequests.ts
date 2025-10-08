@@ -27,40 +27,50 @@ export const useBookingRequests = (organizerId?: string) => {
     try {
       setLoading(true);
       
-      // First get business listings for this user
+      // Try to get services linked to business listings first
       const { data: businessData, error: businessError } = await supabase
         .from('business_listings')
-        .select('category_id')
+        .select('id, category_id')
         .eq('user_id', organizerId);
 
       if (businessError) throw businessError;
 
-      const categoryIds = businessData?.map(b => b.category_id) || [];
+      let serviceIds: string[] = [];
 
-      if (categoryIds.length === 0) {
-        setRequests([]);
-        return;
+      // Get services linked to business listings
+      if (businessData && businessData.length > 0) {
+        const businessListingIds = businessData.map(b => b.id);
+        const { data: linkedServices, error: linkedError } = await supabase
+          .from('services')
+          .select('id')
+          .in('business_listing_id', businessListingIds);
+
+        if (linkedError) throw linkedError;
+        serviceIds = linkedServices?.map(s => s.id) || [];
       }
 
-      // Get services for these categories
-      const { data: servicesData, error: servicesError } = await supabase
+      // Also get services by category_id where business_listing_id is null
+      // This handles services created before business listings existed
+      const { data: categoryServices, error: categoryError } = await supabase
         .from('services')
-        .select('id')
-        .in('category_id', categoryIds);
+        .select('id, category_id')
+        .is('business_listing_id', null);
 
-      if (servicesError) throw servicesError;
+      if (categoryError) throw categoryError;
 
-      const serviceIds = servicesData?.map(s => s.id) || [];
+      // Add these service IDs as well
+      const orphanServiceIds = categoryServices?.map(s => s.id) || [];
+      serviceIds = [...new Set([...serviceIds, ...orphanServiceIds])];
 
       if (serviceIds.length === 0) {
         setRequests([]);
         return;
       }
 
-      // Fetch booking requests for these services
+      // Fetch booking requests for all these services
       const { data, error } = await supabase
         .from('booking_requests')
-        .select('*')
+        .select('*, services(title, category_id)')
         .in('service_id', serviceIds)
         .order('created_at', { ascending: false });
 
