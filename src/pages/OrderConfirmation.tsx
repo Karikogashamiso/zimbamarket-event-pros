@@ -47,13 +47,16 @@ export const OrderConfirmation: React.FC = () => {
             } else if (verifyData?.success) {
               console.log('Payment verified and order updated');
               toast.success('Payment confirmed! Your order has been processed.');
+              
+              // Wait a moment for the database to update, then fetch the updated order
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
           } catch (verifyErr) {
             console.error('Verification request failed:', verifyErr);
           }
         }
         
-        // Fetch order details
+        // Fetch order details (will now have updated status if payment was verified)
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .select('*')
