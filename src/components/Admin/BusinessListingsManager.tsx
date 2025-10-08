@@ -92,6 +92,8 @@ export const BusinessListingsManager = () => {
     const formData = new FormData(e.currentTarget as HTMLFormElement);
 
     try {
+      const newStatus = formData.get('status') as string;
+      
       const { error } = await supabase
         .from('business_listings')
         .update({
@@ -101,13 +103,37 @@ export const BusinessListingsManager = () => {
           phone_number: formData.get('phone_number') as string,
           email: formData.get('email') as string,
           website: formData.get('website') as string,
-          status: formData.get('status') as string,
+          status: newStatus,
           featured: formData.get('featured') === 'true',
           price_from: formData.get('price_from') ? parseFloat(formData.get('price_from') as string) : null,
         })
         .eq('id', selectedListing.id);
 
       if (error) throw error;
+
+      // If status changed to rejected, deactivate all related services
+      if (newStatus === 'rejected' && selectedListing.status !== 'rejected') {
+        const { error: serviceError } = await supabase
+          .from('services')
+          .update({ active: false })
+          .eq('business_listing_id', selectedListing.id);
+
+        if (serviceError) {
+          console.error('Error deactivating services:', serviceError);
+        }
+      }
+
+      // If status changed to approved, reactivate all related services
+      if (newStatus === 'approved' && selectedListing.status === 'rejected') {
+        const { error: serviceError } = await supabase
+          .from('services')
+          .update({ active: true })
+          .eq('business_listing_id', selectedListing.id);
+
+        if (serviceError) {
+          console.error('Error reactivating services:', serviceError);
+        }
+      }
 
       toast({
         title: "Success",

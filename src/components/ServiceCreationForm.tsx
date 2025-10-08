@@ -57,12 +57,18 @@ export const ServiceCreationForm = () => {
       return;
     }
 
+    // Find the selected business listing to get its ID
+    const selectedBusinessListing = businessListings.find(
+      bl => bl.category_id === selectedCategoryId
+    );
+
     const amenitiesArray = formData.amenities
       ? formData.amenities.split(',').map(a => a.trim()).filter(Boolean)
       : [];
 
     const serviceData = {
       category_id: selectedCategoryId,
+      business_listing_id: selectedBusinessListing?.id,
       title: formData.title,
       description: formData.description,
       location: formData.location,

@@ -1719,6 +1719,7 @@ export type Database = {
           address: string | null
           amenities: string[] | null
           availability_status: string | null
+          business_listing_id: string | null
           capacity_max: number | null
           capacity_min: number | null
           category_id: string
@@ -1747,6 +1748,7 @@ export type Database = {
           address?: string | null
           amenities?: string[] | null
           availability_status?: string | null
+          business_listing_id?: string | null
           capacity_max?: number | null
           capacity_min?: number | null
           category_id: string
@@ -1775,6 +1777,7 @@ export type Database = {
           address?: string | null
           amenities?: string[] | null
           availability_status?: string | null
+          business_listing_id?: string | null
           capacity_max?: number | null
           capacity_min?: number | null
           category_id?: string
@@ -1799,6 +1802,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "services_business_listing_id_fkey"
+            columns: ["business_listing_id"]
+            isOneToOne: false
+            referencedRelation: "business_listings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "services_category_id_fkey"
             columns: ["category_id"]
