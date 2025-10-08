@@ -16,6 +16,7 @@ export const OrderConfirmation: React.FC = () => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verificationAttempted, setVerificationAttempted] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -32,8 +33,9 @@ export const OrderConfirmation: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const paymentStatus = urlParams.get('payment');
         
-        if (paymentStatus === 'success') {
+        if (paymentStatus === 'success' && !verificationAttempted) {
           console.log('Payment successful, verifying with Stripe...');
+          setVerificationAttempted(true);
           
           try {
             // Verify payment and update order status
@@ -48,12 +50,15 @@ export const OrderConfirmation: React.FC = () => {
               console.log('Payment verified and order updated');
               toast.success('Payment confirmed! Your order has been processed.');
               
-              // Wait a moment for the database to update, then fetch the updated order
-              await new Promise(resolve => setTimeout(resolve, 500));
+              // Wait for database replication
+              await new Promise(resolve => setTimeout(resolve, 1000));
             }
           } catch (verifyErr) {
             console.error('Verification request failed:', verifyErr);
           }
+          
+          // Clear the payment parameter from URL to prevent re-verification
+          window.history.replaceState({}, '', `/order-confirmation/${orderNumber}`);
         }
         
         // Fetch order details (will now have updated status if payment was verified)

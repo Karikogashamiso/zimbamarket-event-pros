@@ -83,6 +83,7 @@ export const CheckoutFlow: React.FC = () => {
     currency: 'USD'
   });
   const [loadingEvent, setLoadingEvent] = useState(true);
+  const [orderCreated, setOrderCreated] = useState(false);
   
   const { processCheckout, isProcessing } = useSimpleCheckout();
   const { toast } = useToast();
@@ -226,14 +227,25 @@ export const CheckoutFlow: React.FC = () => {
   };
 
   const handleConfirmOrder = async () => {
+    // Prevent duplicate order creation
+    if (orderCreated) {
+      toast({
+        title: "Order Already Created",
+        description: "Redirecting to your order...",
+      });
+      return;
+    }
+
     try {
       console.log('Confirming order with data:', checkoutData);
       
+      setOrderCreated(true);
       // Process checkout - navigation happens inside processCheckout
       await processCheckout(checkoutData);
       
     } catch (error) {
       console.error('Order confirmation failed:', error);
+      setOrderCreated(false);
       // Error handling is done in useSimpleCheckout
     }
   };
