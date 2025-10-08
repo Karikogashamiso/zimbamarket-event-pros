@@ -35,6 +35,7 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
       // Add tier
       onTiersChange([...selectedTiers, { 
         id: tier.id,
+        ticketTypeId: tier.id,
         name: tier.name,
         description: tier.description,
         price: tier.base_price,
