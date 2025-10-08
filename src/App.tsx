@@ -56,11 +56,11 @@ const App = () => {
     >
       <QueryClientProvider client={queryClient}>
         <HelmetProvider>
-          <TooltipProvider>
-            <div>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+          <BrowserRouter>
+            <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+              <div>
+                <Toaster />
+                <Sonner />
                 <ScrollToTop />
                 <Routes>
                   <Route path="/" element={<Index />} />
@@ -99,9 +99,9 @@ const App = () => {
                 
                 {/* Global Chat Widget - Available on all pages */}
                 <ChatWidget />
-              </BrowserRouter>
-            </div>
-          </TooltipProvider>
+              </div>
+            </TooltipProvider>
+          </BrowserRouter>
         </HelmetProvider>
       </QueryClientProvider>
     </ErrorBoundary>
