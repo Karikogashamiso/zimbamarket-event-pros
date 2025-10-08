@@ -37,7 +37,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     available: true
   },
   {
-    id: 'visa',
+    id: 'card',
     name: 'Visa/Mastercard',
     description: 'Pay with your international credit or debit card',
     icon: <CreditCard className="h-5 w-5" />,
@@ -83,7 +83,7 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
 
   const calculateFees = (method: string, amount: number) => {
     switch (method) {
-      case 'visa':
+      case 'card':
         return amount * 0.029; // 2.9% fee
       default:
         return 0;
@@ -120,7 +120,7 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
                   <div className={`p-3 rounded-lg ${
                     method.id === 'ecocash' ? 'bg-red-100 text-red-700' :
                     method.id === 'onemoney' ? 'bg-blue-100 text-blue-700' :
-                    method.id === 'visa' ? 'bg-purple-100 text-purple-700' :
+                    method.id === 'card' ? 'bg-purple-100 text-purple-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
                     {method.icon}
