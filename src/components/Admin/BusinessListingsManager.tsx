@@ -113,6 +113,7 @@ export const BusinessListingsManager = () => {
 
       // If status changed to rejected, deactivate all related services
       if (newStatus === 'rejected' && selectedListing.status !== 'rejected') {
+        // Deactivate services linked by business_listing_id
         const { error: serviceError } = await supabase
           .from('services')
           .update({ active: false })
@@ -121,10 +122,22 @@ export const BusinessListingsManager = () => {
         if (serviceError) {
           console.error('Error deactivating services:', serviceError);
         }
+
+        // Also deactivate services that match by category (fallback for older records)
+        const { error: categoryError } = await supabase
+          .from('services')
+          .update({ active: false })
+          .eq('category_id', selectedListing.category_id)
+          .is('business_listing_id', null);
+
+        if (categoryError) {
+          console.error('Error deactivating category services:', categoryError);
+        }
       }
 
       // If status changed to approved, reactivate all related services
       if (newStatus === 'approved' && selectedListing.status === 'rejected') {
+        // Reactivate services linked by business_listing_id
         const { error: serviceError } = await supabase
           .from('services')
           .update({ active: true })
@@ -132,6 +145,17 @@ export const BusinessListingsManager = () => {
 
         if (serviceError) {
           console.error('Error reactivating services:', serviceError);
+        }
+
+        // Also reactivate services that match by category (fallback for older records)
+        const { error: categoryError } = await supabase
+          .from('services')
+          .update({ active: true })
+          .eq('category_id', selectedListing.category_id)
+          .is('business_listing_id', null);
+
+        if (categoryError) {
+          console.error('Error reactivating category services:', categoryError);
         }
       }
 
