@@ -16,15 +16,6 @@ const customerInfoSchema = z.object({
   specialRequests: z.string()
     .trim()
     .max(1000, "Special requests must be less than 1000 characters")
-    .refine(
-      (val) => {
-        if (!val) return true;
-        const lowerVal = val.toLowerCase();
-        const loremIpsumKeywords = ['lorem', 'ipsum', 'dolor', 'sit amet', 'consectetur', 'adipiscing', 'quia', 'quibusdam'];
-        return !loremIpsumKeywords.some(keyword => lowerVal.includes(keyword));
-      },
-      { message: "Please enter actual special requests, not placeholder text" }
-    )
     .transform(val => val === '' ? undefined : val)
     .optional(),
   marketingConsent: z.boolean(),
