@@ -45,6 +45,7 @@ serve(async (req: Request) => {
 
     const orderData: CreateOrderRequest = await req.json();
     console.log('Creating order with data:', { ...orderData, items: orderData.items.length });
+    console.log('Using booking_status and payment_status columns (not order_status)');
 
     // Validate required fields
     if (!orderData.customer_first_name || !orderData.customer_last_name || 
