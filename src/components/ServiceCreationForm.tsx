@@ -23,7 +23,7 @@ import {
 
 export const ServiceCreationForm = () => {
   const { user } = useAuth();
-  const { services, createService, deleteService, loading } = useServiceManagement();
+  const { services, createService, deleteService, loading } = useServiceManagement(undefined, true);
   const [businessListings, setBusinessListings] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);

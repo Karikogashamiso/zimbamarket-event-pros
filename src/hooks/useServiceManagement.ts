@@ -33,7 +33,7 @@ interface CreateServiceData {
   images?: string[];
 }
 
-export const useServiceManagement = (categoryId?: string) => {
+export const useServiceManagement = (categoryId?: string, userOnly: boolean = false) => {
   const [services, setServices] = useState<ServiceData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -42,20 +42,56 @@ export const useServiceManagement = (categoryId?: string) => {
     try {
       setLoading(true);
       
-      let query = supabase
-        .from('services')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (userOnly) {
+        // Fetch only user's own services via their business listings
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setServices([]);
+          setLoading(false);
+          return;
+        }
 
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
+        // Get user's business listings
+        const { data: businessListings, error: listingsError } = await supabase
+          .from('business_listings')
+          .select('id')
+          .eq('user_id', user.id);
+
+        if (listingsError) throw listingsError;
+
+        if (!businessListings || businessListings.length === 0) {
+          setServices([]);
+          setLoading(false);
+          return;
+        }
+
+        const businessListingIds = businessListings.map(b => b.id);
+
+        // Fetch services linked to these business listings
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .in('business_listing_id', businessListingIds)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setServices(data || []);
+      } else {
+        // Fetch all services (for browsing)
+        let query = supabase
+          .from('services')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (categoryId) {
+          query = query.eq('category_id', categoryId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        setServices(data || []);
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      setServices(data || []);
     } catch (error: any) {
       console.error('Error fetching services:', error);
       toast({
@@ -70,7 +106,7 @@ export const useServiceManagement = (categoryId?: string) => {
 
   useEffect(() => {
     fetchServices();
-  }, [categoryId]);
+  }, [categoryId, userOnly]);
 
   const createService = async (serviceData: CreateServiceData) => {
     try {
