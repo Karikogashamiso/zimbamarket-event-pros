@@ -31,6 +31,13 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Use service role for database operations to bypass RLS
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Create a client with auth for user identification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -41,7 +48,7 @@ serve(async (req: Request) => {
       }
     );
 
-    // Get authenticated user
+    // Get authenticated user (if any)
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
@@ -73,7 +80,7 @@ serve(async (req: Request) => {
     const ticketTypesData = [];
 
     for (const item of orderData.items) {
-      const { data: ticketType, error: ticketError } = await supabaseClient
+      const { data: ticketType, error: ticketError } = await supabaseAdmin
         .from('ticket_types')
         .select('id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active')
         .eq('id', item.ticket_type_id)
@@ -123,8 +130,8 @@ serve(async (req: Request) => {
 
     console.log('Order total calculated:', totalAmount);
 
-    // Create order
-    const { data: order, error: orderError } = await supabaseClient
+    // Create order using admin client to bypass RLS
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         user_id: user?.id || null,
@@ -178,7 +185,7 @@ serve(async (req: Request) => {
       }
     }
 
-    const { data: tickets, error: ticketsError } = await supabaseClient
+    const { data: tickets, error: ticketsError } = await supabaseAdmin
       .from('tickets')
       .insert(ticketsToCreate)
       .select();
@@ -186,7 +193,7 @@ serve(async (req: Request) => {
     if (ticketsError) {
       console.error('Tickets creation error:', ticketsError);
       // Rollback order if tickets fail
-      await supabaseClient.from('orders').delete().eq('id', order.id);
+      await supabaseAdmin.from('orders').delete().eq('id', order.id);
       return new Response(
         JSON.stringify({ error: 'Failed to create tickets', details: ticketsError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
