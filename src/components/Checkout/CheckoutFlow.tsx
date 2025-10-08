@@ -14,12 +14,41 @@ import { CustomerInfo } from './CustomerInfo';
 import { PaymentOptions } from './PaymentOptions';
 import { OrderSummary } from './OrderSummary';
 import { TicketConfirmation } from './TicketConfirmation';
-import { useCheckout, CheckoutData } from '@/hooks/useCheckout';
+import { useSimpleCheckout } from '@/hooks/useSimpleCheckout';
 import { useToast } from '@/hooks/use-toast';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
-export type CheckoutStep = 
+export interface CheckoutData {
+  event?: {
+    id: string;
+    title: string;
+    venue: string;
+    ticket_types?: any[];
+    event_addons?: any[];
+  };
+  selectedSeats?: any[];
+  ticketTiers?: Array<{
+    ticketTypeId: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  addOns?: any[];
+  customerInfo?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    termsAccepted?: boolean;
+  };
+  paymentMethod?: string;
+  totalAmount?: number;
+  currency?: string;
+}
+
+export type CheckoutStep =
   | 'event' 
   | 'seats' 
   | 'tiers' 
@@ -55,8 +84,16 @@ export const CheckoutFlow: React.FC = () => {
   });
   const [loadingEvent, setLoadingEvent] = useState(true);
   
-  const { isProcessing, orderDetails, processCheckout, calculateTotal } = useCheckout();
+  const { processCheckout, isProcessing } = useSimpleCheckout();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Calculate total amount helper
+  const calculateTotal = (tiers: any[] = [], addons: any[] = []) => {
+    const tiersTotal = tiers.reduce((sum, tier) => sum + (tier.price * tier.quantity), 0);
+    const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+    return tiersTotal + addonsTotal;
+  };
 
   // Fetch event/trip data on mount
   useEffect(() => {
@@ -190,11 +227,14 @@ export const CheckoutFlow: React.FC = () => {
 
   const handleConfirmOrder = async () => {
     try {
+      console.log('Confirming order with data:', checkoutData);
+      
+      // Process checkout - navigation happens inside processCheckout
       await processCheckout(checkoutData);
-      setCurrentStep('confirmation');
+      
     } catch (error) {
-      // Error handling is done in the hook
-      console.error('Checkout failed:', error);
+      console.error('Order confirmation failed:', error);
+      // Error handling is done in useSimpleCheckout
     }
   };
 
@@ -327,12 +367,6 @@ export const CheckoutFlow: React.FC = () => {
             checkoutData={checkoutData}
             onConfirmOrder={handleConfirmOrder}
             isProcessing={isProcessing}
-          />
-        );
-      case 'confirmation':
-        return (
-          <TicketConfirmation
-            orderDetails={orderDetails}
           />
         );
       default:

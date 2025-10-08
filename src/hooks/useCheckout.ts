@@ -207,42 +207,75 @@ export const useCheckout = () => {
   };
 
   const processPayment = async (orderId: string, paymentMethod: string, amount: number, customerEmail: string, customerName: string) => {
-    console.log('Processing Stripe payment:', { orderId, paymentMethod, amount });
+    console.log('Processing payment:', { orderId, paymentMethod, amount });
 
-    // Call Stripe payment processing edge function
-    const { data: paymentResult, error: paymentError } = await supabase.functions.invoke('process-stripe-payment', {
-      body: {
-        orderId,
-        amount,
-        currency: 'USD',
-        customerEmail,
-        customerName,
-        paymentMethod,
+    // For now, support non-Stripe payments (Ecocash, OneMoney, Bank Transfer)
+    if (paymentMethod === 'card' || paymentMethod === 'stripe') {
+      // Try Stripe payment
+      try {
+        const { data: paymentResult, error: paymentError } = await supabase.functions.invoke('process-stripe-payment', {
+          body: {
+            orderId,
+            amount,
+            currency: 'USD',
+            customerEmail,
+            customerName,
+            paymentMethod,
+          }
+        });
+
+        if (paymentError || !paymentResult?.configured) {
+          console.warn('Stripe not configured, creating pending payment');
+          // Fall through to pending payment below
+        } else {
+          // Stripe payment successful
+          const transactionData = {
+            order_id: orderId,
+            amount,
+            currency: 'USD' as 'USD' | 'ZWL' | 'RTGS',
+            transaction_type: 'payment',
+            payment_method: paymentMethod,
+            payment_provider: 'stripe',
+            status: paymentResult.status === 'succeeded' ? 'completed' : 'pending' as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'partially_refunded',
+            provider_transaction_id: paymentResult.paymentIntentId,
+            metadata: {
+              processed_at: new Date().toISOString(),
+              client_secret: paymentResult.clientSecret,
+            },
+          };
+
+          const { data: transaction, error: transactionError } = await supabase
+            .from('payment_transactions')
+            .insert([transactionData])
+            .select()
+            .single();
+
+          if (transactionError) {
+            console.error('Payment transaction error:', transactionError);
+            throw new Error(`Failed to record payment: ${transactionError.message}`);
+          }
+
+          console.log('Stripe payment processed:', transaction);
+          return transaction;
+        }
+      } catch (error) {
+        console.warn('Stripe payment failed, creating pending payment:', error);
+        // Fall through to pending payment
       }
-    });
-
-    if (paymentError) {
-      console.error('Stripe payment error:', paymentError);
-      throw new Error(`Payment processing failed: ${paymentError.message}`);
     }
 
-    if (!paymentResult?.configured) {
-      throw new Error('Stripe payment not configured. Please add your Stripe API key.');
-    }
-
-    // Create payment transaction record
+    // Create pending payment transaction for non-Stripe methods
     const transactionData = {
       order_id: orderId,
       amount,
       currency: 'USD' as 'USD' | 'ZWL' | 'RTGS',
       transaction_type: 'payment',
       payment_method: paymentMethod,
-      payment_provider: 'stripe',
-      status: paymentResult.status === 'succeeded' ? 'completed' : 'pending' as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'partially_refunded',
-      provider_transaction_id: paymentResult.paymentIntentId,
+      payment_provider: paymentMethod === 'ecocash' ? 'ecocash' : paymentMethod === 'onemoney' ? 'onemoney' : 'manual',
+      status: 'pending' as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'partially_refunded',
       metadata: {
         processed_at: new Date().toISOString(),
-        client_secret: paymentResult.clientSecret,
+        note: 'Awaiting payment confirmation',
       },
     };
 
@@ -257,7 +290,7 @@ export const useCheckout = () => {
       throw new Error(`Failed to record payment: ${transactionError.message}`);
     }
 
-    console.log('Payment processed:', transaction);
+    console.log('Pending payment transaction created:', transaction);
     return transaction;
   };
 
@@ -324,16 +357,25 @@ export const useCheckout = () => {
         `${checkoutData.customerInfo!.firstName} ${checkoutData.customerInfo!.lastName}`
       );
 
-      // Step 4: Update order status to confirmed
-      await updateOrderStatus(order.id, 'confirmed');
+      // Step 4: Update order status based on payment
+      const orderStatus = payment.status === 'completed' ? 'confirmed' : 'pending';
+      const paymentStatus = payment.status === 'completed' ? 'completed' : 'pending';
+      
+      await updateOrderStatus(order.id, orderStatus as any);
+
+      // Update payment status separately
+      await supabase
+        .from('orders')
+        .update({ payment_status: paymentStatus as any })
+        .eq('id', order.id);
 
       // Step 5: Set final order details
       const finalOrderDetails = {
         ...order,
         tickets,
         payment,
-        booking_status: 'confirmed',
-        payment_status: 'paid',
+        booking_status: orderStatus,
+        payment_status: paymentStatus,
       };
 
       setOrderDetails(finalOrderDetails);
@@ -356,9 +398,13 @@ export const useCheckout = () => {
         // Don't fail the entire checkout for email issues
       }
 
+      const toastMessage = payment.status === 'completed' 
+        ? `Your order ${order.order_number} has been confirmed. Check your email for tickets.`
+        : `Your order ${order.order_number} has been created. Complete payment to activate your tickets.`;
+
       toast({
-        title: "Booking Confirmed!",
-        description: `Your order ${order.order_number} has been confirmed. Check your email for tickets.`,
+        title: payment.status === 'completed' ? "Booking Confirmed!" : "Order Created",
+        description: toastMessage,
       });
 
       return finalOrderDetails;
