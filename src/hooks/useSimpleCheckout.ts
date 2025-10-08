@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useOrderCreation } from './useOrderCreation';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TicketTier {
   ticketTypeId: string;
@@ -25,6 +26,7 @@ interface CheckoutData {
   };
   paymentMethod?: string;
   totalAmount?: number;
+  currency?: string;
 }
 
 export const useSimpleCheckout = () => {
@@ -63,7 +65,7 @@ export const useSimpleCheckout = () => {
         customer_email: checkoutData.customerInfo.email,
         customer_phone: checkoutData.customerInfo.phone,
         items,
-        payment_method: checkoutData.paymentMethod || 'pending',
+        payment_method: checkoutData.paymentMethod || 'card',
       });
 
       if (!order) {
@@ -72,9 +74,47 @@ export const useSimpleCheckout = () => {
 
       console.log('Order created successfully:', order);
 
-      // Navigate to order confirmation page
-      navigate(`/order-confirmation/${order.order_number}`);
+      // Process payment through Stripe if card payment selected
+      if (checkoutData.paymentMethod === 'card') {
+        console.log('Creating Stripe Checkout session...');
+        
+        const { data: checkoutSession, error: checkoutError } = await supabase.functions.invoke('create-checkout-session', {
+          body: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            customerEmail: checkoutData.customerInfo.email,
+            totalAmount: checkoutData.totalAmount || 0,
+            currency: checkoutData.currency || 'USD',
+          }
+        });
 
+        if (checkoutError) {
+          console.error('Checkout session error:', checkoutError);
+          throw new Error('Failed to create payment session. Please try again.');
+        }
+
+        if (!checkoutSession?.configured) {
+          toast({
+            title: "Payment Not Configured",
+            description: "Stripe is not configured. Order created with pending payment.",
+          });
+          navigate(`/order-confirmation/${order.order_number}`);
+          return order;
+        }
+
+        if (!checkoutSession?.url) {
+          throw new Error('Invalid checkout session response');
+        }
+
+        console.log('Redirecting to Stripe Checkout:', checkoutSession.url);
+
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutSession.url;
+        return order;
+      }
+
+      // For non-card payments, go directly to confirmation
+      navigate(`/order-confirmation/${order.order_number}`);
       return order;
 
     } catch (error: any) {
