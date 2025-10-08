@@ -147,3 +147,5 @@ export const TestimonialsSection: React.FC = () => {
     </div>
   );
 };
+
+export default TestimonialsSection;

@@ -28,7 +28,7 @@ const NewsletterSection = lazy(() => import("@/components/NewsletterSection"));
 const Footer = lazy(() => import("@/components/Footer"));
 const SmartRecommendations = lazy(() => import("@/components/Recommendations/SmartRecommendations"));
 const StatsSection = lazy(() => import("@/components/StatsSection"));
-const TestimonialsCarousel = lazy(() => import("@/components/TestimonialsCarousel"));
+const TestimonialsSection = lazy(() => import("@/components/Marketing/TestimonialsSection"));
 const TrendingServices = lazy(() => import("@/components/TrendingServices"));
 const FloatingActionButton = lazy(() => import("@/components/FloatingActionButton"));
 
@@ -138,7 +138,7 @@ const Index = () => {
             </SectionErrorBoundary>
             
             <SectionErrorBoundary sectionName="testimonials">
-              <TestimonialsCarousel />
+              <TestimonialsSection />
             </SectionErrorBoundary>
             
             <SectionErrorBoundary sectionName="locations">
