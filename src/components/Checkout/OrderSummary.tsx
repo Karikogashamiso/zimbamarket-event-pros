@@ -50,7 +50,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               {checkoutData.event.venue && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  {checkoutData.event.venue}
+                  {typeof checkoutData.event.venue === 'string' 
+                    ? checkoutData.event.venue 
+                    : `${checkoutData.event.venue.name || ''}, ${checkoutData.event.venue.city || ''}`}
                 </div>
               )}
               {checkoutData.event.date && (
