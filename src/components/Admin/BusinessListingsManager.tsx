@@ -62,8 +62,8 @@ export const BusinessListingsManager = () => {
         .from('business_listings')
         .select(`
           *,
-          category:categories(name),
-          services:services(id, title, active)
+          categories(name),
+          services(id, title, active)
         `)
         .order('created_at', { ascending: false });
 
@@ -229,9 +229,9 @@ export const BusinessListingsManager = () => {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-1 text-sm">
-                          <span className="text-muted-foreground">Category: {listing.category?.name || 'N/A'}</span>
-                        </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <span className="text-muted-foreground">Category: {listing.categories?.name || 'N/A'}</span>
+                          </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">

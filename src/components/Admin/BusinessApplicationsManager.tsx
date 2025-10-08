@@ -61,9 +61,7 @@ export const BusinessApplicationsManager = () => {
         .from('business_applications')
         .select(`
           *,
-          user:user_id (
-            email
-          )
+          profiles(first_name, last_name, phone_number, user_id)
         `)
         .order('created_at', { ascending: false });
 
@@ -271,10 +269,16 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
-                        {app.user && (
+                        {app.profiles && (
                           <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
-                            <span className="text-muted-foreground">Submitted by user: </span>
-                            <span className="font-medium">{app.user.email}</span>
+                            <span className="text-muted-foreground">Submitted by: </span>
+                            <span className="font-medium">{app.profiles.first_name} {app.profiles.last_name}</span>
+                            {app.profiles.phone_number && <span className="text-muted-foreground ml-2">({app.profiles.phone_number})</span>}
+                          </div>
+                        )}
+                        {!app.profiles && app.user_id && (
+                          <div className="text-sm bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-md">
+                            <span className="text-muted-foreground">User ID: {app.user_id}</span>
                           </div>
                         )}
 
@@ -350,10 +354,16 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
-                        {app.user && (
+                        {app.profiles && (
                           <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
                             <span className="text-muted-foreground">Submitted by: </span>
-                            <span className="font-medium">{app.user.email}</span>
+                            <span className="font-medium">{app.profiles.first_name} {app.profiles.last_name}</span>
+                            {app.profiles.phone_number && <span className="text-muted-foreground ml-2">({app.profiles.phone_number})</span>}
+                          </div>
+                        )}
+                        {!app.profiles && app.user_id && (
+                          <div className="text-sm bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-md">
+                            <span className="text-muted-foreground">User ID: {app.user_id}</span>
                           </div>
                         )}
 
