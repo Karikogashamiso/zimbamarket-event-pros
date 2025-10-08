@@ -92,14 +92,18 @@ export const BusinessApplicationsManager = () => {
     }
 
     try {
-      // Use placeholder user_id - in production, implement proper user matching
-      const userId = '00000000-0000-0000-0000-000000000000';
+      // Get current admin user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
 
-      // Create business listing
+      // Create business listing (admin creates on behalf of applicant)
       const { data: listingData, error: listingError } = await supabase
         .from('business_listings')
         .insert({
-          user_id: userId || '00000000-0000-0000-0000-000000000000', // Placeholder if no user yet
+          user_id: user.id, // Admin creates it, applicant can claim later
           category_id: selectedCategoryId,
           business_name: selectedApp.business_name,
           description: selectedApp.description,
