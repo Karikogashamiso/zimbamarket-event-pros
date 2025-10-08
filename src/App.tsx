@@ -33,6 +33,7 @@ import AdminOrders from "./pages/Admin/Orders";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
+import MyBusinessApplications from "./pages/MyBusinessApplications";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -73,6 +74,7 @@ const App = () => {
                   <Route path="/blog" element={<Layout><Blog /></Layout>} />
                   <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
                   <Route path="/list-business" element={<Layout><ListBusiness /></Layout>} />
+                  <Route path="/my-applications" element={<Layout><MyBusinessApplications /></Layout>} />
                   <Route path="/help" element={<Layout><Help /></Layout>} />
                   <Route path="/contact" element={<Layout><Contact /></Layout>} />
                   <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />

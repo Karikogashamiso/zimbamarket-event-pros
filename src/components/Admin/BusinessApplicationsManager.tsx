@@ -150,6 +150,23 @@ export const BusinessApplicationsManager = () => {
 
       if (updateError) throw updateError;
 
+      // Send approval notification email
+      try {
+        const category = categories.find(c => c.id === selectedCategoryId);
+        await supabase.functions.invoke('send-application-status-update', {
+          body: {
+            email: selectedApp.email,
+            businessName: selectedApp.business_name,
+            contactPerson: selectedApp.contact_person,
+            status: 'approved',
+            categoryName: category?.name
+          }
+        });
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        // Don't block success if email fails
+      }
+
       toast({
         title: "Success",
         description: "Business approved! They can now claim and manage their listing.",
@@ -177,6 +194,26 @@ export const BusinessApplicationsManager = () => {
         .eq('id', applicationId);
 
       if (error) throw error;
+
+      // Get application details for email
+      const application = applications.find(a => a.id === applicationId);
+      
+      // Send rejection notification email
+      if (application) {
+        try {
+          await supabase.functions.invoke('send-application-status-update', {
+            body: {
+              email: application.email,
+              businessName: application.business_name,
+              contactPerson: application.contact_person,
+              status: 'rejected'
+            }
+          });
+        } catch (emailError) {
+          console.error('Email sending failed:', emailError);
+          // Don't block success if email fails
+        }
+      }
 
       toast({
         title: "Success",

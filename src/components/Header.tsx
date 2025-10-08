@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search, User, Shield } from "lucide-react";
+import { Menu, Heart, LogOut, Search, User, Shield, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import MobileMenu from "./MobileMenu";
 import { Link } from "react-router-dom";
@@ -167,6 +167,13 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                       <DropdownMenuSeparator />
                     </>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-applications" className="flex items-center cursor-pointer">
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>My Applications</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleSignOut}
                     className="cursor-pointer text-destructive focus:text-destructive"

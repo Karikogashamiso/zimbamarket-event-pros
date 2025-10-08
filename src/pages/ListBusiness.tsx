@@ -222,10 +222,25 @@ const ListBusiness = () => {
         return;
       }
 
+      // Send confirmation email
+      try {
+        await supabase.functions.invoke('send-business-application-confirmation', {
+          body: {
+            email: validatedData.email,
+            businessName: validatedData.businessName,
+            contactPerson: validatedData.contactPerson,
+            businessType: validatedData.businessType
+          }
+        });
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        // Don't block success if email fails
+      }
+
       // Success
       toast({
         title: "Application Submitted Successfully!",
-        description: "Thank you for your interest. Our team will review your application and contact you within 24 hours.",
+        description: "Check your email for confirmation. Our team will review your application within 24 hours.",
       });
 
       // Reset form and validation states
@@ -244,6 +259,11 @@ const ListBusiness = () => {
       setCustomBusinessType("");
       setFormErrors({});
       setTouchedFields({});
+
+      // Redirect to applications page after 2 seconds
+      setTimeout(() => {
+        window.location.href = '/my-applications';
+      }, 2000);
 
     } catch (error) {
       if (error instanceof z.ZodError) {
