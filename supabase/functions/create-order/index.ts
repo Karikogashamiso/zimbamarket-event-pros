@@ -128,11 +128,12 @@ serve(async (req: Request) => {
         customer_last_name: orderData.customer_last_name,
         customer_email: orderData.customer_email,
         customer_phone: orderData.customer_phone,
+        subtotal: totalAmount,
         total_amount: totalAmount,
         currency: ticketTypesData[0].currency,
-        order_status: 'pending',
+        booking_status: 'pending',
         payment_status: 'pending',
-        payment_method: orderData.payment_method || 'pending',
+        order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
       })
       .select()
       .single();

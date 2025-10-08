@@ -22,7 +22,7 @@ interface Order {
   order_number: string;
   total_amount: number;
   currency: string;
-  order_status: string;
+  booking_status: string;
   payment_status: string;
   tickets: any[];
   ticket_count: number;
