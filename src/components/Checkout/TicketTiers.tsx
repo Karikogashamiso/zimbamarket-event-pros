@@ -25,24 +25,30 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
   console.log('TicketTiers - filtered ticket types:', ticketTypes);
 
   const handleTierSelect = (tier: any) => {
+    console.log('Selecting tier:', tier);
     const existingIndex = selectedTiers.findIndex(t => t.id === tier.id);
     
     if (existingIndex >= 0) {
       // Remove tier
       const updated = selectedTiers.filter(t => t.id !== tier.id);
+      console.log('Removed tier, updated tiers:', updated);
       onTiersChange(updated);
     } else {
-      // Add tier
-      onTiersChange([...selectedTiers, { 
+      // Add tier with ticketTypeId
+      const newTier = { 
         id: tier.id,
-        ticketTypeId: tier.id,
+        ticketTypeId: tier.id, // This is the critical field for order creation
         name: tier.name,
         description: tier.description,
         price: tier.base_price,
         currency: tier.currency,
         quantity: 1,
         max_quantity: tier.max_quantity
-      }]);
+      };
+      console.log('Adding new tier:', newTier);
+      const updated = [...selectedTiers, newTier];
+      console.log('Updated tiers:', updated);
+      onTiersChange(updated);
     }
   };
 

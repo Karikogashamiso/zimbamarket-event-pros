@@ -38,6 +38,7 @@ export const useSimpleCheckout = () => {
 
     try {
       console.log('Processing simple checkout:', checkoutData);
+      console.log('Ticket tiers:', checkoutData.ticketTiers);
 
       // Validate required data
       if (!checkoutData.customerInfo || !checkoutData.ticketTiers || checkoutData.ticketTiers.length === 0) {
@@ -45,10 +46,15 @@ export const useSimpleCheckout = () => {
       }
 
       // Prepare order items from ticket tiers
-      const items = checkoutData.ticketTiers.map(tier => ({
-        ticket_type_id: tier.ticketTypeId,
-        quantity: tier.quantity,
-      }));
+      const items = checkoutData.ticketTiers.map(tier => {
+        console.log('Mapping tier:', tier);
+        return {
+          ticket_type_id: tier.ticketTypeId,
+          quantity: tier.quantity,
+        };
+      });
+      
+      console.log('Prepared items for order:', items);
 
       // Create order using the order creation hook
       const order = await createOrder({
