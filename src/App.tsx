@@ -79,6 +79,7 @@ const App = () => {
                   <Route path="/tickets" element={<Layout><TicketDesign /></Layout>} />
                   <Route path="/events" element={<Layout><Events /></Layout>} />
                   <Route path="/organizer" element={<Layout><OrganizerDashboard /></Layout>} />
+                  <Route path="/organizer/dashboard" element={<Layout><OrganizerDashboard /></Layout>} />
                   
                   {/* Admin Routes with nested structure */}
                   <Route path="/admin" element={<AdminLayout />}>
