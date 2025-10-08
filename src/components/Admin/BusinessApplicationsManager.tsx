@@ -59,10 +59,7 @@ export const BusinessApplicationsManager = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('business_applications')
-        .select(`
-          *,
-          profiles(first_name, last_name, phone_number, user_id)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -306,16 +303,18 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
-                        {app.profiles && (
+                        {app.user_id && (
                           <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
                             <span className="text-muted-foreground">Submitted by: </span>
-                            <span className="font-medium">{app.profiles.first_name} {app.profiles.last_name}</span>
-                            {app.profiles.phone_number && <span className="text-muted-foreground ml-2">({app.profiles.phone_number})</span>}
+                            <span className="font-medium">{app.contact_person}</span>
+                            {app.user_id && <span className="text-muted-foreground ml-2">(User Account)</span>}
                           </div>
                         )}
-                        {!app.profiles && app.user_id && (
+                        {!app.user_id && (
                           <div className="text-sm bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-md">
-                            <span className="text-muted-foreground">User ID: {app.user_id}</span>
+                            <span className="text-muted-foreground">Submitted by: </span>
+                            <span className="font-medium">{app.contact_person}</span>
+                            <span className="text-muted-foreground ml-2">(Guest)</span>
                           </div>
                         )}
 
@@ -391,16 +390,18 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
-                        {app.profiles && (
+                        {app.user_id && (
                           <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
                             <span className="text-muted-foreground">Submitted by: </span>
-                            <span className="font-medium">{app.profiles.first_name} {app.profiles.last_name}</span>
-                            {app.profiles.phone_number && <span className="text-muted-foreground ml-2">({app.profiles.phone_number})</span>}
+                            <span className="font-medium">{app.contact_person}</span>
+                            <span className="text-muted-foreground ml-2">(User Account)</span>
                           </div>
                         )}
-                        {!app.profiles && app.user_id && (
+                        {!app.user_id && (
                           <div className="text-sm bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-md">
-                            <span className="text-muted-foreground">User ID: {app.user_id}</span>
+                            <span className="text-muted-foreground">Submitted by: </span>
+                            <span className="font-medium">{app.contact_person}</span>
+                            <span className="text-muted-foreground ml-2">(Guest)</span>
                           </div>
                         )}
 
