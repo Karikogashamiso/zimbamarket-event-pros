@@ -42,7 +42,7 @@ serve(async (req) => {
     }
 
     // If already confirmed, return success
-    if (order.payment_status === 'paid' || order.payment_status === 'completed') {
+    if (order.payment_status === 'completed') {
       console.log('Order already confirmed');
       return new Response(
         JSON.stringify({ 
@@ -71,11 +71,11 @@ serve(async (req) => {
 
     // Check if payment was successful
     if (matchingSession.payment_status === 'paid') {
-      // Update order status
+      // Update order status to completed (not 'paid' - that's not a valid enum value)
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          payment_status: 'paid',
+          payment_status: 'completed',
           booking_status: 'confirmed',
           confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -92,7 +92,7 @@ serve(async (req) => {
         order_id: order.id,
         amount: order.total_amount,
         currency: order.currency,
-        status: 'paid',
+        status: 'completed',
         transaction_type: 'payment',
         payment_method: 'card',
         payment_provider: 'stripe',
@@ -111,7 +111,7 @@ serve(async (req) => {
           paymentConfirmed: true,
           order: {
             ...order,
-            payment_status: 'paid',
+            payment_status: 'completed',
             booking_status: 'confirmed'
           }
         }),
