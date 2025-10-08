@@ -59,7 +59,12 @@ export const BusinessApplicationsManager = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('business_applications')
-        .select('*')
+        .select(`
+          *,
+          user:user_id (
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -92,18 +97,18 @@ export const BusinessApplicationsManager = () => {
     }
 
     try {
-      // Get current admin user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use the applicant's user_id from the application, not the admin's user_id
+      const applicantUserId = selectedApp.user_id;
       
-      if (!user) {
-        throw new Error('No authenticated user found');
+      if (!applicantUserId) {
+        throw new Error('Application does not have an associated user. Please ask the applicant to resubmit.');
       }
 
-      // Create business listing (admin creates, contact info for applicant to claim)
+      // Create business listing for the applicant
       const { data: listingData, error: listingError } = await supabase
         .from('business_listings')
         .insert({
-          user_id: user.id,
+          user_id: applicantUserId,  // Use applicant's user_id, not admin's
           category_id: selectedCategoryId,
           business_name: selectedApp.business_name,
           description: selectedApp.description,
@@ -123,6 +128,7 @@ export const BusinessApplicationsManager = () => {
         .from('services')
         .insert({
           category_id: selectedCategoryId,
+          business_listing_id: listingData.id,
           title: selectedApp.business_name,
           description: selectedApp.description,
           location: selectedApp.location,
@@ -265,6 +271,13 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
+                        {app.user && (
+                          <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                            <span className="text-muted-foreground">Submitted by user: </span>
+                            <span className="font-medium">{app.user.email}</span>
+                          </div>
+                        )}
+
                          <div className="text-sm space-y-1">
                           <p className="text-muted-foreground line-clamp-2">{app.description}</p>
                           <p className="font-medium">Contact: {app.contact_person}</p>
@@ -336,6 +349,13 @@ export const BusinessApplicationsManager = () => {
                             {app.phone_number}
                           </div>
                         </div>
+
+                        {app.user && (
+                          <div className="text-sm bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                            <span className="text-muted-foreground">Submitted by: </span>
+                            <span className="font-medium">{app.user.email}</span>
+                          </div>
+                        )}
 
                         <p className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}

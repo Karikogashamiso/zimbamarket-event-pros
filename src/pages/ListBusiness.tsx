@@ -195,10 +195,14 @@ const ListBusiness = () => {
       // Validate all fields
       const validatedData = businessApplicationSchema.parse(formData);
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Submit to Supabase
       const { error } = await supabase
         .from('business_applications')
         .insert({
+          user_id: user?.id || null,
           business_name: validatedData.businessName,
           business_type: validatedData.businessType,
           location: validatedData.location,
