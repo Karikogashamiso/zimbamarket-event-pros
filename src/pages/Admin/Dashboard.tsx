@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessApplicationsManager } from "@/components/Admin/BusinessApplicationsManager";
+import { BusinessListingsManager } from "@/components/Admin/BusinessListingsManager";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -102,6 +103,7 @@ const Dashboard = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="applications">Business Applications</TabsTrigger>
+          <TabsTrigger value="listings">All Listings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -174,6 +176,10 @@ const Dashboard = () => {
 
         <TabsContent value="applications">
           <BusinessApplicationsManager />
+        </TabsContent>
+
+        <TabsContent value="listings">
+          <BusinessListingsManager />
         </TabsContent>
       </Tabs>
     </div>

@@ -99,18 +99,19 @@ export const BusinessApplicationsManager = () => {
         throw new Error('No authenticated user found');
       }
 
-      // Create business listing (admin creates on behalf of applicant)
+      // Create business listing (admin creates, contact info for applicant to claim)
       const { data: listingData, error: listingError } = await supabase
         .from('business_listings')
         .insert({
-          user_id: user.id, // Admin creates it, applicant can claim later
+          user_id: user.id,
           category_id: selectedCategoryId,
           business_name: selectedApp.business_name,
           description: selectedApp.description,
           location: selectedApp.location,
           phone_number: selectedApp.phone_number,
           email: selectedApp.email,
-          status: 'approved'
+          status: 'approved',
+          featured: false
         })
         .select()
         .single();
@@ -147,7 +148,7 @@ export const BusinessApplicationsManager = () => {
 
       toast({
         title: "Success",
-        description: "Business application approved and listing created",
+        description: "Business approved! They can now claim and manage their listing.",
       });
 
       setShowApprovalDialog(false);
@@ -264,14 +265,17 @@ export const BusinessApplicationsManager = () => {
                           </div>
                         </div>
 
-                        <p className="text-sm text-muted-foreground line-clamp-2">{app.description}</p>
+                         <div className="text-sm space-y-1">
+                          <p className="text-muted-foreground line-clamp-2">{app.description}</p>
+                          <p className="font-medium">Contact: {app.contact_person}</p>
+                        </div>
 
                         <p className="text-xs text-muted-foreground">
                           Submitted {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
                         </p>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex flex-col gap-2 ml-4">
                         <Button 
                           size="sm" 
                           variant="default"
@@ -308,16 +312,58 @@ export const BusinessApplicationsManager = () => {
             ) : (
               <div className="space-y-3">
                 {processedApps.slice(0, 10).map((app) => (
-                  <div key={app.id} className="flex items-center justify-between border-b pb-2">
-                    <div className="flex-1">
-                      <p className="font-medium">{app.business_name}</p>
-                      <p className="text-sm text-muted-foreground">{app.business_type}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
-                      </span>
-                      {getStatusBadge(app.status)}
+                  <div key={app.id} className="border rounded-lg p-4 hover:bg-accent/30 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">{app.business_name}</span>
+                          {getStatusBadge(app.status)}
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-sm">
+                          <FileText className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">{app.business_type}</span>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {app.email}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {app.phone_number}
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2 ml-4">
+                        {app.status === 'rejected' && (
+                          <Button 
+                            size="sm" 
+                            variant="default"
+                            onClick={() => handleApprove(app)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                        )}
+                        {app.status === 'approved' && (
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => handleReject(app.id)}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

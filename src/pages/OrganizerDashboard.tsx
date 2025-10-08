@@ -19,6 +19,7 @@ import { AddTripTicketTypeForm } from "@/components/AddTripTicketTypeForm";
 import { AddTripAddonForm } from "@/components/AddTripAddonForm";
 import { BookingRequestsManager } from "@/components/BookingRequestsManager";
 import { ServiceCreationForm } from "@/components/ServiceCreationForm";
+import { BusinessListingsDisplay } from "@/components/BusinessListingsDisplay";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -462,9 +463,9 @@ const OrganizerDashboard = () => {
             'venues'
           } className="space-y-6">
             <TabsList className={`grid w-full ${
-              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-3' :
-              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-4' :
-              'grid-cols-4'
+              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-4' :
+              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-5' :
+              'grid-cols-5'
             }`}>
               {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
                 <TabsTrigger value="venues">Venues</TabsTrigger>
@@ -476,6 +477,7 @@ const OrganizerDashboard = () => {
                 <TabsTrigger value="transport">Transport</TabsTrigger>
               )}
               <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="listings">Business Listings</TabsTrigger>
               <TabsTrigger value="requests">Requests</TabsTrigger>
             </TabsList>
 
@@ -906,6 +908,11 @@ const OrganizerDashboard = () => {
             {/* Services Tab */}
             <TabsContent value="services" className="space-y-6">
               <ServiceCreationForm />
+            </TabsContent>
+
+            {/* Business Listings Tab */}
+            <TabsContent value="listings" className="space-y-6">
+              <BusinessListingsDisplay userId={user?.id || ''} />
             </TabsContent>
 
             {/* Booking Requests Tab */}
