@@ -62,7 +62,8 @@ export const BusinessListingsManager = () => {
         .from('business_listings')
         .select(`
           *,
-          category:categories(name)
+          category:categories(name),
+          services:services(id, title, active)
         `)
         .order('created_at', { ascending: false });
 
@@ -268,6 +269,26 @@ export const BusinessListingsManager = () => {
                         </div>
 
                         <p className="text-sm text-muted-foreground line-clamp-2">{listing.description}</p>
+
+                        {listing.services && (
+                          <div className="flex items-center gap-2 flex-wrap text-xs">
+                            <span className="text-muted-foreground">Services:</span>
+                            {listing.services.length === 0 ? (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600">
+                                No services
+                              </Badge>
+                            ) : (
+                              <>
+                                <Badge variant="outline">
+                                  {listing.services.length} total
+                                </Badge>
+                                <Badge variant="outline" className="bg-green-500/10 text-green-600">
+                                  {listing.services.filter((s: any) => s.active).length} active
+                                </Badge>
+                              </>
+                            )}
+                          </div>
+                        )}
 
                         <p className="text-xs text-muted-foreground">
                           Created {formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}

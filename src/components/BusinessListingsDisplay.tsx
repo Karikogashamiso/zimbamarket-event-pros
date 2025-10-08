@@ -49,7 +49,8 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
         .from('business_listings')
         .select(`
           *,
-          category:categories(name)
+          category:categories(name),
+          services:services(id, title, active)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -209,6 +210,26 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
                       </div>
 
                       <p className="text-sm text-muted-foreground line-clamp-2">{listing.description}</p>
+
+                      {listing.services && (
+                        <div className="flex items-center gap-2 flex-wrap text-xs mt-2">
+                          <span className="text-muted-foreground">Services:</span>
+                          {listing.services.length === 0 ? (
+                            <Badge variant="outline" className="bg-red-500/10 text-red-600">
+                              No services created yet
+                            </Badge>
+                          ) : (
+                            <>
+                              <Badge variant="outline">
+                                {listing.services.length} total
+                              </Badge>
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600">
+                                {listing.services.filter((s: any) => s.active).length} active
+                              </Badge>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="ml-4">
