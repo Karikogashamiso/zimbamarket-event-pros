@@ -88,8 +88,16 @@ export const CheckoutFlow: React.FC = () => {
           
           if (data) {
             console.log('Setting event data:', data);
+            // Convert venue object to string for validation
+            const venue = data.venue 
+              ? `${data.venue.name || ''}, ${data.venue.city || ''}` 
+              : '';
+            
             updateCheckoutData({ 
-              event: data as any
+              event: {
+                ...data,
+                venue
+              } as any
             });
           }
         } else if (tripId) {
