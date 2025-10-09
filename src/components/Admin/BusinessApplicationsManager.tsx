@@ -41,6 +41,7 @@ export const BusinessApplicationsManager = () => {
   const [applications, setApplications] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -103,7 +104,10 @@ export const BusinessApplicationsManager = () => {
       return;
     }
 
+    if (processing) return; // Prevent double-click
+    
     try {
+      setProcessing(true);
       const applicantUserId = selectedApp.user_id;
       
       // If application has a user_id, create listing and service
@@ -141,8 +145,8 @@ export const BusinessApplicationsManager = () => {
             review_count: 0,
             response_time: '24h',
             availability_status: 'available',
-            featured: false,
-            verified: false,
+            is_featured: false,
+            is_verified: false,
             price_unit: 'service'
           });
 
@@ -194,11 +198,16 @@ export const BusinessApplicationsManager = () => {
         description: error.message || "Failed to approve application",
         variant: "destructive",
       });
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handleReject = async (applicationId: string) => {
+    if (processing) return; // Prevent double-click
+    
     try {
+      setProcessing(true);
       const { error } = await supabase
         .from('business_applications')
         .update({ status: 'rejected' })
@@ -239,6 +248,8 @@ export const BusinessApplicationsManager = () => {
         description: "Failed to reject application",
         variant: "destructive",
       });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -375,6 +386,7 @@ export const BusinessApplicationsManager = () => {
                           size="sm" 
                           variant="default"
                           onClick={() => handleApprove(app)}
+                          disabled={processing}
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Approve
@@ -383,6 +395,7 @@ export const BusinessApplicationsManager = () => {
                           size="sm" 
                           variant="destructive"
                           onClick={() => handleReject(app.id)}
+                          disabled={processing}
                         >
                           <XCircle className="w-4 h-4 mr-1" />
                           Reject
@@ -458,6 +471,7 @@ export const BusinessApplicationsManager = () => {
                             size="sm" 
                             variant="default"
                             onClick={() => handleApprove(app)}
+                            disabled={processing}
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Approve
@@ -468,6 +482,7 @@ export const BusinessApplicationsManager = () => {
                             size="sm" 
                             variant="destructive"
                             onClick={() => handleReject(app.id)}
+                            disabled={processing}
                           >
                             <XCircle className="w-4 h-4 mr-1" />
                             Reject
