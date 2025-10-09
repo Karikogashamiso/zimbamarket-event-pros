@@ -110,10 +110,10 @@ export const BusinessApplicationsManager = () => {
       setProcessing(true);
       const applicantUserId = selectedApp.user_id;
       
-      // If application has a user_id, create listing and service
+      // If application has a user_id, create business listing only
       if (applicantUserId) {
         // Create business listing for the applicant
-        const { data: listingData, error: listingError } = await supabase
+        const { error: listingError } = await supabase
           .from('business_listings')
           .insert({
             user_id: applicantUserId,
@@ -125,32 +125,9 @@ export const BusinessApplicationsManager = () => {
             email: selectedApp.email,
             status: 'approved',
             featured: false
-          })
-          .select()
-          .single();
-
-        if (listingError) throw listingError;
-
-        // Create default service for the business
-        const { error: serviceError } = await supabase
-          .from('services')
-          .insert({
-            category_id: selectedCategoryId,
-            business_listing_id: listingData.id,
-            title: selectedApp.business_name,
-            description: selectedApp.description,
-            location: selectedApp.location,
-            active: true,
-            rating: 0,
-            review_count: 0,
-            response_time: '24h',
-            availability_status: 'available',
-            is_featured: false,
-            is_verified: false,
-            price_unit: 'service'
           });
 
-        if (serviceError) throw serviceError;
+        if (listingError) throw listingError;
       }
 
       // Update application status (works for both user and guest applications)
@@ -179,7 +156,7 @@ export const BusinessApplicationsManager = () => {
       }
 
       const successMessage = applicantUserId 
-        ? "Business approved! They can now manage their listing."
+        ? "Business approved! They can now add services to their listing."
         : "Application approved! Business will be listed once owner claims it.";
       
       toast({
