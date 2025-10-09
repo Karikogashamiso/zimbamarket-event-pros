@@ -19,6 +19,10 @@ interface BookingRequest {
     title: string;
     business_listing_id: string;
   };
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
 }
 
 export const useBookingRequests = () => {
@@ -64,7 +68,7 @@ export const useBookingRequests = () => {
         return;
       }
 
-      // Fetch booking requests for these services
+      // Fetch booking requests for these services with user profiles
       const { data, error } = await supabase
         .from('booking_requests')
         .select(`
@@ -72,6 +76,10 @@ export const useBookingRequests = () => {
           services!inner(
             title,
             business_listing_id
+          ),
+          profiles(
+            first_name,
+            last_name
           )
         `)
         .in('service_id', serviceIds)

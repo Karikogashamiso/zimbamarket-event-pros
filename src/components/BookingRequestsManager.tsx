@@ -107,7 +107,9 @@ export const BookingRequestsManager = () => {
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {request.guest_name || 'Guest User'}
+                            {request.user_id && request.profiles
+                              ? `${request.profiles.first_name} ${request.profiles.last_name}`
+                              : request.guest_name || 'Guest User'}
                           </span>
                           {getStatusBadge(request.status)}
                         </div>
@@ -192,7 +194,11 @@ export const BookingRequestsManager = () => {
                 {processedRequests.slice(0, 10).map((request) => (
                   <div key={request.id} className="flex items-center justify-between border-b pb-2">
                     <div className="flex-1">
-                      <p className="font-medium">{request.guest_name || 'Guest User'}</p>
+                      <p className="font-medium">
+                        {request.user_id && request.profiles
+                          ? `${request.profiles.first_name} ${request.profiles.last_name}`
+                          : request.guest_name || 'Guest User'}
+                      </p>
                       <p className="text-sm text-muted-foreground">{request.guest_email}</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -224,7 +230,11 @@ export const BookingRequestsManager = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Name</label>
-                  <p className="text-muted-foreground">{selectedRequest.guest_name || 'N/A'}</p>
+                  <p className="text-muted-foreground">
+                    {selectedRequest.user_id && selectedRequest.profiles
+                      ? `${selectedRequest.profiles.first_name} ${selectedRequest.profiles.last_name}`
+                      : selectedRequest.guest_name || 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Status</label>
