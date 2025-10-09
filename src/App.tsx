@@ -24,6 +24,7 @@ import { CheckoutFlow } from "./components/Checkout/CheckoutFlow";
 import { OrderConfirmation } from "./pages/OrderConfirmation";
 import Events from "./pages/Events";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
+import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminVenues from "./pages/Admin/Venues";
@@ -83,6 +84,8 @@ const App = () => {
                   <Route path="/events" element={<Layout><Events /></Layout>} />
                   <Route path="/organizer" element={<Layout><OrganizerDashboard /></Layout>} />
                   <Route path="/organizer/dashboard" element={<Layout><OrganizerDashboard /></Layout>} />
+                  <Route path="/service-provider" element={<Layout><ServiceProviderDashboard /></Layout>} />
+                  <Route path="/service-provider/dashboard" element={<Layout><ServiceProviderDashboard /></Layout>} />
                   
                   {/* Admin Routes with nested structure */}
                   <Route path="/admin" element={<AdminLayout />}>

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +31,7 @@ import {
 
 const ListBusiness = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedBusinessType, setSelectedBusinessType] = useState<string>("");
   const [isOtherModalOpen, setIsOtherModalOpen] = useState(false);
@@ -242,6 +243,11 @@ const ListBusiness = () => {
         title: "Application Submitted Successfully!",
         description: "Check your email for confirmation. Our team will review your application within 24 hours.",
       });
+
+      // Redirect to service provider dashboard after 2 seconds
+      setTimeout(() => {
+        navigate('/service-provider');
+      }, 2000);
 
       // Reset form and validation states
       setFormData({

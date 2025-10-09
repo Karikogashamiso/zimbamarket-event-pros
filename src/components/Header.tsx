@@ -23,32 +23,53 @@ interface HeaderProps {
 const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasBusinessListings, setHasBusinessListings] = useState(false);
+  const [hasOrganizerProfile, setHasOrganizerProfile] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkUserAccess = async () => {
       if (!user) {
         setIsAdmin(false);
+        setHasBusinessListings(false);
+        setHasOrganizerProfile(false);
         return;
       }
 
       try {
-        const { data } = await supabase
+        // Check admin status
+        const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
           .eq('role', 'admin')
           .maybeSingle();
+        setIsAdmin(!!roleData);
 
-        setIsAdmin(!!data);
+        // Check business listings
+        const { data: listingsData } = await supabase
+          .from('business_listings')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        setHasBusinessListings(!!listingsData);
+
+        // Check organizer profile
+        const { data: organizerData } = await supabase
+          .from('organizers')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        setHasOrganizerProfile(!!organizerData);
       } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
+        console.error('Error checking user access:', error);
       }
     };
 
-    checkAdminStatus();
+    checkUserAccess();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -167,6 +188,23 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                       <DropdownMenuSeparator />
                     </>
                   )}
+                  {hasBusinessListings && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/service-provider" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Service Provider Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {hasOrganizerProfile && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/organizer" className="flex items-center cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Organizer Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(hasBusinessListings || hasOrganizerProfile) && <DropdownMenuSeparator />}
                   <DropdownMenuItem asChild>
                     <Link to="/my-applications" className="flex items-center cursor-pointer">
                       <FileText className="mr-2 h-4 w-4" />
