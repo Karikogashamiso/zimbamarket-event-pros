@@ -66,12 +66,24 @@ const ServiceDetail = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set());
+  const [isSaved, setIsSaved] = useState(false);
   
   const { service, loading: serviceLoading, error: serviceError } = useService(id || '');
   const { reviews, loading: reviewsLoading } = useReviews(id || '');
   const { user } = useAuth();
   const { toast } = useToast();
   const { saveService, shareService, reportService, isSaving, isReporting } = useServiceActions();
+
+  // Check if service is saved
+  useEffect(() => {
+    if (service?.id) {
+      const savedServices = localStorage.getItem('savedServices');
+      if (savedServices) {
+        const saved = JSON.parse(savedServices);
+        setIsSaved(saved.includes(service.id));
+      }
+    }
+  }, [service?.id]);
 
   // Handle reviews refresh
   const handleReviewSubmitted = () => {
@@ -317,20 +329,6 @@ const ServiceDetail = () => {
   };
 
   const serviceImages = getServiceImages();
-  
-  // State for saved services
-  const [isSaved, setIsSaved] = useState(false);
-
-  // Check if service is saved
-  useEffect(() => {
-    if (service?.id) {
-      const savedServices = localStorage.getItem('savedServices');
-      if (savedServices) {
-        const saved = JSON.parse(savedServices);
-        setIsSaved(saved.includes(service.id));
-      }
-    }
-  }, [service?.id]);
 
   // Handle save/unsave with visual feedback
   const handleSaveService = async () => {
