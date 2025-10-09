@@ -11,7 +11,10 @@ import {
   Users,
   Image as ImageIcon,
   ExternalLink,
-  Edit
+  Edit,
+  Trash2,
+  Check,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +26,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,6 +47,7 @@ export const BusinessListingsManager = () => {
   const [loading, setLoading] = useState(true);
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -185,6 +199,81 @@ export const BusinessListingsManager = () => {
     }
   };
 
+  const handleQuickStatusChange = async (listingId: string, newStatus: 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('business_listings')
+        .update({ status: newStatus })
+        .eq('id', listingId);
+
+      if (error) throw error;
+
+      // Handle service activation/deactivation
+      if (newStatus === 'rejected') {
+        await supabase
+          .from('services')
+          .update({ active: false })
+          .eq('business_listing_id', listingId);
+      } else if (newStatus === 'approved') {
+        await supabase
+          .from('services')
+          .update({ active: true })
+          .eq('business_listing_id', listingId);
+      }
+
+      toast({
+        title: "Success",
+        description: `Business listing ${newStatus}`,
+      });
+
+      fetchListings();
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteListing = async () => {
+    if (!deleteListingId) return;
+
+    try {
+      // First delete all related services
+      const { error: servicesError } = await supabase
+        .from('services')
+        .delete()
+        .eq('business_listing_id', deleteListingId);
+
+      if (servicesError) throw servicesError;
+
+      // Then delete the business listing
+      const { error } = await supabase
+        .from('business_listings')
+        .delete()
+        .eq('id', deleteListingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Business listing deleted successfully",
+      });
+
+      setDeleteListingId(null);
+      fetchListings();
+    } catch (error: any) {
+      console.error('Error deleting listing:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete listing",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -302,15 +391,60 @@ export const BusinessListingsManager = () => {
                         </p>
                       </div>
 
-                      <div className="ml-4">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditListing(listing)}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
+                      <div className="ml-4 flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          {listing.status === 'pending' && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20"
+                                onClick={() => handleQuickStatusChange(listing.id, 'approved')}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="bg-red-500/10 hover:bg-red-500/20 text-red-600 border-red-500/20"
+                                onClick={() => handleQuickStatusChange(listing.id, 'rejected')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {listing.status === 'rejected' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="bg-green-500/10 hover:bg-green-500/20 text-green-600 border-green-500/20"
+                              onClick={() => handleQuickStatusChange(listing.id, 'approved')}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditListing(listing)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => setDeleteListingId(listing.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -445,6 +579,28 @@ export const BusinessListingsManager = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteListingId} onOpenChange={() => setDeleteListingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Business Listing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this business listing and all associated services. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteListing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
