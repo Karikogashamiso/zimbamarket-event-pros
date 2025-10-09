@@ -670,10 +670,12 @@ const OrganizerDashboard = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="concert">Concert</SelectItem>
-                          <SelectItem value="conference">Conference</SelectItem>
                           <SelectItem value="festival">Festival</SelectItem>
+                          <SelectItem value="conference">Conference</SelectItem>
                           <SelectItem value="sports">Sports</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="theater">Theater</SelectItem>
+                          <SelectItem value="club_night">Club Night</SelectItem>
+                          <SelectItem value="restaurant">Restaurant</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
