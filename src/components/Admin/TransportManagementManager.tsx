@@ -52,14 +52,38 @@ export const TransportManagementManager = () => {
         .order('created_at', { ascending: false });
 
       if (routesError) throw routesError;
-      setRoutes(routesData || []);
+      
+      // Fetch venue names for routes
+      const routesWithVenues = await Promise.all(
+        (routesData || []).map(async (route) => {
+          const { data: originVenue } = await supabase
+            .from('venues')
+            .select('venue_name')
+            .eq('id', route.origin_venue_id)
+            .single();
+          
+          const { data: destVenue } = await supabase
+            .from('venues')
+            .select('venue_name')
+            .eq('id', route.destination_venue_id)
+            .single();
+          
+          return {
+            ...route,
+            origin_venue: originVenue,
+            destination_venue: destVenue
+          };
+        })
+      );
+      
+      setRoutes(routesWithVenues);
 
       // Fetch trips
       const { data: tripsData, error: tripsError } = await supabase
         .from('transport_trips')
         .select(`
           *,
-          transport_routes(route_name, origin, destination)
+          transport_routes(route_name, route_code)
         `)
         .order('departure_datetime', { ascending: false });
 
@@ -198,29 +222,29 @@ export const TransportManagementManager = () => {
                           <Bus className="w-4 h-4 text-muted-foreground" />
                           <span className="font-medium">{route.route_name}</span>
                           <Badge variant="outline">
-                            {route.transport_mode}
+                            {route.transport_type}
                           </Badge>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            <span>From: {route.origin}</span>
+                            <span>From: {route.origin_venue?.venue_name || 'N/A'}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            <span>To: {route.destination}</span>
+                            <span>To: {route.destination_venue?.venue_name || 'N/A'}</span>
                           </div>
-                          {route.base_price && (
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-3 h-3" />
-                              Base Price: ${route.base_price}
-                            </div>
-                          )}
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             Duration: {route.estimated_duration_minutes} min
                           </div>
+                          {route.distance_km && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              Distance: {route.distance_km} km
+                            </div>
+                          )}
                         </div>
 
                         {route.organizers && (
@@ -275,6 +299,9 @@ export const TransportManagementManager = () => {
                           <span className="font-medium">
                             {trip.transport_routes?.route_name || 'Unknown Route'}
                           </span>
+                          {trip.transport_routes?.route_code && (
+                            <Badge variant="outline">{trip.transport_routes.route_code}</Badge>
+                          )}
                           <Badge variant={trip.trip_status === 'scheduled' ? 'default' : 'secondary'}>
                             {trip.trip_status}
                           </Badge>
@@ -305,15 +332,6 @@ export const TransportManagementManager = () => {
                             Available: {trip.available_seats}
                           </div>
                         </div>
-
-                        {trip.transport_routes && (
-                          <div className="text-sm">
-                            <MapPin className="w-3 h-3 inline mr-1" />
-                            <span className="text-muted-foreground">
-                              {trip.transport_routes.origin} → {trip.transport_routes.destination}
-                            </span>
-                          </div>
-                        )}
 
                         <p className="text-xs text-muted-foreground">
                           Created {formatDistanceToNow(new Date(trip.created_at), { addSuffix: true })}
