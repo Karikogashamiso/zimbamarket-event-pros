@@ -170,28 +170,7 @@ const ServiceProviderDashboard = () => {
                   </CardHeader>
                 </Card>
               ) : (
-                <>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Create Service</CardTitle>
-                      <CardDescription>
-                        Add a new service to one of your approved business listings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ServiceCreationForm />
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Your Services</CardTitle>
-                      <CardDescription>
-                        Services are displayed below the form after creation
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </>
+                <ServiceCreationForm />
               )}
             </TabsContent>
 
