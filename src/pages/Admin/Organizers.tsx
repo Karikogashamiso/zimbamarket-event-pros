@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Check, X, Building2, Mail, Phone, MapPin, Globe, Shield, CheckCircle } from "lucide-react";
+import { Users, Check, X, Building2, Mail, Phone, MapPin, Globe, Shield, CheckCircle, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Organizer {
   id: string;
@@ -40,6 +50,7 @@ export default function Organizers() {
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,6 +126,35 @@ export default function Organizers() {
       toast({
         title: "Error",
         description: "Failed to update verification status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteOrganizer = async () => {
+    if (!selectedOrganizer) return;
+
+    try {
+      const { error } = await supabase
+        .from('organizers')
+        .delete()
+        .eq('id', selectedOrganizer.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Organizer deleted successfully",
+      });
+
+      fetchOrganizers();
+      setSelectedOrganizer(null);
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error deleting organizer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete organizer",
         variant: "destructive",
       });
     }
@@ -392,11 +432,44 @@ export default function Organizers() {
                     )}
                   </div>
                 </div>
+
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div>
+                    <p className="font-medium text-destructive">Danger Zone</p>
+                    <p className="text-sm text-muted-foreground">Permanently delete this organizer</p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the organizer
+              <span className="font-semibold"> {selectedOrganizer?.business_name}</span> and
+              all associated events, trips, and data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteOrganizer} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
