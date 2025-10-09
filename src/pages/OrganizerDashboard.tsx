@@ -249,6 +249,19 @@ const OrganizerDashboard = () => {
     const formData = new FormData(e.currentTarget);
 
     try {
+      const startDatetime = formData.get('start_datetime') as string;
+      const endDatetime = formData.get('end_datetime') as string;
+      
+      // Validate end_datetime is after start_datetime if provided
+      if (endDatetime && endDatetime <= startDatetime) {
+        toast({ 
+          title: "Invalid dates", 
+          description: "End date must be after start date",
+          variant: "destructive" 
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('events')
         .insert({
@@ -257,8 +270,8 @@ const OrganizerDashboard = () => {
           title: formData.get('title') as string,
           description: formData.get('event_description') as string,
           event_category: formData.get('event_category') as any,
-          start_datetime: formData.get('start_datetime') as string,
-          end_datetime: formData.get('end_datetime') as string,
+          start_datetime: startDatetime,
+          end_datetime: endDatetime || null, // Convert empty string to null
           is_published: true,
         } as any);
 
