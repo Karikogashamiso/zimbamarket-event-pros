@@ -241,6 +241,13 @@ export const BusinessListingsManager = () => {
     if (!deleteListingId) return;
 
     try {
+      // Get the listing to find the user_id
+      const { data: listingData } = await supabase
+        .from('business_listings')
+        .select('user_id, business_name')
+        .eq('id', deleteListingId)
+        .single();
+
       // First delete all related services
       const { error: servicesError } = await supabase
         .from('services')
@@ -257,9 +264,23 @@ export const BusinessListingsManager = () => {
 
       if (error) throw error;
 
+      // Delete the related business application if exists
+      if (listingData?.user_id) {
+        const { error: appError } = await supabase
+          .from('business_applications')
+          .delete()
+          .eq('user_id', listingData.user_id)
+          .eq('business_name', listingData.business_name);
+
+        if (appError) {
+          console.error('Error deleting application:', appError);
+          // Don't throw - listing is already deleted
+        }
+      }
+
       toast({
         title: "Success",
-        description: "Business listing deleted successfully",
+        description: "Business listing and application deleted successfully",
       });
 
       setDeleteListingId(null);
