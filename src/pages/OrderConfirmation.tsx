@@ -33,6 +33,8 @@ export const OrderConfirmation: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const paymentStatus = urlParams.get('payment');
         
+        let order = null;
+
         if (paymentStatus === 'success' && !verificationAttempted) {
           console.log('Payment successful, verifying with Stripe...');
           setVerificationAttempted(true);
@@ -46,12 +48,12 @@ export const OrderConfirmation: React.FC = () => {
             if (verifyError) {
               console.error('Payment verification error:', verifyError);
               toast.error('Failed to verify payment. Please contact support.');
-            } else if (verifyData?.success) {
+            } else if (verifyData?.success && verifyData?.order) {
               console.log('Payment verified and order updated');
               toast.success('Payment confirmed! Your order has been processed.');
               
-              // Wait for database replication
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // Use the order data from verification response to avoid RLS issues
+              order = verifyData.order;
             }
           } catch (verifyErr) {
             console.error('Verification request failed:', verifyErr);
@@ -61,19 +63,22 @@ export const OrderConfirmation: React.FC = () => {
           window.history.replaceState({}, '', `/order-confirmation/${orderNumber}`);
         }
         
-        // Fetch order details (will now have updated status if payment was verified)
-        // Use maybeSingle() to handle guest checkout where RLS might filter results
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('order_number', orderNumber)
-          .maybeSingle();
+        // Only fetch from DB if we don't already have order data from verification
+        if (!order) {
+          const { data: fetchedOrder, error: orderError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('order_number', orderNumber)
+            .maybeSingle();
 
-        if (orderError || !order) {
-          console.error('Order not found:', orderError);
-          setError('Order not found');
-          setLoading(false);
-          return;
+          if (orderError || !fetchedOrder) {
+            console.error('Order not found:', orderError);
+            setError('Order not found. Please check your email for confirmation.');
+            setLoading(false);
+            return;
+          }
+          
+          order = fetchedOrder;
         }
 
         // Fetch tickets for this order
