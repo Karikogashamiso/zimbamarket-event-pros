@@ -244,11 +244,6 @@ const ListBusiness = () => {
         description: "Check your email for confirmation. Our team will review your application within 24 hours.",
       });
 
-      // Redirect to service provider dashboard after 2 seconds
-      setTimeout(() => {
-        navigate('/service-provider');
-      }, 2000);
-
       // Reset form and validation states
       setFormData({
         businessName: "",
@@ -266,9 +261,19 @@ const ListBusiness = () => {
       setFormErrors({});
       setTouchedFields({});
 
-      // Redirect to applications page after 2 seconds
+      // Redirect based on authentication status
       setTimeout(() => {
-        window.location.href = '/my-applications';
+        if (user) {
+          // Authenticated users go to their applications page
+          navigate('/my-applications');
+        } else {
+          // Non-authenticated users are prompted to sign in
+          toast({
+            title: "Sign in to view your application",
+            description: "Create an account or sign in to track your application status.",
+          });
+          navigate('/auth?tab=login&redirect=/my-applications');
+        }
       }, 2000);
 
     } catch (error) {
