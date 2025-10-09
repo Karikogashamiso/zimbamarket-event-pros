@@ -32,6 +32,7 @@ const OrganizerDashboard = () => {
   const [showOrganizerForm, setShowOrganizerForm] = useState(false);
   const [selectedOriginId, setSelectedOriginId] = useState<string>('');
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>('');
+  const [editingProfile, setEditingProfile] = useState(false);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -278,6 +279,39 @@ const OrganizerDashboard = () => {
     }
   };
 
+  const updateOrganizer = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      const { error } = await supabase
+        .from('organizers')
+        .update({
+          business_name: formData.get('business_name') as string,
+          email: formData.get('email') as string,
+          phone_number: formData.get('phone_number') as string,
+          description: formData.get('description') as string,
+          website: formData.get('website') as string,
+          address: formData.get('address') as string,
+          city: formData.get('city') as string,
+          country: formData.get('country') as string,
+        })
+        .eq('id', selectedOrganizer.id);
+
+      if (error) throw error;
+
+      toast({ title: "Profile updated successfully!" });
+      setEditingProfile(false);
+      await checkOrganizerStatus();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -450,9 +484,9 @@ const OrganizerDashboard = () => {
             'venues'
           } className="space-y-6">
             <TabsList className={`grid w-full ${
-              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-2' :
-              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-3' :
-              'grid-cols-3'
+              selectedOrganizer?.business_type === 'venue_operator' ? 'grid-cols-3' :
+              selectedOrganizer?.business_type === 'event_organizer' ? 'grid-cols-4' :
+              'grid-cols-4'
             }`}>
               {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
                 <TabsTrigger value="venues">Venues</TabsTrigger>
@@ -464,6 +498,7 @@ const OrganizerDashboard = () => {
                 <TabsTrigger value="transport">Transport</TabsTrigger>
               )}
               <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
             </TabsList>
 
             {(selectedOrganizer?.business_type === 'venue_operator' || selectedOrganizer?.business_type === 'event_organizer' || selectedOrganizer?.business_type === 'transport_operator') && (
@@ -889,6 +924,169 @@ const OrganizerDashboard = () => {
               </Card>
               </TabsContent>
             )}
+
+            <TabsContent value="profile" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Organizer Profile</CardTitle>
+                      <CardDescription>View and manage your organizer information</CardDescription>
+                    </div>
+                    {!editingProfile && (
+                      <Button onClick={() => setEditingProfile(true)} variant="outline" size="sm">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {editingProfile ? (
+                    <form onSubmit={updateOrganizer} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="edit_business_name">Business Name *</Label>
+                          <Input 
+                            id="edit_business_name" 
+                            name="business_name" 
+                            defaultValue={selectedOrganizer?.business_name}
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit_email">Email *</Label>
+                          <Input 
+                            id="edit_email" 
+                            name="email" 
+                            type="email" 
+                            defaultValue={selectedOrganizer?.email}
+                            required 
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit_phone_number">Phone Number</Label>
+                          <Input 
+                            id="edit_phone_number" 
+                            name="phone_number" 
+                            type="tel"
+                            defaultValue={selectedOrganizer?.phone_number}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit_website">Website</Label>
+                          <Input 
+                            id="edit_website" 
+                            name="website" 
+                            type="url"
+                            placeholder="https://"
+                            defaultValue={selectedOrganizer?.website}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit_city">City</Label>
+                          <Input 
+                            id="edit_city" 
+                            name="city"
+                            defaultValue={selectedOrganizer?.city}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit_country">Country</Label>
+                          <Input 
+                            id="edit_country" 
+                            name="country"
+                            defaultValue={selectedOrganizer?.country}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label htmlFor="edit_address">Address</Label>
+                          <Input 
+                            id="edit_address" 
+                            name="address"
+                            defaultValue={selectedOrganizer?.address}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label htmlFor="edit_description">Description</Label>
+                          <Textarea 
+                            id="edit_description" 
+                            name="description" 
+                            rows={3}
+                            defaultValue={selectedOrganizer?.description}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit">Save Changes</Button>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setEditingProfile(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Business Name</Label>
+                          <p className="font-medium">{selectedOrganizer?.business_name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Business Type</Label>
+                          <p className="font-medium capitalize">{selectedOrganizer?.business_type?.replace('_', ' ')}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Email</Label>
+                          <p className="font-medium">{selectedOrganizer?.email}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Phone Number</Label>
+                          <p className="font-medium">{selectedOrganizer?.phone_number || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Website</Label>
+                          <p className="font-medium">
+                            {selectedOrganizer?.website ? (
+                              <a href={selectedOrganizer.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                {selectedOrganizer.website}
+                              </a>
+                            ) : 'Not provided'}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Status</Label>
+                          <div>
+                            <Badge variant={selectedOrganizer?.status === 'approved' ? 'default' : 'secondary'}>
+                              {selectedOrganizer?.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">City</Label>
+                          <p className="font-medium">{selectedOrganizer?.city || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground text-xs">Country</Label>
+                          <p className="font-medium">{selectedOrganizer?.country || 'Not provided'}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-muted-foreground text-xs">Address</Label>
+                          <p className="font-medium">{selectedOrganizer?.address || 'Not provided'}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-muted-foreground text-xs">Description</Label>
+                          <p className="font-medium">{selectedOrganizer?.description || 'No description provided'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
           </Tabs>
         </div>
