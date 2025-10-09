@@ -172,13 +172,13 @@ const SearchResults = () => {
         />
           
           <div className="absolute top-4 left-4 flex flex-col gap-2">
-            {result.featured && (
+            {result.is_featured && (
               <Badge className="bg-secondary text-white font-semibold shadow-lg">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Featured
               </Badge>
             )}
-            {result.verified && (
+            {result.is_verified && (
               <Badge className="bg-primary text-white font-semibold shadow-lg">
                 <Shield className="w-3 h-3 mr-1" />
                 Verified

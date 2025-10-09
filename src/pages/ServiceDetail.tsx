@@ -383,13 +383,13 @@ const ServiceDetail = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="outline">{service.category?.name}</Badge>
-                      {service.verified && (
+                      {service.is_verified && (
                         <Badge className="bg-primary">
                           <Shield className="w-3 h-3 mr-1" />
                           Verified
                         </Badge>
                       )}
-                      {service.featured && (
+                      {service.is_featured && (
                         <Badge className="bg-secondary">
                           <Award className="w-3 h-3 mr-1" />
                           Featured

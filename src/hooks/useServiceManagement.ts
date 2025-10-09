@@ -149,10 +149,12 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
 
   const updateService = async (serviceId: string, updates: Partial<CreateServiceData>) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('services')
         .update(updates)
-        .eq('id', serviceId);
+        .eq('id', serviceId)
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -162,6 +164,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
       });
 
       fetchServices();
+      return data;
     } catch (error: any) {
       console.error('Error updating service:', error);
       toast({
@@ -169,6 +172,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
         description: "Failed to update service",
         variant: "destructive",
       });
+      return null;
     }
   };
 

@@ -190,10 +190,10 @@ const Services = () => {
                           <Badge variant={service.active ? "default" : "secondary"}>
                             {service.active ? "Active" : "Inactive"}
                           </Badge>
-                          {service.featured && (
+                          {service.is_featured && (
                             <Badge className="bg-gradient-primary text-white">Featured</Badge>
                           )}
-                          {service.verified && (
+                          {service.is_verified && (
                             <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
                               Verified
                             </Badge>
@@ -296,8 +296,8 @@ const Services = () => {
                   <Badge variant={selectedService.active ? "default" : "secondary"}>
                     {selectedService.active ? "Active" : "Inactive"}
                   </Badge>
-                  {selectedService.featured && <Badge>Featured</Badge>}
-                  {selectedService.verified && <Badge variant="outline">Verified</Badge>}
+                  {selectedService.is_featured && <Badge>Featured</Badge>}
+                  {selectedService.is_verified && <Badge variant="outline">Verified</Badge>}
                 </div>
               </div>
 

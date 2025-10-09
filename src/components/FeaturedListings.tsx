@@ -101,7 +101,7 @@ const FeaturedListings = () => {
                     {/* Enhanced overlay on hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
                     
-                    {service.featured && (
+                    {service.is_featured && (
                       <div className="absolute top-4 left-4">
                         <Badge className="bg-gradient-to-r from-secondary to-accent text-white font-semibold shadow-lg animate-glow">
                           <Sparkles className="w-3 h-3 mr-1" />

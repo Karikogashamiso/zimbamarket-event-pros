@@ -21,8 +21,8 @@ export interface Service {
   capacity_max?: number;
   response_time: string;
   availability_status: string;
-  featured: boolean;
-  verified: boolean;
+  is_featured: boolean;
+  is_verified: boolean;
   image_url?: string;
   images?: string[];
   amenities?: string[];
@@ -108,11 +108,11 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
       }
 
       if (filters?.featured) {
-        query = query.eq('featured', true);
+        query = query.eq('is_featured', true);
       }
 
       if (filters?.verified) {
-        query = query.eq('verified', true);
+        query = query.eq('is_verified', true);
       }
 
       // Price range filtering
@@ -155,7 +155,7 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
         }
       } else {
         // Default: featured first, then by rating
-        query = query.order('featured', { ascending: false })
+        query = query.order('is_featured', { ascending: false })
                      .order('rating', { ascending: false });
       }
 
@@ -186,10 +186,10 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
         countQuery.gte('rating', filters.rating);
       }
       if (filters?.featured) {
-        countQuery.eq('featured', true);
+        countQuery.eq('is_featured', true);
       }
       if (filters?.verified) {
-        countQuery.eq('verified', true);
+        countQuery.eq('is_verified', true);
       }
       if (filters?.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 10000)) {
         countQuery.gte('price_from', filters.priceRange.min);

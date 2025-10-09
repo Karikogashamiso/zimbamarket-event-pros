@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Upload, X, Star, BadgeCheck } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Star, BadgeCheck, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { useServiceManagement } from '@/hooks/useServiceManagement';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,10 +25,11 @@ import {
 
 export const ServiceCreationForm = () => {
   const { user } = useAuth();
-  const { services, createService, deleteService, loading } = useServiceManagement(undefined, true);
+  const { services, createService, updateService, deleteService, loading } = useServiceManagement(undefined, true);
   const [businessListings, setBusinessListings] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
+  const [editingService, setEditingService] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -44,6 +45,7 @@ export const ServiceCreationForm = () => {
   });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
@@ -91,6 +93,10 @@ export const ServiceCreationForm = () => {
     setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const uploadImages = async (): Promise<string[]> => {
     if (imageFiles.length === 0) return [];
 
@@ -128,6 +134,47 @@ export const ServiceCreationForm = () => {
     return uploadedUrls;
   };
 
+  const handleEditService = (service: any) => {
+    setEditingService(service);
+    setSelectedCategoryId(service.category_id);
+    setFormData({
+      title: service.title,
+      description: service.description,
+      location: service.location,
+      address: service.address || '',
+      price_from: service.price_from?.toString() || '',
+      price_unit: service.price_unit || 'service',
+      capacity_min: service.capacity_min?.toString() || '',
+      capacity_max: service.capacity_max?.toString() || '',
+      amenities: service.amenities?.join(', ') || '',
+      is_featured: service.is_featured || false,
+      is_verified: service.is_verified || false
+    });
+    setExistingImages(service.images || []);
+    setImageFiles([]);
+    setImagePreviewUrls([]);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingService(null);
+    setFormData({
+      title: '',
+      description: '',
+      location: '',
+      address: '',
+      price_from: '',
+      price_unit: 'service',
+      capacity_min: '',
+      capacity_max: '',
+      amenities: '',
+      is_featured: false,
+      is_verified: false
+    });
+    setImageFiles([]);
+    setImagePreviewUrls([]);
+    setExistingImages([]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -136,8 +183,11 @@ export const ServiceCreationForm = () => {
       return;
     }
 
-    // Upload images first
-    const imageUrls = await uploadImages();
+    // Upload new images
+    const newImageUrls = await uploadImages();
+    
+    // Combine existing and new images
+    const allImages = [...existingImages, ...newImageUrls];
 
     // Find the selected business listing to get its ID
     const selectedBusinessListing = businessListings.find(
@@ -160,31 +210,40 @@ export const ServiceCreationForm = () => {
       capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
       capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
       amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
-      images: imageUrls.length > 0 ? imageUrls : undefined,
+      images: allImages.length > 0 ? allImages : undefined,
       is_featured: formData.is_featured,
       is_verified: formData.is_verified
     };
 
-    const result = await createService(serviceData);
-    
-    if (result) {
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        location: '',
-        address: '',
-        price_from: '',
-        price_unit: 'service',
-        capacity_min: '',
-        capacity_max: '',
-        amenities: '',
-        is_featured: false,
-        is_verified: false
-      });
-      setImageFiles([]);
-      setImagePreviewUrls([]);
-      toast.success('Service created successfully!');
+    let result;
+    if (editingService) {
+      result = await updateService(editingService.id, serviceData);
+      if (result) {
+        toast.success('Service updated successfully!');
+        handleCancelEdit();
+      }
+    } else {
+      result = await createService(serviceData);
+      if (result) {
+        toast.success('Service created successfully!');
+        // Reset form
+        setFormData({
+          title: '',
+          description: '',
+          location: '',
+          address: '',
+          price_from: '',
+          price_unit: 'service',
+          capacity_min: '',
+          capacity_max: '',
+          amenities: '',
+          is_featured: false,
+          is_verified: false
+        });
+        setImageFiles([]);
+        setImagePreviewUrls([]);
+        setExistingImages([]);
+      }
     }
   };
 
@@ -220,7 +279,9 @@ export const ServiceCreationForm = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add New Service</CardTitle>
+          <CardTitle>
+            {editingService ? 'Edit Service' : 'Add New Service'}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -364,25 +425,53 @@ export const ServiceCreationForm = () => {
                 </label>
               </div>
               
-              {/* Image Previews */}
+              {/* Existing Images */}
+              {existingImages.length > 0 && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Existing Images</Label>
+                  <div className="grid grid-cols-5 gap-2 mt-2">
+                    {existingImages.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Existing ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Image Previews */}
               {imagePreviewUrls.length > 0 && (
-                <div className="grid grid-cols-5 gap-2 mt-3">
-                  {imagePreviewUrls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+                <div>
+                  <Label className="text-xs text-muted-foreground">New Images</Label>
+                  <div className="grid grid-cols-5 gap-2 mt-2">
+                    {imagePreviewUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -420,10 +509,17 @@ export const ServiceCreationForm = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={uploadingImages}>
-              <Plus className="w-4 h-4 mr-2" />
-              {uploadingImages ? 'Uploading Images...' : 'Create Service'}
-            </Button>
+            <div className="flex gap-2">
+              {editingService && (
+                <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
+                  Cancel Edit
+                </Button>
+              )}
+              <Button type="submit" className="flex-1" disabled={uploadingImages}>
+                <Plus className="w-4 h-4 mr-2" />
+                {uploadingImages ? 'Uploading...' : editingService ? 'Update Service' : 'Create Service'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -485,13 +581,22 @@ export const ServiceCreationForm = () => {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setDeleteServiceId(service.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditService(service)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteServiceId(service.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
