@@ -159,6 +159,19 @@ const ServiceProviderDashboard = () => {
             </TabsContent>
 
             <TabsContent value="services" className="space-y-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Your Services</h2>
+                  <p className="text-muted-foreground">Manage all services across your business listings</p>
+                </div>
+                {hasApprovedListings && (
+                  <Button onClick={() => navigate('/service-provider/create-service')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Service
+                  </Button>
+                )}
+              </div>
+              
               {!hasApprovedListings ? (
                 <Card className="border-yellow-500">
                   <CardHeader>
