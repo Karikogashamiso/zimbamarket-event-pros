@@ -75,7 +75,7 @@ export const CustomerBookings = () => {
   };
 
   const getStatusBadge = (status: string, paymentStatus: string) => {
-    if (status === 'approved' && paymentStatus === 'completed') {
+    if (status === 'approved' && paymentStatus === 'paid') {
       return (
         <Badge variant="default" className="bg-green-600">
           <CheckCircle className="w-3 h-3 mr-1" />
@@ -205,7 +205,7 @@ export const CustomerBookings = () => {
               </div>
             )}
 
-            {booking.status === 'approved' && booking.payment_status === 'completed' && (
+            {booking.status === 'approved' && booking.payment_status === 'paid' && (
               <div className="bg-green-50 border border-green-200 rounded p-3 text-center">
                 <p className="text-sm text-green-800 font-medium">
                   ✓ Booking confirmed! The provider will contact you soon.

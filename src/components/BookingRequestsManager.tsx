@@ -340,7 +340,7 @@ export const BookingRequestsManager = () => {
                     {request.status === 'approved' && request.total_amount && (
                       <div className="mt-2 flex items-center gap-2">
                         {getPaymentStatusBadge(request.payment_status)}
-                        {request.payment_status === 'completed' && (
+                        {request.payment_status === 'paid' && (
                           <span className="text-xs text-emerald-600 font-medium">
                             ✓ Slot Blocked
                           </span>

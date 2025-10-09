@@ -42,10 +42,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Update payment status to completed
+    // Update payment status to paid (not 'completed')
     const { error: updateError } = await supabaseClient
       .from('booking_requests')
-      .update({ payment_status: 'completed' })
+      .update({ payment_status: 'paid' })
       .eq('id', bookingRequestId);
 
     if (updateError) throw updateError;
