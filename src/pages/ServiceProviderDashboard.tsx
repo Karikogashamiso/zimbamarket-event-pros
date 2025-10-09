@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet-async";
-import { ServiceCreationForm } from "@/components/ServiceCreationForm";
+import { ServicesList } from "@/components/ServicesList";
 import { BusinessListingsDisplay } from "@/components/BusinessListingsDisplay";
 import { BookingRequestsManager } from "@/components/BookingRequestsManager";
 
@@ -183,7 +183,11 @@ const ServiceProviderDashboard = () => {
                   </CardHeader>
                 </Card>
               ) : (
-                <ServiceCreationForm />
+                <Card>
+                  <CardContent className="pt-6">
+                    <ServicesList />
+                  </CardContent>
+                </Card>
               )}
             </TabsContent>
 

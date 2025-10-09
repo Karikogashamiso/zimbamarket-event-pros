@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Star, BadgeCheck, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +16,12 @@ import { Helmet } from 'react-helmet-async';
 const CreateService = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editServiceId = searchParams.get('edit');
   const [businessListings, setBusinessListings] = useState<any[]>([]);
   const [selectedBusinessListingId, setSelectedBusinessListingId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(!!editServiceId);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -34,10 +37,50 @@ const CreateService = () => {
   });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   useEffect(() => {
     fetchBusinessListings();
-  }, [user]);
+    if (editServiceId) {
+      fetchServiceData();
+    }
+  }, [user, editServiceId]);
+
+  const fetchServiceData = async () => {
+    if (!editServiceId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', editServiceId)
+        .single();
+
+      if (error) throw error;
+
+      setFormData({
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        address: data.address || '',
+        price_from: data.price_from?.toString() || '',
+        price_unit: data.price_unit || 'service',
+        capacity_min: data.capacity_min?.toString() || '',
+        capacity_max: data.capacity_max?.toString() || '',
+        amenities: data.amenities?.join(', ') || '',
+        is_featured: data.is_featured || false,
+        is_verified: data.is_verified || false
+      });
+      setSelectedBusinessListingId(data.business_listing_id);
+      setExistingImages(data.images || []);
+    } catch (error) {
+      console.error('Error fetching service:', error);
+      toast.error('Failed to load service data');
+      navigate('/service-provider');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchBusinessListings = async () => {
     if (!user) return;
@@ -83,6 +126,10 @@ const CreateService = () => {
   const removeImage = (index: number) => {
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const uploadImages = async (): Promise<string[]> => {
@@ -140,37 +187,51 @@ const CreateService = () => {
         ? formData.amenities.split(',').map(a => a.trim()).filter(Boolean)
         : [];
 
-      const { error } = await supabase
-        .from('services')
-        .insert({
-          category_id: selectedBusinessListing?.category_id,
-          business_listing_id: selectedBusinessListingId,
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          address: formData.address || undefined,
-          price_from: formData.price_from ? parseFloat(formData.price_from) : undefined,
-          price_unit: formData.price_unit,
-          capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
-          capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
-          amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
-          images: imageUrls.length > 0 ? imageUrls : undefined,
-          is_featured: formData.is_featured,
-          is_verified: formData.is_verified,
-          active: true,
-          rating: 0,
-          review_count: 0,
-          response_time: '24h',
-          availability_status: 'available'
-        });
+      const allImages = [...existingImages, ...imageUrls];
 
-      if (error) throw error;
+      const serviceData = {
+        category_id: selectedBusinessListing?.category_id,
+        business_listing_id: selectedBusinessListingId,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        address: formData.address || undefined,
+        price_from: formData.price_from ? parseFloat(formData.price_from) : undefined,
+        price_unit: formData.price_unit,
+        capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
+        capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
+        amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
+        images: allImages.length > 0 ? allImages : undefined,
+        is_featured: formData.is_featured,
+        is_verified: formData.is_verified,
+        active: true,
+        rating: 0,
+        review_count: 0,
+        response_time: '24h',
+        availability_status: 'available'
+      };
 
-      toast.success('Service created successfully!');
+      if (editServiceId) {
+        const { error } = await supabase
+          .from('services')
+          .update(serviceData)
+          .eq('id', editServiceId);
+
+        if (error) throw error;
+        toast.success('Service updated successfully!');
+      } else {
+        const { error } = await supabase
+          .from('services')
+          .insert(serviceData);
+
+        if (error) throw error;
+        toast.success('Service created successfully!');
+      }
+
       navigate('/service-provider');
     } catch (error: any) {
-      console.error('Error creating service:', error);
-      toast.error(error.message || 'Failed to create service');
+      console.error('Error saving service:', error);
+      toast.error(error.message || 'Failed to save service');
     } finally {
       setSubmitting(false);
     }
@@ -195,8 +256,12 @@ const CreateService = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Create New Service</h1>
-          <p className="text-xl text-white/90">Add a new service to your business listing</p>
+          <h1 className="text-4xl font-bold mb-2">
+            {editServiceId ? 'Edit Service' : 'Create New Service'}
+          </h1>
+          <p className="text-xl text-white/90">
+            {editServiceId ? 'Update your service details' : 'Add a new service to your business listing'}
+          </p>
         </div>
       </section>
 
@@ -372,30 +437,57 @@ const CreateService = () => {
                         Click to upload images
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {imageFiles.length}/5 images selected
+                        {imageFiles.length + existingImages.length}/5 images
                       </p>
                     </div>
                   </label>
                 </div>
 
+                {existingImages.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Current Images</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {existingImages.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Existing ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(index)}
+                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {imagePreviewUrls.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">New Images</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {imagePreviewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -458,16 +550,16 @@ const CreateService = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={submitting || loading}>
                 {submitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating...
+                    {editServiceId ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Create Service
+                    {editServiceId ? 'Update Service' : 'Create Service'}
                   </>
                 )}
               </Button>
