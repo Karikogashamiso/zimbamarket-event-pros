@@ -119,13 +119,43 @@ const OrganizerDashboard = () => {
       // Fetch orders for this organizer
       const { data: ordersData } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          tickets!inner(
+            id,
+            ticket_type:ticket_types!inner(
+              id,
+              event:events(id, title, is_published, is_cancelled),
+              trip:transport_trips(
+                id,
+                trip_number,
+                route:transport_routes(id, organizer_id)
+              )
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
       
-      // Filter orders that belong to this organizer's events or trips
-      const organizerOrders = ordersData?.filter((order: any) => 
-        order.id // This will be improved with proper filtering via RLS or a function
-      ) || [];
+      // Filter orders that belong to this organizer and have valid events/trips
+      const organizerOrders = ordersData?.filter((order: any) => {
+        return order.tickets?.some((ticket: any) => {
+          const ticketType = ticket.ticket_type;
+          if (!ticketType) return false;
+          
+          // Check if it's an event order with valid, published, non-cancelled event
+          if (ticketType.event) {
+            return ticketType.event.is_published && !ticketType.event.is_cancelled;
+          }
+          
+          // Check if it's a transport order belonging to this organizer
+          if (ticketType.trip?.route) {
+            return ticketType.trip.route.organizer_id === organizerId;
+          }
+          
+          return false;
+        });
+      }) || [];
+      
       setOrders(organizerOrders);
     } catch (error) {
       console.error('Error fetching organizer data:', error);
