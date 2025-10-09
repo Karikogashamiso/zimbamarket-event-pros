@@ -152,7 +152,7 @@ export const TransportManagementManager = () => {
       if (ticketTypes && ticketTypes.length > 0) {
         const ticketTypeIds = ticketTypes.map(tt => tt.id);
 
-        // Delete tickets first
+        // First delete tickets
         const { error: ticketsError } = await supabase
           .from('tickets')
           .delete()
@@ -160,7 +160,15 @@ export const TransportManagementManager = () => {
 
         if (ticketsError) throw ticketsError;
 
-        // Delete ticket types
+        // Then delete event addons linked to this trip
+        const { error: addonsError } = await supabase
+          .from('event_addons')
+          .delete()
+          .eq('trip_id', deleteTripId);
+
+        if (addonsError) throw addonsError;
+
+        // Then delete ticket types
         const { error: ticketTypesError } = await supabase
           .from('ticket_types')
           .delete()
