@@ -170,25 +170,7 @@ const ServiceProviderDashboard = () => {
                   </CardHeader>
                 </Card>
               ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Services</CardTitle>
-                    <CardDescription>
-                      View and manage services for your approved business listings
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-6">
-                        Add services to your business listings to showcase what you offer
-                      </p>
-                      <Button onClick={() => navigate('/service-provider/create-service')}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Service
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ServiceCreationForm />
               )}
             </TabsContent>
 
