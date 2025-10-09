@@ -13,6 +13,7 @@ interface BookingRequest {
   event_date?: string;
   message?: string;
   status: string;
+  payment_status?: string;
   total_amount?: number;
   created_at: string;
   services?: {

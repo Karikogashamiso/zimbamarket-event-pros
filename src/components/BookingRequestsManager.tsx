@@ -61,6 +61,23 @@ export const BookingRequestsManager = () => {
     }
   };
 
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case 'completed':
+        return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+          <DollarSign className="w-3 h-3 mr-1" />
+          Paid
+        </Badge>;
+      case 'pending':
+        return <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+          <Clock className="w-3 h-3 mr-1" />
+          Payment Pending
+        </Badge>;
+      default:
+        return null;
+    }
+  };
+
   const handleViewDetails = (request: any) => {
     setSelectedRequest(request);
     setShowDetailsDialog(true);
@@ -312,6 +329,18 @@ export const BookingRequestsManager = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Payment Status */}
+                    {request.status === 'approved' && request.total_amount && (
+                      <div className="mt-2 flex items-center gap-2">
+                        {getPaymentStatusBadge(request.payment_status)}
+                        {request.payment_status === 'completed' && (
+                          <span className="text-xs text-emerald-600 font-medium">
+                            ✓ Slot Blocked
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {request.message && (
                       <div className="mt-2 text-sm text-muted-foreground line-clamp-1">
