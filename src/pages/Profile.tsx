@@ -1,0 +1,217 @@
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { User, Calendar, LogOut, Save } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { CustomerBookings } from '@/components/CustomerBookings';
+import { Helmet } from 'react-helmet-async';
+
+const Profile = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+  const [loading, setLoading] = useState(false);
+  
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    fetchProfile();
+  }, [user, navigate]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setProfileForm({
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          phoneNumber: data.phone_number || '',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          first_name: profileForm.firstName,
+          last_name: profileForm.lastName,
+          phone_number: profileForm.phoneNumber,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>My Profile | ZimEventPro</title>
+        <meta name="description" content="Manage your profile and bookings" />
+      </Helmet>
+
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">My Account</h1>
+                <p className="text-muted-foreground">Manage your profile and bookings</p>
+              </div>
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </TabsTrigger>
+                <TabsTrigger value="bookings">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  My Bookings
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="profile" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Personal Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={user.email || ''}
+                          disabled
+                          className="bg-muted"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Email cannot be changed
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            value={profileForm.firstName}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, firstName: e.target.value }))}
+                            placeholder="John"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            value={profileForm.lastName}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, lastName: e.target.value }))}
+                            placeholder="Doe"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={profileForm.phoneNumber}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                          placeholder="+263 123 456 789"
+                        />
+                      </div>
+
+                      <Button type="submit" disabled={loading}>
+                        <Save className="w-4 h-4 mr-2" />
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="bookings" className="mt-6">
+                <CustomerBookings />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Profile;

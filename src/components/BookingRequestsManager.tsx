@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   CheckCircle, 
   XCircle, 
@@ -10,7 +12,8 @@ import {
   Phone, 
   Calendar,
   MessageSquare,
-  User
+  User,
+  DollarSign
 } from 'lucide-react';
 import { useBookingRequests } from '@/hooks/useBookingRequests';
 import { formatDistanceToNow } from 'date-fns';
@@ -21,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookingRequestsManagerProps {
   // No props needed - automatically uses authenticated user
@@ -30,6 +35,9 @@ export const BookingRequestsManager = () => {
   const { requests, loading, updateRequestStatus } = useBookingRequests();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showPriceDialog, setShowPriceDialog] = useState(false);
+  const [customPrice, setCustomPrice] = useState('');
+  const { toast } = useToast();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -58,9 +66,76 @@ export const BookingRequestsManager = () => {
     setShowDetailsDialog(true);
   };
 
-  const handleApprove = async (requestId: string) => {
-    await updateRequestStatus(requestId, 'approved');
-    setShowDetailsDialog(false);
+  const handleApproveClick = (request: any) => {
+    setSelectedRequest(request);
+    setCustomPrice(''); // Reset price
+    setShowPriceDialog(true);
+  };
+
+  const handleApproveWithPrice = async (useCustomPrice: boolean) => {
+    if (!selectedRequest) return;
+    
+    try {
+      let priceToSet = null;
+      
+      if (useCustomPrice) {
+        const price = parseFloat(customPrice);
+        if (isNaN(price) || price <= 0) {
+          toast({
+            title: "Invalid Price",
+            description: "Please enter a valid price",
+            variant: "destructive",
+          });
+          return;
+        }
+        priceToSet = price;
+      } else {
+        // Use base price from service
+        // Fetch the service to get base price
+        const { data: service } = await supabase
+          .from('services')
+          .select('price_from')
+          .eq('id', selectedRequest.service_id)
+          .single();
+        
+        if (!service?.price_from) {
+          toast({
+            title: "No Base Price",
+            description: "Service has no base price. Please set a custom price.",
+            variant: "destructive",
+          });
+          return;
+        }
+        priceToSet = service.price_from;
+      }
+
+      // Update booking with approved status and price
+      const { error } = await supabase
+        .from('booking_requests')
+        .update({ 
+          status: 'approved',
+          total_amount: priceToSet
+        })
+        .eq('id', selectedRequest.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Booking approved with price $${priceToSet}`,
+      });
+
+      setShowPriceDialog(false);
+      setShowDetailsDialog(false);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error approving booking:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve booking",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReject = async (requestId: string) => {
@@ -159,7 +234,7 @@ export const BookingRequestsManager = () => {
                         <Button 
                           size="sm" 
                           variant="default"
-                          onClick={() => handleApprove(request.id)}
+                          onClick={() => handleApproveClick(request)}
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Approve
@@ -284,13 +359,93 @@ export const BookingRequestsManager = () => {
                       Reject
                     </Button>
                     <Button 
-                      onClick={() => handleApprove(selectedRequest.id)}
+                      onClick={() => handleApproveClick(selectedRequest)}
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
                       Approve
                     </Button>
                   </>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Price Approval Dialog */}
+      <Dialog open={showPriceDialog} onOpenChange={setShowPriceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Booking & Set Price</DialogTitle>
+            <DialogDescription>
+              Set the price for this booking request
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded p-4">
+                <p className="text-sm font-medium mb-2">Service Details</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedRequest.services?.title}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Event Date: {new Date(selectedRequest.event_date).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Choose Pricing Option</Label>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start h-auto py-3"
+                  onClick={() => handleApproveWithPrice(false)}
+                >
+                  <div className="text-left">
+                    <div className="font-semibold flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Use Base Price
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Use the service's standard pricing
+                    </div>
+                  </div>
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custom-price">Set Custom Price</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="custom-price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Enter amount"
+                        value={customPrice}
+                        onChange={(e) => setCustomPrice(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button 
+                      onClick={() => handleApproveWithPrice(true)}
+                      disabled={!customPrice}
+                    >
+                      Set & Approve
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -163,13 +163,24 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
             {/* Additional Actions */}
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-base font-medium text-foreground hover:bg-muted"
-              >
-                <Heart className="mr-3 h-5 w-5 text-muted-foreground" />
-                Favorites
-              </Button>
+              <Link to="/profile" onClick={onClose}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base font-medium text-foreground hover:bg-muted"
+                >
+                  <User className="mr-3 h-5 w-5 text-muted-foreground" />
+                  My Profile & Bookings
+                </Button>
+              </Link>
+              <Link to="/favorites" onClick={onClose}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 text-base font-medium text-foreground hover:bg-muted"
+                >
+                  <Heart className="mr-3 h-5 w-5 text-muted-foreground" />
+                  Favorites
+                </Button>
+              </Link>
               <Link to="/help" onClick={onClose}>
                 <Button
                   variant="ghost"
