@@ -10,7 +10,8 @@ import {
   Phone,
   MapPin,
   Building2,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +44,7 @@ export const BusinessApplicationsManager = () => {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -225,6 +237,34 @@ export const BusinessApplicationsManager = () => {
       toast({
         title: "Error",
         description: "Failed to reject application",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteApplication = async () => {
+    if (!deleteApplicationId) return;
+
+    try {
+      const { error } = await supabase
+        .from('business_applications')
+        .delete()
+        .eq('id', deleteApplicationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Application record deleted successfully",
+      });
+
+      setDeleteApplicationId(null);
+      fetchApplications();
+    } catch (error: any) {
+      console.error('Error deleting application:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete application",
         variant: "destructive",
       });
     }
@@ -433,6 +473,14 @@ export const BusinessApplicationsManager = () => {
                             Reject
                           </Button>
                         )}
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setDeleteApplicationId(app.id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -481,6 +529,28 @@ export const BusinessApplicationsManager = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteApplicationId} onOpenChange={() => setDeleteApplicationId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Application Record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this application record from the history. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteApplication}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
