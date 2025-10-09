@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface BookingRequest {
   id: string;
@@ -14,24 +15,29 @@ interface BookingRequest {
   status: string;
   total_amount?: number;
   created_at: string;
+  services?: {
+    title: string;
+    business_listing_id: string;
+  };
 }
 
-export const useBookingRequests = (organizerId?: string) => {
+export const useBookingRequests = () => {
   const [requests, setRequests] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchRequests = async () => {
-    if (!organizerId) return;
+    if (!user?.id) return;
     
     try {
       setLoading(true);
       
-      // Get business listings for this organizer
+      // Get business listings for this user
       const { data: businessData, error: businessError } = await supabase
         .from('business_listings')
         .select('id')
-        .eq('user_id', organizerId);
+        .eq('user_id', user.id);
 
       if (businessError) throw businessError;
 
@@ -45,7 +51,7 @@ export const useBookingRequests = (organizerId?: string) => {
       const businessListingIds = businessData.map(b => b.id);
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select('id')
+        .select('id, title')
         .in('business_listing_id', businessListingIds);
 
       if (servicesError) throw servicesError;
@@ -61,7 +67,13 @@ export const useBookingRequests = (organizerId?: string) => {
       // Fetch booking requests for these services
       const { data, error } = await supabase
         .from('booking_requests')
-        .select('*, services(title, category_id, business_listing_id, business_listings(business_name))')
+        .select(`
+          *,
+          services!inner(
+            title,
+            business_listing_id
+          )
+        `)
         .in('service_id', serviceIds)
         .order('created_at', { ascending: false });
 
@@ -81,8 +93,10 @@ export const useBookingRequests = (organizerId?: string) => {
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, [organizerId]);
+    if (user?.id) {
+      fetchRequests();
+    }
+  }, [user?.id]);
 
   const updateRequestStatus = async (requestId: string, status: string) => {
     try {

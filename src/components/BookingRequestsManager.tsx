@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/dialog";
 
 interface BookingRequestsManagerProps {
-  organizerId?: string;
+  // No props needed - automatically uses authenticated user
 }
 
-export const BookingRequestsManager = ({ organizerId }: BookingRequestsManagerProps) => {
-  const { requests, loading, updateRequestStatus } = useBookingRequests(organizerId);
+export const BookingRequestsManager = () => {
+  const { requests, loading, updateRequestStatus } = useBookingRequests();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
