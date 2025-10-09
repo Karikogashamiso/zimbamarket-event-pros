@@ -34,6 +34,7 @@ const OrganizerDashboard = () => {
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>('');
   const [editingProfile, setEditingProfile] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -133,6 +134,9 @@ const OrganizerDashboard = () => {
 
   const createOrganizer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
 
     try {
@@ -166,11 +170,16 @@ const OrganizerDashboard = () => {
         description: error.message || "Failed to create organizer profile.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const createVenue = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
 
     try {
@@ -197,11 +206,16 @@ const OrganizerDashboard = () => {
         description: error.message || "Failed to create venue.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
 
     try {
@@ -229,11 +243,15 @@ const OrganizerDashboard = () => {
         description: error.message || "Failed to create event.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const createRoute = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
     const formData = new FormData(e.currentTarget);
 
     const originId = formData.get('origin_venue_id') as string;
@@ -249,6 +267,7 @@ const OrganizerDashboard = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const { data: routeData, error: routeError } = await supabase
         .from('transport_routes')
@@ -289,11 +308,16 @@ const OrganizerDashboard = () => {
         description: error.message || "Failed to create route.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const updateOrganizer = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     
     try {
@@ -322,6 +346,8 @@ const OrganizerDashboard = () => {
         description: error.message || "Failed to update profile.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -390,7 +416,9 @@ const OrganizerDashboard = () => {
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" rows={3} />
                 </div>
-                <Button type="submit" className="w-full">Create Organizer Profile</Button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Create Organizer Profile"}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -547,9 +575,9 @@ const OrganizerDashboard = () => {
                       <Textarea id="venue_description" name="venue_description" rows={2} />
                     </div>
                     <div className="md:col-span-2">
-                      <Button type="submit" className="w-full">
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Venue
+                        {isSubmitting ? "Adding..." : "Add Venue"}
                       </Button>
                     </div>
                   </form>
@@ -632,9 +660,9 @@ const OrganizerDashboard = () => {
                       <Textarea id="event_description" name="event_description" rows={3} />
                     </div>
                     <div className="md:col-span-2">
-                      <Button type="submit" className="w-full">
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Create Event
+                        {isSubmitting ? "Creating..." : "Create Event"}
                       </Button>
                     </div>
                   </form>
@@ -800,9 +828,9 @@ const OrganizerDashboard = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Button type="submit" className="w-full">
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Create Route & Trip
+                        {isSubmitting ? "Creating..." : "Create Route & Trip"}
                       </Button>
                     </div>
                   </form>
@@ -1079,11 +1107,14 @@ const OrganizerDashboard = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button type="submit">Save Changes</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting ? "Saving..." : "Save Changes"}
+                        </Button>
                         <Button 
                           type="button" 
                           variant="outline" 
                           onClick={() => setEditingProfile(false)}
+                          disabled={isSubmitting}
                         >
                           Cancel
                         </Button>
