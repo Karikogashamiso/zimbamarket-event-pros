@@ -307,7 +307,10 @@ export const BookingRequestsManager = () => {
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        {getStatusBadge(request.status)}
+                        <div className="flex items-center gap-1">
+                          {getStatusBadge(request.status)}
+                          {request.payment_status && getPaymentStatusBadge(request.payment_status)}
+                        </div>
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
                         </span>
@@ -323,9 +326,12 @@ export const BookingRequestsManager = () => {
                       )}
                       
                       {request.total_amount && (
-                        <div className="flex items-center gap-1 text-muted-foreground">
+                        <div className="flex items-center gap-1">
                           <DollarSign className="w-3 h-3" />
-                          ${request.total_amount}
+                          <span className={request.payment_status === 'completed' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
+                            ${request.total_amount}
+                            {request.payment_status === 'completed' && ' ✓'}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -379,7 +385,10 @@ export const BookingRequestsManager = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Status</label>
-                  <div className="mt-1">{getStatusBadge(selectedRequest.status)}</div>
+                  <div className="mt-1 flex items-center gap-2">
+                    {getStatusBadge(selectedRequest.status)}
+                    {selectedRequest.payment_status && getPaymentStatusBadge(selectedRequest.payment_status)}
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Email</label>
@@ -400,10 +409,24 @@ export const BookingRequestsManager = () => {
                 {selectedRequest.total_amount && (
                   <div>
                     <label className="text-sm font-medium">Amount</label>
-                    <p className="text-muted-foreground">${selectedRequest.total_amount}</p>
+                    <p className={selectedRequest.payment_status === 'completed' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
+                      ${selectedRequest.total_amount}
+                      {selectedRequest.payment_status === 'completed' && ' ✓ Paid'}
+                    </p>
                   </div>
                 )}
               </div>
+
+              {selectedRequest.status === 'approved' && selectedRequest.payment_status === 'completed' && (
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      Slot has been automatically blocked for this date
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {selectedRequest.message && (
                 <div>
