@@ -63,8 +63,8 @@ export const TestimonialsSection: React.FC = () => {
   ];
 
   return (
-    <div className="py-16 bg-gradient-to-br from-primary/5 to-accent/5">
-      <div className="container mx-auto px-4">
+    <div className="py-16">
+      <div className="container mx-auto px-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           <Badge variant="secondary" className="mb-4">

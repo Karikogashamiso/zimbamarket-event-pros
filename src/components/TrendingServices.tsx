@@ -53,8 +53,8 @@ const trendingServices = [
 
 const TrendingServices = () => {
   return (
-    <section className="py-24 bg-gradient-to-br from-background via-muted/20 to-background">
-      <div className="container mx-auto px-4">
+    <section className="py-24">
+      <div className="container mx-auto px-4 bg-gradient-to-br from-background via-muted/20 to-background rounded-lg p-8">
         <div className="flex items-center justify-between mb-16">
           <div>
             <div className="flex items-center gap-3 mb-4">
