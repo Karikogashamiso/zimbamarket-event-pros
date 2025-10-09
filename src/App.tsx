@@ -27,6 +27,7 @@ import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminOrganizers from "./pages/Admin/Organizers";
 import AdminVenues from "./pages/Admin/Venues";
 import AdminEvents from "./pages/Admin/Events";
 import AdminServices from "./pages/Admin/Services";
@@ -90,6 +91,7 @@ const App = () => {
                   {/* Admin Routes with nested structure */}
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboard />} />
+                    <Route path="organizers" element={<AdminOrganizers />} />
                     <Route path="venues" element={<AdminVenues />} />
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="services" element={<AdminServices />} />
