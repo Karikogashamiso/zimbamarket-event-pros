@@ -63,7 +63,7 @@ export const BookingRequestsManager = () => {
 
   const getPaymentStatusBadge = (paymentStatus: string) => {
     switch (paymentStatus) {
-      case 'completed':
+      case 'paid':
         return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
           <DollarSign className="w-3 h-3 mr-1" />
           Paid
@@ -328,9 +328,9 @@ export const BookingRequestsManager = () => {
                       {request.total_amount && (
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-3 h-3" />
-                          <span className={request.payment_status === 'completed' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
+                          <span className={request.payment_status === 'paid' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
                             ${request.total_amount}
-                            {request.payment_status === 'completed' && ' ✓'}
+                            {request.payment_status === 'paid' && ' ✓'}
                           </span>
                         </div>
                       )}
@@ -409,15 +409,15 @@ export const BookingRequestsManager = () => {
                 {selectedRequest.total_amount && (
                   <div>
                     <label className="text-sm font-medium">Amount</label>
-                    <p className={selectedRequest.payment_status === 'completed' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
+                    <p className={selectedRequest.payment_status === 'paid' ? 'text-emerald-600 font-semibold' : 'text-muted-foreground'}>
                       ${selectedRequest.total_amount}
-                      {selectedRequest.payment_status === 'completed' && ' ✓ Paid'}
+                      {selectedRequest.payment_status === 'paid' && ' ✓ Paid'}
                     </p>
                   </div>
                 )}
               </div>
 
-              {selectedRequest.status === 'approved' && selectedRequest.payment_status === 'completed' && (
+              {selectedRequest.status === 'approved' && selectedRequest.payment_status === 'paid' && (
                 <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                     <CheckCircle className="w-4 h-4" />
