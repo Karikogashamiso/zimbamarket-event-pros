@@ -239,7 +239,7 @@ const MyBusinessApplications = () => {
                                   <p className="text-sm text-green-700 dark:text-green-300 mb-3">
                                     Your business listing is now active. Start managing your profile and receiving bookings.
                                   </p>
-                                  <Button size="sm" onClick={() => navigate("/organizer")}>
+                                  <Button size="sm" onClick={() => navigate("/service-provider")}>
                                     Go to Dashboard
                                   </Button>
                                 </div>
