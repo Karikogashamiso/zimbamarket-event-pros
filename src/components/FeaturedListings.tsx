@@ -2,30 +2,30 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Eye, Sparkles } from "lucide-react";
+import { Star, MapPin, Eye, Sparkles, Building2, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useServices } from "@/hooks/useServices";
+import { useBusinessListings } from "@/hooks/useBusinessListings";
 import LazyImage from "@/components/LazyImage";
 import { trackServiceView } from "@/components/Analytics/GoogleAnalytics";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { DataError, LoadingErrorBanner } from "@/components/ui/error-states";
 
 const FeaturedListings = () => {
-  const { services, loading, error, retry, isRetrying } = useServices({ featured: true });
+  const { listings, loading, error, retry } = useBusinessListings({ featured: true });
 
   if (error) {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <LoadingErrorBanner
-            message="Unable to load featured services. You can still browse other sections."
+            message="Unable to load featured businesses. You can still browse other sections."
             onRetry={retry}
             onDismiss={() => window.location.reload()}
           />
           <DataError
             type="services"
             onRetry={retry}
-            isRetrying={isRetrying}
+            isRetrying={false}
           />
         </div>
       </section>
@@ -49,10 +49,10 @@ const FeaturedListings = () => {
             <span className="text-sm font-medium text-primary">Featured Services</span>
           </div>
           <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 text-gradient">
-            Premium Event Services
+            Featured Businesses
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Discover our handpicked collection of Zimbabwe's most trusted and highly-rated event professionals
+            Discover Zimbabwe's most trusted event service providers and their offerings
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
@@ -81,8 +81,8 @@ const FeaturedListings = () => {
               </Card>
             ))
           ) : (
-            services.slice(0, 6).map((service, index) => (
-              <SectionErrorBoundary key={service.id} sectionName="service card" showRetry={false}>
+            listings.slice(0, 6).map((listing, index) => (
+              <SectionErrorBoundary key={listing.id} sectionName="business card" showRetry={false}>
                 <Card 
                   className="group overflow-hidden card-interactive border-0 shadow-elegant hover:shadow-2xl"
                   style={{
@@ -91,8 +91,8 @@ const FeaturedListings = () => {
                 >
                   <div className="relative overflow-hidden">
                     <LazyImage 
-                      src={service.image_url || "/placeholder.svg"} 
-                      alt={service.title}
+                      src={listing.images?.[0] || "/placeholder.svg"} 
+                      alt={listing.business_name}
                       aspectRatio={4 / 3}
                       className="group-hover:scale-110 transition-all duration-700"
                       placeholder="/placeholder.svg"
@@ -101,11 +101,11 @@ const FeaturedListings = () => {
                     {/* Enhanced overlay on hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
                     
-                    {service.is_featured && (
+                    {listing.featured && (
                       <div className="absolute top-4 left-4">
                         <Badge className="bg-gradient-to-r from-secondary to-accent text-white font-semibold shadow-lg animate-glow">
                           <Sparkles className="w-3 h-3 mr-1" />
-                          Premium
+                          Featured
                         </Badge>
                       </div>
                     )}
@@ -120,66 +120,63 @@ const FeaturedListings = () => {
                         <Eye className="w-4 h-4" />
                       </Button>
                     </div>
-                    
-                    {/* Quick stats overlay */}
-                    <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                      <div className="flex justify-between items-center text-white text-sm">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">{service.rating}</span>
-                          <span className="opacity-80">({service.review_count})</span>
-                        </div>
-                        <div className="font-bold">
-                          {service.price_from ? `$${service.price_from}+` : 'Custom'}
-                        </div>
-                      </div>
-                    </div>
                   </div>
                   
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-3">
                       <Badge variant="outline" className="text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                        {service.category?.name || 'Service'}
+                        {listing.category?.name || 'Business'}
                       </Badge>
                       <div className="flex items-center gap-1 text-muted-foreground text-xs">
                         <MapPin className="w-3 h-3" />
-                        <span>{service.location}</span>
+                        <span>{listing.location}</span>
                       </div>
                     </div>
                     
-                    <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors leading-tight">
-                      {service.title}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Building2 className="w-5 h-5 text-primary" />
+                      <h3 className="text-xl font-display font-bold group-hover:text-primary transition-colors leading-tight">
+                        {listing.business_name}
+                      </h3>
+                    </div>
                     
                     <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
-                      {service.description}
+                      {listing.description}
                     </p>
                     
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-secondary text-secondary" />
-                          <span className="text-sm font-semibold">{service.rating}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {service.review_count} reviews
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-primary">
-                          {service.price_from ? `From $${service.price_from}` : 'Quote'}
-                        </p>
+                    {/* Services under this business */}
+                    <div className="mb-4 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Services ({listing.services?.length || 0})
+                      </p>
+                      <div className="space-y-1">
+                        {listing.services?.slice(0, 3).map((service: any) => (
+                          <div key={service.id} className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="w-3 h-3 text-primary flex-shrink-0" />
+                            <span className="truncate">{service.title}</span>
+                            {service.is_verified && (
+                              <Badge variant="outline" className="text-xs h-5 bg-blue-50 text-blue-600 border-blue-200">
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                        {listing.services?.length > 3 && (
+                          <p className="text-xs text-muted-foreground">
+                            +{listing.services.length - 3} more services
+                          </p>
+                        )}
                       </div>
                     </div>
                     
-                    <Link to={`/service/${service.id}`}>
+                    <Link to={`/business/${listing.id}`}>
                       <Button 
                         variant="premium"
                         className="w-full hover-scale group/btn" 
                         size="sm"
-                        onClick={() => trackServiceView(service.id, service.title)}
+                        onClick={() => trackServiceView(listing.id, listing.business_name)}
                       >
-                        <span>View Details</span>
+                        <span>View Business</span>
                         <Eye className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                       </Button>
                     </Link>
@@ -198,7 +195,7 @@ const FeaturedListings = () => {
               size="lg" 
               className="text-lg px-12 py-4 h-auto border-2 hover:border-primary hover:shadow-glow-primary hover-scale group"
             >
-              <span>Explore All Services</span>
+              <span>Explore All Businesses</span>
               <Sparkles className="w-5 h-5 ml-2 group-hover:animate-pulse" />
             </Button>
           </Link>
