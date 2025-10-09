@@ -110,12 +110,12 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
     return { status: 'available', text: 'Available', color: 'default' };
   };
 
-  const formatTime = (timeSlot: string) => {
-    if (!timeSlot) return 'Invalid Time';
+  const formatTime = (timeSlot: string | null) => {
+    if (!timeSlot) return 'Time TBD';
     
     try {
       const date = new Date(`2000-01-01T${timeSlot}`);
-      if (isNaN(date.getTime())) return 'Invalid Time';
+      if (isNaN(date.getTime())) return 'Time TBD';
       
       return date.toLocaleTimeString('en-US', {
         hour: 'numeric',
@@ -123,7 +123,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
         hour12: true
       });
     } catch (error) {
-      return 'Invalid Time';
+      return 'Time TBD';
     }
   };
 
@@ -223,20 +223,22 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                           disabled={availabilityInfo.status !== 'available'}
                           onClick={async () => {
                             try {
+                              const timeInfo = slot.time_slot ? `Requested time: ${formatTime(slot.time_slot)}` : 'Time to be confirmed';
+                              
                               // Create booking request
                               const { error } = await supabase
                                 .from('booking_requests')
                                 .insert({
                                   service_id: serviceId,
                                   event_date: selectedDate,
-                                  message: `Requested time: ${formatTime(slot.time_slot)}`,
+                                  message: timeInfo,
                                 });
 
                               if (error) throw error;
 
                               toast({
                                 title: "Booking Request Sent",
-                                description: `Your request for ${formatTime(slot.time_slot)} on ${new Date(selectedDate).toLocaleDateString()} has been submitted.`,
+                                description: `Your request for ${new Date(selectedDate).toLocaleDateString()} ${slot.time_slot ? `at ${formatTime(slot.time_slot)}` : ''} has been submitted.`,
                               });
                               setIsOpen(false);
                             } catch (error: any) {
