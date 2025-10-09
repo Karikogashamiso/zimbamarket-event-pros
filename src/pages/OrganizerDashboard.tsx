@@ -1028,31 +1028,56 @@ const OrganizerDashboard = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {orders.map((order) => (
-                        <div key={order.id} className="border rounded-lg p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="font-semibold">Order #{order.order_number}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {order.customer_first_name} {order.customer_last_name}
-                              </p>
+                      {orders.map((order) => {
+                        const ticketCount = order.tickets?.length || 0;
+                        return (
+                          <div key={order.id} className="border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-semibold">Order #{order.order_number}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.customer_first_name} {order.customer_last_name}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {order.customer_email}
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <Badge variant={
+                                  order.booking_status === 'confirmed' || order.payment_status === 'completed' 
+                                    ? 'default' 
+                                    : order.booking_status === 'cancelled' 
+                                    ? 'destructive'
+                                    : 'secondary'
+                                }>
+                                  {order.payment_status === 'completed' ? 'Paid' : order.booking_status}
+                                </Badge>
+                                <Badge variant="outline">
+                                  {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}
+                                </Badge>
+                              </div>
                             </div>
-                            <Badge variant={order.booking_status === 'confirmed' ? 'default' : 'secondary'}>
-                              {order.booking_status}
-                            </Badge>
+                            <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                              <div>
+                                <span className="text-muted-foreground">Amount:</span>{' '}
+                                <span className="font-medium">${order.total_amount}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Date:</span>{' '}
+                                <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => navigate(`/order-confirmation/${order.order_number}`)}
+                            >
+                              View Details
+                            </Button>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Amount:</span>{' '}
-                              <span className="font-medium">${order.total_amount}</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Date:</span>{' '}
-                              <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>

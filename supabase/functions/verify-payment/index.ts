@@ -55,12 +55,14 @@ serve(async (req) => {
     }
 
     // Search for Stripe sessions with this order metadata
+    // Search more sessions to ensure we find the right one
     const sessions = await stripe.checkout.sessions.list({
-      limit: 10,
+      limit: 100,
     });
 
     const matchingSession = sessions.data.find(
-      session => session.metadata?.orderNumber === orderNumber
+      session => session.metadata?.orderNumber === orderNumber || 
+                 session.client_reference_id === orderNumber
     );
 
     if (!matchingSession) {
