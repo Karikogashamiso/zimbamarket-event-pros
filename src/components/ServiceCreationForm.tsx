@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Trash2, Upload, X, Star, BadgeCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { useServiceManagement } from '@/hooks/useServiceManagement';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,8 +38,13 @@ export const ServiceCreationForm = () => {
     price_unit: 'service',
     capacity_min: '',
     capacity_max: '',
-    amenities: ''
+    amenities: '',
+    is_featured: false,
+    is_verified: false
   });
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     fetchBusinessListings();
@@ -60,13 +67,77 @@ export const ServiceCreationForm = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + imageFiles.length > 5) {
+      toast.error('Maximum 5 images allowed');
+      return;
+    }
+
+    setImageFiles(prev => [...prev, ...files]);
+    
+    // Create preview URLs
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviewUrls(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (imageFiles.length === 0) return [];
+
+    setUploadingImages(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of imageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `services/${fileName}`;
+
+        const { error: uploadError, data } = await supabase.storage
+          .from('business-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('business-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error('Failed to upload some images');
+    } finally {
+      setUploadingImages(false);
+    }
+
+    return uploadedUrls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedCategoryId) {
-      alert('Please select a business listing');
+      toast.error('Please select a business listing');
       return;
     }
+
+    // Upload images first
+    const imageUrls = await uploadImages();
 
     // Find the selected business listing to get its ID
     const selectedBusinessListing = businessListings.find(
@@ -88,7 +159,10 @@ export const ServiceCreationForm = () => {
       price_unit: formData.price_unit,
       capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
       capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
-      amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined
+      amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
+      images: imageUrls.length > 0 ? imageUrls : undefined,
+      is_featured: formData.is_featured,
+      is_verified: formData.is_verified
     };
 
     const result = await createService(serviceData);
@@ -104,13 +178,22 @@ export const ServiceCreationForm = () => {
         price_unit: 'service',
         capacity_min: '',
         capacity_max: '',
-        amenities: ''
+        amenities: '',
+        is_featured: false,
+        is_verified: false
       });
+      setImageFiles([]);
+      setImagePreviewUrls([]);
+      toast.success('Service created successfully!');
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'is_featured' || field === 'is_verified') {
+      setFormData(prev => ({ ...prev, [field]: value === 'true' }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   if (businessListings.length === 0) {
@@ -255,9 +338,91 @@ export const ServiceCreationForm = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full">
+            {/* Image Upload */}
+            <div>
+              <Label>Service Images (Max 5)</Label>
+              <div className="mt-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="service-images"
+                  disabled={imageFiles.length >= 5}
+                />
+                <label
+                  htmlFor="service-images"
+                  className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
+                >
+                  <div className="text-center">
+                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Click to upload images ({imageFiles.length}/5)
+                    </p>
+                  </div>
+                </label>
+              </div>
+              
+              {/* Image Previews */}
+              {imagePreviewUrls.length > 0 && (
+                <div className="grid grid-cols-5 gap-2 mt-3">
+                  {imagePreviewUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Featured and Verified Toggles */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <div>
+                    <Label htmlFor="is_featured" className="cursor-pointer">Mark as Featured</Label>
+                    <p className="text-xs text-muted-foreground">Featured services appear at the top</p>
+                  </div>
+                </div>
+                <Switch
+                  id="is_featured"
+                  checked={formData.is_featured}
+                  onCheckedChange={(checked) => handleInputChange('is_featured', checked.toString())}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BadgeCheck className="h-4 w-4 text-blue-500" />
+                  <div>
+                    <Label htmlFor="is_verified" className="cursor-pointer">Mark as Verified</Label>
+                    <p className="text-xs text-muted-foreground">Verified badge builds trust</p>
+                  </div>
+                </div>
+                <Switch
+                  id="is_verified"
+                  checked={formData.is_verified}
+                  onCheckedChange={(checked) => handleInputChange('is_verified', checked.toString())}
+                />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={uploadingImages}>
               <Plus className="w-4 h-4 mr-2" />
-              Create Service
+              {uploadingImages ? 'Uploading Images...' : 'Create Service'}
             </Button>
           </form>
         </CardContent>
@@ -276,11 +441,36 @@ export const ServiceCreationForm = () => {
           ) : (
             <div className="space-y-3">
               {services.map((service) => (
-                <div key={service.id} className="flex items-start justify-between border rounded-lg p-4">
+                <div key={service.id} className="flex items-start gap-4 border rounded-lg p-4">
+                  {/* Service Image */}
+                  {service.images && service.images.length > 0 && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={service.images[0]}
+                        alt={service.title}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex-1">
-                    <h4 className="font-medium">{service.title}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{service.description}</p>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex items-start gap-2">
+                      <h4 className="font-medium">{service.title}</h4>
+                      {service.is_featured && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Star className="h-3 w-3" />
+                          Featured
+                        </Badge>
+                      )}
+                      {service.is_verified && (
+                        <Badge variant="default" className="flex items-center gap-1">
+                          <BadgeCheck className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{service.description}</p>
+                    <div className="flex gap-2 mt-2 flex-wrap">
                       <Badge variant="outline">{service.location}</Badge>
                       {service.price_from && (
                         <Badge variant="secondary">${service.price_from}</Badge>
@@ -289,6 +479,9 @@ export const ServiceCreationForm = () => {
                         <Badge className="bg-green-500">Active</Badge>
                       ) : (
                         <Badge variant="outline">Inactive</Badge>
+                      )}
+                      {service.images && service.images.length > 0 && (
+                        <Badge variant="outline">{service.images.length} image{service.images.length > 1 ? 's' : ''}</Badge>
                       )}
                     </div>
                   </div>

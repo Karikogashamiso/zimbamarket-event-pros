@@ -1734,6 +1734,8 @@ export type Database = {
           id: string
           image_url: string | null
           images: string[] | null
+          is_featured: boolean | null
+          is_verified: boolean | null
           location: string
           phone_number: string | null
           price_from: number | null
@@ -1763,6 +1765,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[] | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
           location: string
           phone_number?: string | null
           price_from?: number | null
@@ -1792,6 +1796,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[] | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
           location?: string
           phone_number?: string | null
           price_from?: number | null

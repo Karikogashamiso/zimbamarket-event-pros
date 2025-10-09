@@ -16,6 +16,8 @@ interface ServiceData {
   amenities?: string[];
   images?: string[];
   active: boolean;
+  is_featured?: boolean;
+  is_verified?: boolean;
   created_at: string;
 }
 
@@ -31,6 +33,8 @@ interface CreateServiceData {
   capacity_max?: number;
   amenities?: string[];
   images?: string[];
+  is_featured?: boolean;
+  is_verified?: boolean;
 }
 
 export const useServiceManagement = (categoryId?: string, userOnly: boolean = false) => {
@@ -118,9 +122,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
           rating: 0,
           review_count: 0,
           response_time: '24h',
-          availability_status: 'available',
-          featured: false,
-          verified: false
+          availability_status: 'available'
         })
         .select()
         .single();
