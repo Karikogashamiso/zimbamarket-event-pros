@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessApplicationsManager } from "@/components/Admin/BusinessApplicationsManager";
 import { BusinessListingsManager } from "@/components/Admin/BusinessListingsManager";
+import { TransportManagementManager } from "@/components/Admin/TransportManagementManager";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -104,6 +105,7 @@ const Dashboard = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="applications">Business Applications</TabsTrigger>
           <TabsTrigger value="listings">All Listings</TabsTrigger>
+          <TabsTrigger value="transport">Transport</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -180,6 +182,10 @@ const Dashboard = () => {
 
         <TabsContent value="listings">
           <BusinessListingsManager />
+        </TabsContent>
+
+        <TabsContent value="transport">
+          <TransportManagementManager />
         </TabsContent>
       </Tabs>
     </div>
