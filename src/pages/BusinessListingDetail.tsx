@@ -25,7 +25,7 @@ const BusinessListingDetail = () => {
       fetchBusinessDetails();
       fetchServices();
     }
-  }, [id]);
+  }, [id, user]);
 
   const fetchBusinessDetails = async () => {
     try {
@@ -41,7 +41,7 @@ const BusinessListingDetail = () => {
       if (error) throw error;
       
       // Check if user owns this business
-      if (data.user_id !== user?.id) {
+      if (user && data.user_id !== user.id) {
         toast.error('You do not have access to this business');
         navigate('/service-provider');
         return;
@@ -51,6 +51,7 @@ const BusinessListingDetail = () => {
     } catch (error) {
       console.error('Error fetching business:', error);
       toast.error('Failed to load business details');
+      navigate('/service-provider');
     } finally {
       setLoading(false);
     }
