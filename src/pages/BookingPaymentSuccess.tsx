@@ -21,13 +21,12 @@ const BookingPaymentSuccess = () => {
       }
 
       try {
-        // Update payment status to completed
-        const { error } = await supabase
-          .from('booking_requests')
-          .update({ payment_status: 'completed' })
-          .eq('id', booking_id);
+        // Update payment status via edge function (has proper permissions)
+        const { error: confirmError } = await supabase.functions.invoke('confirm-booking-payment', {
+          body: { bookingRequestId: booking_id },
+        });
 
-        if (error) throw error;
+        if (confirmError) throw confirmError;
 
         // Fetch booking details
         const { data, error: fetchError } = await supabase
