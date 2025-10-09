@@ -183,14 +183,26 @@ export const CustomerBookings = () => {
               </div>
             )}
 
-            {booking.status === 'approved' && booking.payment_status === 'pending' && booking.total_amount && (
-              <Button 
-                className="w-full"
-                onClick={() => handlePayment(booking.id)}
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Pay Now ${booking.total_amount}
-              </Button>
+            {booking.status === 'approved' && booking.payment_status === 'pending' && (
+              <div className="space-y-2">
+                {!booking.total_amount && (
+                  <div className="bg-blue-50 border border-blue-200 rounded p-3 text-center">
+                    <p className="text-sm text-blue-800">
+                      ⏳ Waiting for provider to set the payment amount
+                    </p>
+                  </div>
+                )}
+                <Button 
+                  className="w-full"
+                  onClick={() => handlePayment(booking.id)}
+                  disabled={!booking.total_amount}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {booking.total_amount 
+                    ? `Pay Now $${booking.total_amount}` 
+                    : 'Pay Now - Amount Pending'}
+                </Button>
+              </div>
             )}
 
             {booking.status === 'approved' && booking.payment_status === 'completed' && (
