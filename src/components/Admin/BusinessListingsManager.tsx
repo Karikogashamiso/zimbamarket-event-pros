@@ -241,22 +241,58 @@ export const BusinessListingsManager = () => {
     if (!deleteListingId) return;
 
     try {
-      // Get the listing to find the user_id
+      // Get the listing to find the user_id and services
       const { data: listingData } = await supabase
         .from('business_listings')
         .select('user_id, business_name')
         .eq('id', deleteListingId)
         .single();
 
-      // First delete all related services
-      const { error: servicesError } = await supabase
+      // Get all services for this listing
+      const { data: services } = await supabase
         .from('services')
-        .delete()
+        .select('id')
         .eq('business_listing_id', deleteListingId);
 
-      if (servicesError) throw servicesError;
+      if (services && services.length > 0) {
+        const serviceIds = services.map(s => s.id);
 
-      // Then delete the business listing
+        // Get all ticket_types for these services
+        const { data: ticketTypes } = await supabase
+          .from('ticket_types')
+          .select('id')
+          .in('event_id', serviceIds);
+
+        if (ticketTypes && ticketTypes.length > 0) {
+          const ticketTypeIds = ticketTypes.map(tt => tt.id);
+
+          // First delete all tickets
+          const { error: ticketsError } = await supabase
+            .from('tickets')
+            .delete()
+            .in('ticket_type_id', ticketTypeIds);
+
+          if (ticketsError) throw ticketsError;
+
+          // Then delete ticket_types
+          const { error: ticketTypesError } = await supabase
+            .from('ticket_types')
+            .delete()
+            .in('id', ticketTypeIds);
+
+          if (ticketTypesError) throw ticketTypesError;
+        }
+
+        // Delete all related services
+        const { error: servicesError } = await supabase
+          .from('services')
+          .delete()
+          .eq('business_listing_id', deleteListingId);
+
+        if (servicesError) throw servicesError;
+      }
+
+      // Delete the business listing
       const { error } = await supabase
         .from('business_listings')
         .delete()
@@ -280,7 +316,7 @@ export const BusinessListingsManager = () => {
 
       toast({
         title: "Success",
-        description: "Business listing and application deleted successfully",
+        description: "Business listing and all related data deleted successfully",
       });
 
       setDeleteListingId(null);
