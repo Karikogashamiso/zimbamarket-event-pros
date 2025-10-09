@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar as CalendarIcon, Clock, Users, DollarSign, CheckCircle, X } from 'lucide-react';
 import { format, isSameDay, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AvailabilitySlot {
   id: string;
@@ -36,6 +38,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   const [guestCount, setGuestCount] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { toast } = useToast();
 
   // Mock availability data - in real app, this would come from your database
   const generateMockAvailability = (date: Date): AvailabilitySlot[] => {
@@ -110,10 +113,33 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     onBookingSelect?.(slot);
   };
 
-  const handleBooking = () => {
-    if (selectedSlot) {
-      // Handle booking logic here
-      console.log('Booking slot:', selectedSlot, 'for', guestCount, 'guests');
+  const handleBooking = async () => {
+    if (!selectedSlot) return;
+    
+    try {
+      const { error } = await supabase
+        .from('booking_requests')
+        .insert({
+          service_id: serviceId,
+          event_date: format(selectedSlot.date, 'yyyy-MM-dd'),
+          message: `Requested time: ${selectedSlot.startTime} - ${selectedSlot.endTime} for ${guestCount} guests`,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Request Sent",
+        description: `Your request for ${selectedSlot.startTime} - ${selectedSlot.endTime} on ${format(selectedSlot.date, 'MMM d, yyyy')} has been submitted.`,
+      });
+      
+      setSelectedSlot(null);
+      setSelectedDate(undefined);
+    } catch (error: any) {
+      toast({
+        title: "Request Failed",
+        description: error.message || "Failed to submit booking request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
