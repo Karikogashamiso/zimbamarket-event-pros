@@ -33,12 +33,12 @@ serve(async (req) => {
       .from('booking_requests')
       .select(`
         *,
-        services!inner(
+        services(
           title,
           description,
           price_from,
           business_listing_id,
-          business_listings!inner(
+          business_listings(
             business_name
           )
         )
@@ -47,6 +47,7 @@ serve(async (req) => {
       .single();
 
     if (bookingError || !booking) {
+      console.error('Booking query error:', bookingError);
       throw new Error('Booking request not found');
     }
 

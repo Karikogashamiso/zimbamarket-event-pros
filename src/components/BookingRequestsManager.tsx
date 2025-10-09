@@ -267,21 +267,58 @@ export const BookingRequestsManager = () => {
             ) : (
               <div className="space-y-3">
                 {processedRequests.slice(0, 10).map((request) => (
-                  <div key={request.id} className="flex items-center justify-between border-b pb-2">
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {request.user_id && request.profiles
-                          ? `${request.profiles.first_name} ${request.profiles.last_name}`
-                          : request.guest_name || 'Guest User'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{request.guest_email}</p>
+                  <div 
+                    key={request.id} 
+                    className="border rounded-lg p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleViewDetails(request)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <p className="font-medium">
+                            {request.user_id && request.profiles
+                              ? `${request.profiles.first_name} ${request.profiles.last_name}`
+                              : request.guest_name || 'Guest User'}
+                          </p>
+                        </div>
+                        {request.guest_email && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="w-3 h-3" />
+                            {request.guest_email}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {getStatusBadge(request.status)}
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
-                      </span>
-                      {getStatusBadge(request.status)}
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {request.event_date && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(request.event_date).toLocaleDateString()}
+                        </div>
+                      )}
+                      
+                      {request.total_amount && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <DollarSign className="w-3 h-3" />
+                          ${request.total_amount}
+                        </div>
+                      )}
                     </div>
+
+                    {request.message && (
+                      <div className="mt-2 text-sm text-muted-foreground line-clamp-1">
+                        <MessageSquare className="w-3 h-3 inline mr-1" />
+                        {request.message}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
