@@ -17,6 +17,7 @@ import { AddTicketTypeForm } from "@/components/AddTicketTypeForm";
 import { AddEventAddonForm } from "@/components/AddEventAddonForm";
 import { AddTripTicketTypeForm } from "@/components/AddTripTicketTypeForm";
 import { AddTripAddonForm } from "@/components/AddTripAddonForm";
+import { OrganizerProfileSwitcher } from "@/components/OrganizerProfileSwitcher";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -359,48 +360,37 @@ const OrganizerDashboard = () => {
 
       <div className="h-20"></div>
 
-      <section className="bg-gradient-primary text-white py-12">
+      <section className="bg-gradient-primary text-white py-8">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-2">{selectedOrganizer?.business_name}</h1>
-              <p className="text-xl text-white/90 capitalize">
-                {selectedOrganizer?.business_type?.replace('_', ' ')} • {selectedOrganizer?.city}, {selectedOrganizer?.country}
-              </p>
-              <p className="text-sm text-white/80 mt-1">
-                Status: {selectedOrganizer?.status === 'approved' ? '✓ Verified' : 'Pending Verification'}
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl sm:text-4xl font-bold">{selectedOrganizer?.business_name}</h1>
+                {selectedOrganizer?.status === 'approved' && (
+                  <Badge variant="secondary" className="bg-green-500 text-white border-none">
+                    ✓ Verified
+                  </Badge>
+                )}
+              </div>
+              <p className="text-lg text-white/90 capitalize">
+                {selectedOrganizer?.business_type?.replace('_', ' ')}
+                {selectedOrganizer?.city && selectedOrganizer?.country && (
+                  <> • {selectedOrganizer.city}, {selectedOrganizer.country}</>
+                )}
               </p>
             </div>
-            <div className="flex gap-3">
-              {organizers.length > 1 && (
-                <Select
-                  value={selectedOrganizer?.id}
-                  onValueChange={(value) => {
-                    const org = organizers.find(o => o.id === value);
-                    setSelectedOrganizer(org);
-                    fetchOrganizerData(org.id);
-                  }}
-                >
-                  <SelectTrigger className="w-64 bg-white text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizers.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.business_name} ({org.business_type.replace('_', ' ')})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Button 
-                variant="secondary" 
-                onClick={() => setShowOrganizerForm(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Profile
-              </Button>
-            </div>
+            <OrganizerProfileSwitcher
+              organizers={organizers}
+              selectedOrganizer={selectedOrganizer}
+              onSelectOrganizer={(id) => {
+                const org = organizers.find(o => o.id === id);
+                if (org) {
+                  setSelectedOrganizer(org);
+                  fetchOrganizerData(org.id);
+                }
+              }}
+              onAddProfile={() => setShowOrganizerForm(true)}
+            />
           </div>
         </div>
       </section>
