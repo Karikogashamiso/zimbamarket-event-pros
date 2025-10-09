@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,8 @@ import {
   Image as ImageIcon,
   ExternalLink,
   Edit,
-  Plus
+  Plus,
+  Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +39,7 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchListings();
@@ -239,7 +242,15 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
                       )}
                     </div>
 
-                    <div className="ml-4">
+                    <div className="ml-4 flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate(`/service-provider/business/${listing.id}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
+                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline"

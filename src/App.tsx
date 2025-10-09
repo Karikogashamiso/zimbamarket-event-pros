@@ -25,6 +25,8 @@ import { OrderConfirmation } from "./pages/OrderConfirmation";
 import Events from "./pages/Events";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
+import CreateService from "./pages/CreateService";
+import BusinessListingDetail from "./pages/BusinessListingDetail";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminOrganizers from "./pages/Admin/Organizers";
@@ -87,6 +89,8 @@ const App = () => {
                   <Route path="/organizer/dashboard" element={<Layout><OrganizerDashboard /></Layout>} />
                   <Route path="/service-provider" element={<Layout><ServiceProviderDashboard /></Layout>} />
                   <Route path="/service-provider/dashboard" element={<Layout><ServiceProviderDashboard /></Layout>} />
+                  <Route path="/service-provider/create-service" element={<Layout><CreateService /></Layout>} />
+                  <Route path="/service-provider/business/:id" element={<Layout><BusinessListingDetail /></Layout>} />
                   
                   {/* Admin Routes with nested structure */}
                   <Route path="/admin" element={<AdminLayout />}>
