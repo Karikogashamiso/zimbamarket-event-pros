@@ -20,9 +20,9 @@ interface BookingRequest {
     business_listing_id: string;
   };
   profiles?: {
-    first_name: string;
-    last_name: string;
-  };
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
 
 export const useBookingRequests = () => {
@@ -68,7 +68,7 @@ export const useBookingRequests = () => {
         return;
       }
 
-      // Fetch booking requests for these services with user profiles
+      // Fetch booking requests for these services
       const { data, error } = await supabase
         .from('booking_requests')
         .select(`
@@ -76,10 +76,6 @@ export const useBookingRequests = () => {
           services!inner(
             title,
             business_listing_id
-          ),
-          profiles(
-            first_name,
-            last_name
           )
         `)
         .in('service_id', serviceIds)
@@ -87,7 +83,23 @@ export const useBookingRequests = () => {
 
       if (error) throw error;
 
-      setRequests(data || []);
+      // Fetch user profiles for requests with user_id
+      const requestsWithProfiles = await Promise.all(
+        (data || []).map(async (request) => {
+          if (request.user_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('user_id', request.user_id)
+              .maybeSingle();
+            
+            return { ...request, profiles: profile };
+          }
+          return { ...request, profiles: null };
+        })
+      );
+
+      setRequests(requestsWithProfiles);
     } catch (error: any) {
       console.error('Error fetching booking requests:', error);
       toast({
