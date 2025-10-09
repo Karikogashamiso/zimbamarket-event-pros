@@ -28,7 +28,6 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [guestCount, setGuestCount] = useState(1);
   
   const { toast } = useToast();
 
@@ -103,9 +102,6 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
     }
     
     const remainingCapacity = slot.max_capacity - slot.current_bookings;
-    if (remainingCapacity < guestCount) {
-      return { status: 'insufficient', text: 'Insufficient Capacity', color: 'secondary' };
-    }
     
     if (remainingCapacity <= 5) {
       return { status: 'limited', text: 'Limited Availability', color: 'secondary' };
@@ -115,11 +111,20 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
   };
 
   const formatTime = (timeSlot: string) => {
-    return new Date(`2000-01-01T${timeSlot}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    if (!timeSlot) return 'Invalid Time';
+    
+    try {
+      const date = new Date(`2000-01-01T${timeSlot}`);
+      if (isNaN(date.getTime())) return 'Invalid Time';
+      
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      return 'Invalid Time';
+    }
   };
 
   return (
@@ -136,38 +141,34 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Date and Guest Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Select Date</label>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Number of Guests</label>
-              <Input
-                type="number"
-                min="1"
-                max="100"
-                value={guestCount}
-                onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)}
-              />
-            </div>
+          {/* Date Selection */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Select Date</label>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
           </div>
 
           {/* Availability Results */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              Available Times for {new Date(selectedDate).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              Available Times for {(() => {
+                try {
+                  const date = new Date(selectedDate + 'T00:00:00');
+                  if (isNaN(date.getTime())) return selectedDate;
+                  return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
+                } catch {
+                  return selectedDate;
+                }
+              })()}
             </h3>
             
             {isLoading ? (
@@ -228,7 +229,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                                 .insert({
                                   service_id: serviceId,
                                   event_date: selectedDate,
-                                  message: `Requested time: ${formatTime(slot.time_slot)} for ${guestCount} guests`,
+                                  message: `Requested time: ${formatTime(slot.time_slot)}`,
                                 });
 
                               if (error) throw error;
