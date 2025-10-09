@@ -184,9 +184,9 @@ const SearchResults = () => {
   ];
 
   const ResultCard = ({ result, isLoading: cardLoading }: { result: any, isLoading: boolean }) => {
-    const isSaved = savedServiceIds.includes(result.id);
+    const isSaved = result ? savedServiceIds.includes(result.id) : false;
     
-    if (cardLoading) {
+    if (cardLoading || !result) {
       return (
         <Card className="overflow-hidden">
           <div className="w-full h-48 bg-muted animate-pulse"></div>
