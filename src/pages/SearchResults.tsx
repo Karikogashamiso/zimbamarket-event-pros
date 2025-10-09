@@ -26,10 +26,48 @@ import AdvancedSearch, { SearchFilters } from "@/components/Search/AdvancedSearc
 import MetaTags from "@/components/SEO/MetaTags";
 import StructuredData from "@/components/SEO/StructuredData";
 import { trackServiceView, trackSearch } from "@/components/Analytics/GoogleAnalytics";
+import { toast } from "sonner";
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState('grid');
+  const [savedServiceIds, setSavedServiceIds] = useState<string[]>([]);
+
+  // Load saved services from localStorage
+  useEffect(() => {
+    const savedIds = localStorage.getItem('savedServices');
+    if (savedIds) {
+      try {
+        setSavedServiceIds(JSON.parse(savedIds));
+      } catch (error) {
+        console.error('Error parsing saved services:', error);
+      }
+    }
+  }, []);
+
+  // Toggle save/unsave service
+  const toggleSaveService = (serviceId: string, serviceName: string) => {
+    const savedIds = localStorage.getItem('savedServices');
+    let ids = savedIds ? JSON.parse(savedIds) : [];
+    
+    if (ids.includes(serviceId)) {
+      // Remove from saved
+      ids = ids.filter((id: string) => id !== serviceId);
+      localStorage.setItem('savedServices', JSON.stringify(ids));
+      setSavedServiceIds(ids);
+      toast.success('Removed from favorites', {
+        description: `${serviceName} has been removed from your favorites.`
+      });
+    } else {
+      // Add to saved
+      ids.push(serviceId);
+      localStorage.setItem('savedServices', JSON.stringify(ids));
+      setSavedServiceIds(ids);
+      toast.success('Added to favorites', {
+        description: `${serviceName} has been added to your favorites.`
+      });
+    }
+  };
   
   // Helper function to parse URL params into proper SearchFilters format
   const parseFiltersFromParams = (): Partial<SearchFilters> => {
@@ -146,6 +184,8 @@ const SearchResults = () => {
   ];
 
   const ResultCard = ({ result, isLoading: cardLoading }: { result: any, isLoading: boolean }) => {
+    const isSaved = savedServiceIds.includes(result.id);
+    
     if (cardLoading) {
       return (
         <Card className="overflow-hidden">
@@ -187,8 +227,18 @@ const SearchResults = () => {
           </div>
           
           <div className="absolute top-4 right-4 flex gap-2">
-            <Button variant="ghost" size="icon" className="bg-white/90 hover:bg-white text-gray-600 hover:text-accent shadow-lg">
-              <Heart className="w-4 h-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={`bg-white/90 hover:bg-white shadow-lg transition-colors ${
+                isSaved ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
+              }`}
+              onClick={(e) => {
+                e.preventDefault();
+                toggleSaveService(result.id, result.title);
+              }}
+            >
+              <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
             </Button>
             <Link to={`/service/${result.id}`}>
               <Button variant="ghost" size="icon" className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg">
