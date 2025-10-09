@@ -26,6 +26,7 @@ import Events from "./pages/Events";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
 import CreateService from "./pages/CreateService";
+import Favorites from "./pages/Favorites";
 import BusinessListingDetail from "./pages/BusinessListingDetail";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
@@ -77,6 +78,7 @@ const App = () => {
                   <Route path="/about" element={<Layout><About /></Layout>} />
                   <Route path="/blog" element={<Layout><Blog /></Layout>} />
                   <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
+                  <Route path="/favorites" element={<Layout><Favorites /></Layout>} />
                   <Route path="/list-business" element={<Layout><ListBusiness /></Layout>} />
                   <Route path="/my-applications" element={<Layout><MyBusinessApplications /></Layout>} />
                   <Route path="/help" element={<Layout><Help /></Layout>} />

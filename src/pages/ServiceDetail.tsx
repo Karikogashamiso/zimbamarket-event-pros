@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -318,16 +318,47 @@ const ServiceDetail = () => {
 
   const serviceImages = getServiceImages();
   
-  // Mock packages for now - in a real app this would come from the database
-  const packages = [
-    {
-      name: "Basic Package",
-      description: "Essential services",
-      guests: `Up to ${service.capacity_min || 50} guests`,
-      price: `$${service.price_from || 500}`,
-      includes: ["Basic service", "Standard setup", "Support included"]
+  // State for saved services
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Check if service is saved
+  useEffect(() => {
+    if (service?.id) {
+      const savedServices = localStorage.getItem('savedServices');
+      if (savedServices) {
+        const saved = JSON.parse(savedServices);
+        setIsSaved(saved.includes(service.id));
+      }
     }
-  ];
+  }, [service?.id]);
+
+  // Handle save/unsave with visual feedback
+  const handleSaveService = async () => {
+    if (!service) return;
+    
+    const savedServices = localStorage.getItem('savedServices');
+    let saved = savedServices ? JSON.parse(savedServices) : [];
+    
+    if (isSaved) {
+      // Remove from saved
+      saved = saved.filter((id: string) => id !== service.id);
+      setIsSaved(false);
+      toast({
+        title: "Removed from favorites",
+        description: `${service.title} has been removed from your favorites.`,
+      });
+    } else {
+      // Add to saved
+      saved.push(service.id);
+      setIsSaved(true);
+      toast({
+        title: "Added to favorites",
+        description: `${service.title} has been added to your favorites.`,
+      });
+    }
+    
+    localStorage.setItem('savedServices', JSON.stringify(saved));
+  };
 
   return (
     <ServiceErrorBoundary serviceId={id}>
@@ -402,8 +433,8 @@ const ServiceDetail = () => {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center gap-1">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{service.rating}</span>
-                        <span className="text-muted-foreground">({service.review_count} reviews)</span>
+                        <span className="font-semibold">{service.rating?.toFixed(1) || '0.0'}</span>
+                        <span className="text-muted-foreground">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="w-4 h-4" />
@@ -457,7 +488,7 @@ const ServiceDetail = () => {
                               <Clock className="w-6 h-6 text-primary" />
                               <h4 className="font-semibold">Response Time</h4>
                             </div>
-                            <p className="text-muted-foreground">{service.response_time}</p>
+                            <p className="text-muted-foreground">Within 24 hours</p>
                           </CardContent>
                         </Card>
                       </div>
@@ -465,35 +496,36 @@ const ServiceDetail = () => {
                     
                     <TabsContent value="packages" className="space-y-6 mt-6">
                       <h3 className="text-2xl font-bold">Service Packages</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {packages.map((pkg, index) => (
-                          <Card key={index} className="hover-lift">
-                            <CardHeader>
-                              <CardTitle>{pkg.name}</CardTitle>
-                              <p className="text-muted-foreground">{pkg.description}</p>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                <div>
-                                  <p className="font-semibold text-lg">{pkg.price}</p>
-                                  <p className="text-sm text-muted-foreground">{pkg.guests}</p>
-                                </div>
-                                <div>
-                                  <h4 className="font-semibold mb-2">Includes:</h4>
-                                  <ul className="space-y-1">
-                                    {pkg.includes.map((item, i) => (
-                                      <li key={i} className="flex items-center gap-2 text-sm">
-                                        <CheckCircle className="w-4 h-4 text-primary" />
-                                        {item}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Standard Service</CardTitle>
+                          <p className="text-muted-foreground">Customizable to your needs</p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <p className="font-semibold text-2xl text-primary">
+                                {service.price_from ? `From $${service.price_from}` : 'Custom Pricing'}
+                                {service.price_unit && <span className="text-lg">/{service.price_unit}</span>}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {service.capacity_min && service.capacity_max 
+                                  ? `${service.capacity_min}-${service.capacity_max} guests`
+                                  : service.capacity_min 
+                                  ? `Up to ${service.capacity_min} guests`
+                                  : 'Flexible capacity'
+                                }
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold mb-2">What's Included:</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Contact the service provider for detailed package information and customization options.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </TabsContent>
                     
                     <TabsContent value="amenities" className="space-y-6 mt-6">
@@ -586,9 +618,9 @@ const ServiceDetail = () => {
                           {service.price_from ? `From $${service.price_from}` : 'Contact for pricing'}
                           {service.price_unit && <span className="text-lg">/{service.price_unit}</span>}
                         </div>
-                        <Badge className="bg-green-100 text-green-800">
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          {service.availability_status}
+                          Available for Booking
                         </Badge>
                       </div>
                       
@@ -717,12 +749,11 @@ const ServiceDetail = () => {
                     <div className="flex gap-2">
                       <Button 
                         variant="outline" 
-                        className="flex-1"
-                        onClick={() => saveService(service.id, service.title)}
-                        disabled={isSaving}
+                        className={`flex-1 transition-all ${isSaved ? 'border-primary text-primary' : ''}`}
+                        onClick={handleSaveService}
                       >
-                        <Heart className="w-4 h-4 mr-2" />
-                        {isSaving ? "Saving..." : "Save"}
+                        <Heart className={`w-4 h-4 mr-2 transition-all ${isSaved ? 'fill-primary' : ''}`} />
+                        {isSaved ? "Saved" : "Save"}
                       </Button>
                       <Button 
                         variant="outline" 

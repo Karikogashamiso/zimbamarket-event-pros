@@ -158,9 +158,11 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className={`${textStyles} ${buttonStyles}`}>
-              <Heart className="w-5 h-5" />
-            </Button>
+            <Link to="/favorites">
+              <Button variant="ghost" size="icon" className={`${textStyles} ${buttonStyles}`}>
+                <Heart className="w-5 h-5" />
+              </Button>
+            </Link>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
