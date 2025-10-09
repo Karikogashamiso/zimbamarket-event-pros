@@ -106,77 +106,7 @@ export const TransportManagementManager = () => {
     if (!deleteRouteId) return;
 
     try {
-      // Get all trips for this route
-      const { data: trips } = await supabase
-        .from('transport_trips')
-        .select('id')
-        .eq('route_id', deleteRouteId);
-
-      if (trips && trips.length > 0) {
-        const tripIds = trips.map(t => t.id);
-
-        // Get all ticket types for these trips
-        const { data: ticketTypes } = await supabase
-          .from('ticket_types')
-          .select('id')
-          .in('trip_id', tripIds);
-
-        if (ticketTypes && ticketTypes.length > 0) {
-          const ticketTypeIds = ticketTypes.map(tt => tt.id);
-
-          // Get all tickets for these ticket types
-          const { data: tickets } = await supabase
-            .from('tickets')
-            .select('id')
-            .in('ticket_type_id', ticketTypeIds);
-
-          if (tickets && tickets.length > 0) {
-            const ticketIds = tickets.map(t => t.id);
-
-            // Delete passenger check-ins first
-            const { error: checkinsError } = await supabase
-              .from('passenger_checkins')
-              .delete()
-              .in('ticket_id', ticketIds);
-
-            if (checkinsError) throw checkinsError;
-
-            // Delete tickets
-            const { error: ticketsError } = await supabase
-              .from('tickets')
-              .delete()
-              .in('id', ticketIds);
-
-            if (ticketsError) throw ticketsError;
-          }
-
-          // Delete event addons for these trips
-          const { error: addonsError } = await supabase
-            .from('event_addons')
-            .delete()
-            .in('trip_id', tripIds);
-
-          if (addonsError) throw addonsError;
-
-          // Delete ticket types
-          const { error: ticketTypesError } = await supabase
-            .from('ticket_types')
-            .delete()
-            .in('id', ticketTypeIds);
-
-          if (ticketTypesError) throw ticketTypesError;
-        }
-
-        // Delete trips
-        const { error: tripsError } = await supabase
-          .from('transport_trips')
-          .delete()
-          .in('id', tripIds);
-
-        if (tripsError) throw tripsError;
-      }
-
-      // Delete the route
+      // Database cascading will handle all related records
       const { error } = await supabase
         .from('transport_routes')
         .delete()
@@ -186,7 +116,7 @@ export const TransportManagementManager = () => {
 
       toast({
         title: "Success",
-        description: "Transport route deleted successfully",
+        description: "Transport route and all related data deleted successfully",
       });
 
       setDeleteRouteId(null);
@@ -205,59 +135,7 @@ export const TransportManagementManager = () => {
     if (!deleteTripId) return;
 
     try {
-      // Get ticket types for this trip
-      const { data: ticketTypes } = await supabase
-        .from('ticket_types')
-        .select('id')
-        .eq('trip_id', deleteTripId);
-
-      if (ticketTypes && ticketTypes.length > 0) {
-        const ticketTypeIds = ticketTypes.map(tt => tt.id);
-
-        // Get all tickets for these ticket types
-        const { data: tickets } = await supabase
-          .from('tickets')
-          .select('id')
-          .in('ticket_type_id', ticketTypeIds);
-
-        if (tickets && tickets.length > 0) {
-          const ticketIds = tickets.map(t => t.id);
-
-          // First delete passenger check-ins
-          const { error: checkinsError } = await supabase
-            .from('passenger_checkins')
-            .delete()
-            .in('ticket_id', ticketIds);
-
-          if (checkinsError) throw checkinsError;
-
-          // Then delete tickets
-          const { error: ticketsError } = await supabase
-            .from('tickets')
-            .delete()
-            .in('id', ticketIds);
-
-          if (ticketsError) throw ticketsError;
-        }
-
-        // Then delete event addons linked to this trip
-        const { error: addonsError } = await supabase
-          .from('event_addons')
-          .delete()
-          .eq('trip_id', deleteTripId);
-
-        if (addonsError) throw addonsError;
-
-        // Then delete ticket types
-        const { error: ticketTypesError } = await supabase
-          .from('ticket_types')
-          .delete()
-          .in('id', ticketTypeIds);
-
-        if (ticketTypesError) throw ticketTypesError;
-      }
-
-      // Delete the trip
+      // Database cascading will handle all related records
       const { error } = await supabase
         .from('transport_trips')
         .delete()
@@ -267,7 +145,7 @@ export const TransportManagementManager = () => {
 
       toast({
         title: "Success",
-        description: "Trip deleted successfully",
+        description: "Trip and all related data deleted successfully",
       });
 
       setDeleteTripId(null);
