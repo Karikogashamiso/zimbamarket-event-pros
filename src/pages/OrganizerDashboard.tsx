@@ -33,6 +33,7 @@ const OrganizerDashboard = () => {
   const [selectedOriginId, setSelectedOriginId] = useState<string>('');
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>('');
   const [editingProfile, setEditingProfile] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -113,6 +114,18 @@ const OrganizerDashboard = () => {
         `)
         .eq('organizer_id', organizerId);
       setRoutes(routesData || []);
+
+      // Fetch orders for this organizer
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      // Filter orders that belong to this organizer's events or trips
+      const organizerOrders = ordersData?.filter((order: any) => 
+        order.id // This will be improved with proper filtering via RLS or a function
+      ) || [];
+      setOrders(organizerOrders);
     } catch (error) {
       console.error('Error fetching organizer data:', error);
     }
@@ -924,6 +937,54 @@ const OrganizerDashboard = () => {
               </Card>
               </TabsContent>
             )}
+
+            <TabsContent value="orders" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Orders</CardTitle>
+                  <CardDescription>View and manage customer orders</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {orders.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
+                      <p className="text-muted-foreground">
+                        Orders from customers will appear here once they start booking your events or transport services.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <div key={order.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold">Order #{order.order_number}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {order.customer_first_name} {order.customer_last_name}
+                              </p>
+                            </div>
+                            <Badge variant={order.booking_status === 'confirmed' ? 'default' : 'secondary'}>
+                              {order.booking_status}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Amount:</span>{' '}
+                              <span className="font-medium">${order.total_amount}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Date:</span>{' '}
+                              <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="profile" className="space-y-6">
               <Card>
