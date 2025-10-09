@@ -62,11 +62,12 @@ export const OrderConfirmation: React.FC = () => {
         }
         
         // Fetch order details (will now have updated status if payment was verified)
+        // Use maybeSingle() to handle guest checkout where RLS might filter results
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .select('*')
           .eq('order_number', orderNumber)
-          .single();
+          .maybeSingle();
 
         if (orderError || !order) {
           console.error('Order not found:', orderError);
