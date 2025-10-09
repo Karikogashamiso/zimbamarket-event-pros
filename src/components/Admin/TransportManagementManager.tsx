@@ -58,13 +58,13 @@ export const TransportManagementManager = () => {
         (routesData || []).map(async (route) => {
           const { data: originVenue } = await supabase
             .from('venues')
-            .select('venue_name')
+            .select('name')
             .eq('id', route.origin_venue_id)
             .single();
           
           const { data: destVenue } = await supabase
             .from('venues')
-            .select('venue_name')
+            .select('name')
             .eq('id', route.destination_venue_id)
             .single();
           
@@ -229,11 +229,11 @@ export const TransportManagementManager = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            <span>From: {route.origin_venue?.venue_name || 'N/A'}</span>
+                            <span>From: {route.origin_venue?.name || 'N/A'}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            <span>To: {route.destination_venue?.venue_name || 'N/A'}</span>
+                            <span>To: {route.destination_venue?.name || 'N/A'}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
