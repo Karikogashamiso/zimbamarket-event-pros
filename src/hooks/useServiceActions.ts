@@ -117,8 +117,22 @@ export const useServiceActions = () => {
   const reportService = async (serviceId: string, serviceName: string, reason: string) => {
     setIsReporting(true);
     try {
-      // For now, just show success message without backend integration
-      // This can be connected to actual reporting system later
+      // Insert report into database
+      const { error } = await supabase
+        .from('service_reports')
+        .insert({
+          service_id: serviceId,
+          reported_by_user_id: user?.id || null,
+          reason: reason,
+          status: 'pending',
+          report_data: {
+            service_name: serviceName,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Report Submitted",
         description: "Thank you for reporting this service. We'll review it shortly.",
