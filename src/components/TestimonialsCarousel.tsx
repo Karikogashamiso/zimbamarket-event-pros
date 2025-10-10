@@ -47,16 +47,19 @@ const TestimonialsCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  // Only show slider if we have 2+ testimonials
+  const showSlider = testimonials.length >= 2;
+
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || !showSlider) return;
     
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, showSlider]);
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -79,6 +82,50 @@ const TestimonialsCarousel = () => {
     ));
   };
 
+  const renderTestimonialCard = (testimonial: typeof testimonials[0], index?: number) => (
+    <Card 
+      key={testimonial.name}
+      className="card-elegant p-8 md:p-12 text-center relative overflow-hidden group"
+      style={index !== undefined ? {
+        animation: `fade-in-up 0.6s ease-out ${index * 0.15}s both`
+      } : undefined}
+    >
+      {/* Background quote icon */}
+      <Quote className="absolute top-4 left-4 w-12 h-12 text-primary/10 transform -rotate-12" />
+      
+      <div className="relative z-10">
+        <div className="flex justify-center mb-6">
+          <Avatar className="w-20 h-20 border-4 border-primary/20 shadow-lg">
+            <AvatarImage src={testimonial.image} alt={testimonial.name} />
+            <AvatarFallback className="bg-primary text-white text-xl">
+              {testimonial.name.split(' ').map(n => n[0]).join('')}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
+        <div className="flex justify-center mb-4">
+          {renderStars(testimonial.rating)}
+        </div>
+
+        <blockquote className="text-lg md:text-xl text-foreground mb-6 leading-relaxed font-medium">
+          "{testimonial.text}"
+        </blockquote>
+
+        <div className="space-y-2">
+          <h4 className="font-semibold text-lg text-foreground">
+            {testimonial.name}
+          </h4>
+          <p className="text-muted-foreground text-sm">
+            {testimonial.role} • {testimonial.location}
+          </p>
+          <p className="text-primary text-sm font-medium">
+            {testimonial.event}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <section className="py-24 bg-gradient-to-br from-muted/30 to-background">
       <div className="container mx-auto px-4">
@@ -91,83 +138,56 @@ const TestimonialsCarousel = () => {
           </p>
         </div>
 
-        <div className="relative max-w-3xl mx-auto">
-          {/* Main testimonial card */}
-          <Card className="card-elegant p-8 md:p-12 text-center relative overflow-hidden group">
-            {/* Background quote icon */}
-            <Quote className="absolute top-4 left-4 w-12 h-12 text-primary/10 transform -rotate-12" />
-            
-            <div className="relative z-10">
-              <div className="flex justify-center mb-6">
-                <Avatar className="w-20 h-20 border-4 border-primary/20 shadow-lg">
-                  <AvatarImage src={testimonials[currentIndex].image} alt={testimonials[currentIndex].name} />
-                  <AvatarFallback className="bg-primary text-white text-xl">
-                    {testimonials[currentIndex].name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
+        {showSlider ? (
+          // Show slider when we have 2+ testimonials
+          <div className="relative max-w-3xl mx-auto">
+            {renderTestimonialCard(testimonials[currentIndex])}
+
+            {/* Navigation buttons */}
+            <div className="flex justify-center items-center gap-4 mt-8">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={prevTestimonial}
+                className="rounded-full hover:bg-primary/10"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+
+              {/* Dot indicators */}
+              <div className="flex gap-2">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentIndex(index);
+                      setIsAutoPlaying(false);
+                    }}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentIndex
+                        ? 'bg-primary shadow-glow-primary'
+                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                    }`}
+                  />
+                ))}
               </div>
 
-              <div className="flex justify-center mb-4">
-                {renderStars(testimonials[currentIndex].rating)}
-              </div>
-
-              <blockquote className="text-lg md:text-xl text-foreground mb-6 leading-relaxed font-medium">
-                "{testimonials[currentIndex].text}"
-              </blockquote>
-
-              <div className="space-y-2">
-                <h4 className="font-semibold text-lg text-foreground">
-                  {testimonials[currentIndex].name}
-                </h4>
-                <p className="text-muted-foreground text-sm">
-                  {testimonials[currentIndex].role} • {testimonials[currentIndex].location}
-                </p>
-                <p className="text-primary text-sm font-medium">
-                  {testimonials[currentIndex].event}
-                </p>
-              </div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={nextTestimonial}
+                className="rounded-full hover:bg-primary/10"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </Button>
             </div>
-          </Card>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={prevTestimonial}
-              className="rounded-full hover:bg-primary/10"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-
-            {/* Dot indicators */}
-            <div className="flex gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setCurrentIndex(index);
-                    setIsAutoPlaying(false);
-                  }}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? 'bg-primary shadow-glow-primary'
-                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={nextTestimonial}
-              className="rounded-full hover:bg-primary/10"
-            >
-              <ArrowRight className="w-5 h-5" />
-            </Button>
           </div>
-        </div>
+        ) : (
+          // Show static grid when we have 0-1 testimonials
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {testimonials.map((testimonial, index) => renderTestimonialCard(testimonial, index))}
+          </div>
+        )}
 
         {/* Additional social proof */}
         <div className="text-center mt-16 opacity-70">
