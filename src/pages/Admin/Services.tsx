@@ -23,9 +23,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet-async";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useServiceCache } from "@/hooks/useServiceCache";
 
 const Services = () => {
   const { toast } = useToast();
+  const { refreshCache } = useServiceCache();
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -109,11 +111,16 @@ const Services = () => {
 
       if (error) throw error;
 
+      // Refresh both local data and global cache
+      await Promise.all([
+        fetchData(),
+        refreshCache()
+      ]);
+
       toast({ 
         title: "Success",
-        description: `Service ${!currentStatus ? 'featured' : 'unfeatured'} successfully. ${!currentStatus ? 'It will now appear in "Trending This Week".' : ''}` 
+        description: `Service ${!currentStatus ? 'featured' : 'unfeatured'} successfully. Changes will appear immediately on the home page.` 
       });
-      fetchData();
     } catch (error: any) {
       console.error('Error toggling featured status:', error);
       toast({
