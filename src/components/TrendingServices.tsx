@@ -26,14 +26,14 @@ const TrendingServices = () => {
     <section className="py-24 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-muted/5 via-primary/5 to-background pointer-events-none" />
-      <div className="absolute top-10 right-10 text-primary/5 animate-float">
+      <div className="absolute top-10 right-10 text-primary/5 animate-float hidden lg:block">
         <Flame className="w-32 h-32" />
       </div>
-      <div className="absolute bottom-20 left-10 text-secondary/5 animate-float delay-2000">
+      <div className="absolute bottom-20 left-10 text-secondary/5 animate-float delay-2000 hidden lg:block">
         <Sparkles className="w-40 h-40" />
       </div>
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10 max-w-7xl">
         <div className="text-center mb-16 space-y-6">
           {/* Trending Badge */}
           <div className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-full px-6 py-3 border border-orange-500/20 shadow-glow">
