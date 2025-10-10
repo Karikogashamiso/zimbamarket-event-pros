@@ -32,6 +32,10 @@ const Reports = () => {
           services (
             id,
             title
+          ),
+          profiles:reported_by_user_id (
+            first_name,
+            last_name
           )
         `)
         .order("created_at", { ascending: false });
@@ -130,6 +134,7 @@ const Reports = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Service</TableHead>
+                      <TableHead>Reported By</TableHead>
                       <TableHead>Reason</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Reported Date</TableHead>
@@ -154,6 +159,15 @@ const Reports = () => {
                               </Link>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {report.profiles ? (
+                            <div className="font-medium">
+                              {report.profiles.first_name} {report.profiles.last_name}
+                            </div>
+                          ) : (
+                            <Badge variant="secondary">Guest User</Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="max-w-xs">
