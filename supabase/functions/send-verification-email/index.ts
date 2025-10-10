@@ -188,6 +188,20 @@ const handler = async (req: Request): Promise<Response> => {
       ? "Reset My Password"
       : "Verify My Email Address";
 
+    // Extract token and type from confirmation URL for password reset
+    let resetToken = '';
+    let resetType = '';
+    
+    if (type === 'password_reset') {
+      try {
+        const url = new URL(confirmationUrl);
+        resetToken = url.searchParams.get('token') || url.hash.split('token=')[1]?.split('&')[0] || '';
+        resetType = url.searchParams.get('type') || url.hash.split('type=')[1]?.split('&')[0] || '';
+      } catch (e) {
+        console.warn('Could not parse confirmation URL:', e);
+      }
+    }
+
     const emailResponse = await resend.emails.send({
       from: "ZimEventPro <onboarding@resend.dev>",
       to: [email],
@@ -214,6 +228,25 @@ const handler = async (req: Request): Promise<Response> => {
                 : 'Thank you for joining Zimbabwe\'s premier event planning platform! We\'re excited to have you on board.'
               }
             </p>
+            
+            ${type === 'password_reset' && resetToken ? `
+              <div style="background: #fff; padding: 20px; border-radius: 5px; margin: 20px 0; border: 2px solid #667eea;">
+                <h3 style="color: #667eea; margin: 0 0 10px 0;">Your Password Reset Code</h3>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                  <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">Token:</p>
+                  <code style="font-family: monospace; font-size: 14px; color: #333; word-break: break-all; display: block;">${resetToken}</code>
+                </div>
+                ${resetType ? `
+                  <div style="background: #f3f4f6; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #666;">Type:</p>
+                    <code style="font-family: monospace; font-size: 14px; color: #333;">${resetType}</code>
+                  </div>
+                ` : ''}
+                <p style="font-size: 12px; color: #666; margin: 10px 0 0 0;">
+                  Copy these values to use in your password reset form.
+                </p>
+              </div>
+            ` : ''}
             
             <p style="font-size: 16px; margin: 20px 0;">
               ${type === 'password_reset'
