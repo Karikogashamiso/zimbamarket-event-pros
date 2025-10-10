@@ -91,7 +91,7 @@ const TestimonialsCarousel = () => {
           </p>
         </div>
 
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative max-w-3xl mx-auto">
           {/* Main testimonial card */}
           <Card className="card-elegant p-8 md:p-12 text-center relative overflow-hidden group">
             {/* Background quote icon */}
