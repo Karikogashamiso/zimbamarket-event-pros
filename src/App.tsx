@@ -35,6 +35,8 @@ import AdminVenues from "./pages/Admin/Venues";
 import AdminEvents from "./pages/Admin/Events";
 import AdminServices from "./pages/Admin/Services";
 import AdminOrders from "./pages/Admin/Orders";
+import AdminReports from "./pages/Admin/Reports";
+import AdminContacts from "./pages/Admin/Contacts";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -107,6 +109,8 @@ const App = () => {
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="services" element={<AdminServices />} />
                     <Route path="orders" element={<AdminOrders />} />
+                    <Route path="reports" element={<AdminReports />} />
+                    <Route path="contacts" element={<AdminContacts />} />
                   </Route>
                   
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
