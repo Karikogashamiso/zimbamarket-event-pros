@@ -1716,6 +1716,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "service_reports_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "service_reports_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
