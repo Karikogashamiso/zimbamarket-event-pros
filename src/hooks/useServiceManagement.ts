@@ -201,12 +201,38 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
     }
   };
 
+  const toggleFeatured = async (serviceId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ featured: !currentStatus })
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Service ${!currentStatus ? 'featured' : 'unfeatured'} successfully`,
+      });
+
+      fetchServices();
+    } catch (error: any) {
+      console.error('Error toggling featured status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update featured status",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     services,
     loading,
     createService,
     updateService,
     deleteService,
+    toggleFeatured,
     refreshServices: fetchServices
   };
 };

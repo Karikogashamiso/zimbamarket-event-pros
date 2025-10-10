@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trash2, Eye, Filter } from "lucide-react";
+import { Trash2, Eye, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet-async";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Services = () => {
   const { toast } = useToast();
@@ -95,6 +97,30 @@ const Services = () => {
       });
     } finally {
       setDeleteServiceId(null);
+    }
+  };
+
+  const handleToggleFeatured = async (serviceId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ featured: !currentStatus })
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Success",
+        description: `Service ${!currentStatus ? 'featured' : 'unfeatured'} successfully. ${!currentStatus ? 'It will now appear in "Trending This Week".' : ''}` 
+      });
+      fetchData();
+    } catch (error: any) {
+      console.error('Error toggling featured status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update featured status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -183,15 +209,18 @@ const Services = () => {
               <div className="space-y-4">
                 {filteredServices.map((service) => (
                   <div key={service.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-medium text-lg">{service.title}</h3>
                           <Badge variant={service.active ? "default" : "secondary"}>
                             {service.active ? "Active" : "Inactive"}
                           </Badge>
-                          {service.is_featured && (
-                            <Badge className="bg-gradient-primary text-white">Featured</Badge>
+                          {service.featured && (
+                            <Badge className="bg-gradient-primary text-white">
+                              <Star className="w-3 h-3 mr-1 fill-current" />
+                              Featured
+                            </Badge>
                           )}
                           {service.is_verified && (
                             <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
@@ -237,21 +266,42 @@ const Services = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedService(service)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeleteServiceId(service.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                      <div className="flex flex-col gap-3">
+                        {/* Featured Toggle */}
+                        <div className="flex items-center gap-2 bg-card border rounded-lg p-3">
+                          <Star className={`w-4 h-4 ${service.featured ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                          <div className="flex flex-col gap-1 min-w-[120px]">
+                            <Label htmlFor={`featured-${service.id}`} className="text-xs font-medium cursor-pointer">
+                              Featured
+                            </Label>
+                            <span className="text-[10px] text-muted-foreground">
+                              Trending Section
+                            </span>
+                          </div>
+                          <Switch
+                            id={`featured-${service.id}`}
+                            checked={service.featured || false}
+                            onCheckedChange={() => handleToggleFeatured(service.id, service.featured)}
+                          />
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedService(service)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setDeleteServiceId(service.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
