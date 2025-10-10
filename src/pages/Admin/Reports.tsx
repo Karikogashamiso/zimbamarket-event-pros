@@ -31,8 +31,7 @@ const Reports = () => {
           *,
           services (
             id,
-            title,
-            status
+            title
           )
         `)
         .order("created_at", { ascending: false });
