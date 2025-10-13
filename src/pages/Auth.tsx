@@ -360,21 +360,7 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
-      // First verify we have a session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Session Expired",
-          description: "Your reset link has expired. Please request a new password reset.",
-          variant: "destructive",
-        });
-        setShowPasswordUpdate(false);
-        setShowForgotPassword(true);
-        return;
-      }
-
-      // Update the password
+      // Update the password - Supabase handles recovery token validation internally
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
