@@ -374,6 +374,7 @@ const Auth = () => {
         return;
       }
 
+      // Update the password
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
@@ -401,20 +402,28 @@ const Auth = () => {
           });
         }
       } else {
+        // Wait a moment to ensure password is fully updated in the database
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Sign out the current session
+        await supabase.auth.signOut();
+        
         toast({
           title: "Password Updated Successfully!",
-          description: "You can now sign in with your new password.",
+          description: "Please sign in with your new password.",
         });
-        
-        // Sign out to ensure clean state
-        await supabase.auth.signOut();
         
         // Clear the form and redirect to login
         setPasswordUpdateForm({ password: "", confirmPassword: "" });
         setShowPasswordUpdate(false);
         setActiveTab("login");
         
-        // Clear URL parameters
+        // Pre-fill the email if we have it from the reset
+        if (resetEmail) {
+          setLoginForm(prev => ({ ...prev, email: resetEmail }));
+        }
+        
+        // Clear URL parameters and force a clean state
         navigate("/auth?tab=login", { replace: true });
       }
     } catch (error) {
