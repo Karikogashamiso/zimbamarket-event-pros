@@ -82,24 +82,52 @@ const Auth = () => {
     path: ["confirmPassword"],
   });
 
-  // Handle password recovery token exchange
+  // Handle password recovery - both hash tokens and PKCE code flow
   useEffect(() => {
     const handleRecovery = async () => {
-      console.log('Full URL:', window.location.href);
-      console.log('Hash:', window.location.hash);
-      console.log('Search:', window.location.search);
+      // Check for PKCE code in search params first
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get('code');
       
+      if (code) {
+        console.log('Found PKCE code, exchanging for session...');
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('Error exchanging code:', error);
+            toast({
+              title: "Session Error",
+              description: "Failed to establish session. Please request a new reset link.",
+              variant: "destructive",
+            });
+            setShowPasswordUpdate(false);
+            setShowForgotPassword(true);
+          } else if (data.session) {
+            console.log('PKCE session established successfully');
+            setShowPasswordUpdate(true);
+            setShowForgotPassword(false);
+            setResetEmailSent(false);
+            setActiveTab('login');
+          }
+        } catch (error) {
+          console.error('PKCE recovery error:', error);
+          toast({
+            title: "Recovery Failed",
+            description: "An error occurred. Please request a new reset link.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      
+      // Fallback: Check for tokens in hash (legacy flow)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const type = hashParams.get('type');
-      
-      console.log('Recovery type from hash:', type);
       
       if (type === 'recovery') {
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        
-        console.log('Has access token:', !!accessToken);
-        console.log('Has refresh token:', !!refreshToken);
         
         if (accessToken && refreshToken) {
           try {
@@ -118,22 +146,15 @@ const Auth = () => {
               setShowPasswordUpdate(false);
               setShowForgotPassword(true);
             } else {
-              console.log('Session established successfully');
+              console.log('Hash-based session established successfully');
               setShowPasswordUpdate(true);
               setShowForgotPassword(false);
               setResetEmailSent(false);
               setActiveTab('login');
             }
           } catch (error) {
-            console.error('Recovery error:', error);
+            console.error('Hash recovery error:', error);
           }
-        } else {
-          console.error('Missing tokens in URL - check Supabase email configuration');
-          toast({
-            title: "Configuration Error",
-            description: "Password reset link is invalid. Please check Supabase URL configuration.",
-            variant: "destructive",
-          });
         }
       }
     };
