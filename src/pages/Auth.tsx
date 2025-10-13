@@ -30,6 +30,7 @@ const Auth = () => {
     return params.get('type') === 'recovery' || params.get('code') || hash.includes('type=recovery');
   });
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
+  const [recoverySession, setRecoverySession] = useState<any>(null);
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
     confirmPassword: "",
@@ -109,6 +110,9 @@ const Auth = () => {
             setIsVerifyingSession(false);
           } else if (data.session) {
             console.log('PKCE session established successfully');
+            // Store the recovery session
+            setRecoverySession(data.session);
+            
             // Wait a bit to ensure session is persisted
             await new Promise(resolve => setTimeout(resolve, 500));
             
@@ -176,6 +180,9 @@ const Auth = () => {
               setIsVerifyingSession(false);
             } else {
               console.log('Hash-based session established successfully');
+              // Store the recovery session
+              setRecoverySession(data.session);
+              
               // Wait to ensure session is persisted
               await new Promise(resolve => setTimeout(resolve, 500));
               
@@ -505,20 +512,25 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
-      // Verify session is still valid before attempting update
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Use the stored recovery session or get current session
+      let session = recoverySession;
       
-      if (sessionError || !session) {
-        console.error('Session missing during password update:', sessionError);
-        toast({
-          title: "Session Expired",
-          description: "Your reset session has expired. Please request a new password reset link.",
-          variant: "destructive",
-        });
-        setShowPasswordUpdate(false);
-        setShowForgotPassword(true);
-        setIsLoading(false);
-        return;
+      if (!session) {
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        session = currentSession;
+        
+        if (sessionError || !session) {
+          console.error('Session missing during password update:', sessionError);
+          toast({
+            title: "Session Expired",
+            description: "Your reset session has expired. Please request a new password reset link.",
+            variant: "destructive",
+          });
+          setShowPasswordUpdate(false);
+          setShowForgotPassword(true);
+          setIsLoading(false);
+          return;
+        }
       }
 
       console.log('Valid session confirmed, updating password...');
