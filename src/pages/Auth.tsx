@@ -488,11 +488,28 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
-      // First, verify we have an active session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Retry logic for session verification (up to 3 attempts)
+      let session = null;
+      let sessionError = null;
+      
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await supabase.auth.getSession();
+        session = result.data.session;
+        sessionError = result.error;
+        
+        if (session) {
+          console.log(`Session found on attempt ${attempt + 1}`);
+          break;
+        }
+        
+        // Wait a bit before retrying
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       
       if (sessionError || !session) {
-        console.error('Session check failed:', sessionError);
+        console.error('Session check failed after retries:', session);
         toast({
           title: "Session Error",
           description: "Your reset session has expired. Please request a new password reset link.",
