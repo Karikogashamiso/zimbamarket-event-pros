@@ -38,6 +38,7 @@ import AdminOrders from "./pages/Admin/Orders";
 import AdminReports from "./pages/Admin/Reports";
 import AdminContacts from "./pages/Admin/Contacts";
 import AdminTestimonials from "./pages/Admin/Testimonials";
+import AdminHomeContent from "./pages/Admin/HomeContent";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -105,6 +106,7 @@ const App = () => {
                   {/* Admin Routes with nested structure */}
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboard />} />
+                    <Route path="home-content" element={<AdminHomeContent />} />
                     <Route path="organizers" element={<AdminOrganizers />} />
                     <Route path="venues" element={<AdminVenues />} />
                     <Route path="events" element={<AdminEvents />} />

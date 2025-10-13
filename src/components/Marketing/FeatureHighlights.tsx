@@ -1,23 +1,76 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  Zap, 
-  Shield, 
-  Smartphone, 
-  Globe, 
-  CreditCard, 
-  Clock,
-  QrCode,
-  MessageCircle,
-  CheckCircle,
-  ArrowRight,
-  Star,
-  TrendingUp
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Zap, CreditCard } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+const iconClasses =
+  'h-6 w-6';
+
+interface HomeFeature {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  features: { text: string }[];
+  display_order: number;
+}
+
+interface HomeStat {
+  id: string;
+  label: string;
+  value: string;
+  description: string;
+  icon: string;
+  display_order: number;
+}
 
 export const FeatureHighlights: React.FC = () => {
+  const [features, setFeatures] = useState<HomeFeature[]>([]);
+  const [stats, setStats] = useState<HomeStat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHomeContent();
+  }, []);
+
+  const fetchHomeContent = async () => {
+    try {
+      const [featuresResult, statsResult] = await Promise.all([
+        supabase
+          .from('home_features')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order'),
+        supabase
+          .from('home_stats')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order')
+      ]);
+
+      if (featuresResult.data) {
+        const typedFeatures = featuresResult.data.map(item => ({
+          ...item,
+          features: item.features as { text: string }[]
+        }));
+        setFeatures(typedFeatures);
+      }
+      if (statsResult.data) setStats(statsResult.data);
+    } catch (error) {
+      console.error('Error fetching home content:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const Icon = (LucideIcons as any)[iconName] || Zap;
+    return Icon;
+  };
+
   return (
     <div className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -36,135 +89,56 @@ export const FeatureHighlights: React.FC = () => {
         </div>
 
         {/* Main Features Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          {/* Feature 1: Instant & Secure */}
-          <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20">
-            <CardHeader className="text-center pb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Zap className="h-10 w-10 text-primary-foreground" />
-              </div>
-              <CardTitle className="text-xl">Lightning Fast Booking</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-muted-foreground mb-6 text-center">
-                Book tickets in under 30 seconds with our streamlined checkout process
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index} className="bg-card/50 backdrop-blur">
+                <CardHeader>
+                  <Skeleton className="h-8 w-8 rounded-lg mb-2" />
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-4 w-full" />
+                    ))}
                   </div>
-                  <span className="text-sm">One-click repeat bookings</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm">Auto-fill customer details</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm">Instant email & SMS confirmation</span>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Average booking time:</span>
-                  <span className="font-bold text-primary">28 seconds</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Feature 2: Security */}
-          <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20">
-            <CardHeader className="text-center pb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-10 w-10 text-white" />
-              </div>
-              <CardTitle className="text-xl">Bank-Grade Security</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-muted-foreground mb-6 text-center">
-                Your payments and personal data are protected by military-grade encryption
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <QrCode className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm">Anti-fraud QR codes</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm">SSL encryption everywhere</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm">Secure payment processing</span>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                <div className="flex items-center justify-center gap-2 text-sm text-green-700">
-                  <Shield className="h-4 w-4" />
-                  <span className="font-medium">99.99% fraud-free transactions</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Feature 3: Mobile-First */}
-          <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20">
-            <CardHeader className="text-center pb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Smartphone className="h-10 w-10 text-white" />
-              </div>
-              <CardTitle className="text-xl">Made for Mobile</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-muted-foreground mb-6 text-center">
-                Designed for Zimbabwe's mobile-first culture — works perfectly on any device
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageCircle className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm">WhatsApp ticket delivery</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Globe className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm">Works offline when needed</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Smartphone className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm">Zero app downloads required</span>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <div className="flex items-center justify-center gap-2 text-sm text-blue-700">
-                  <Star className="h-4 w-4" />
-                  <span className="font-medium">Optimized for 2G networks</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))
+          ) : features.length > 0 ? (
+            features.map((feature) => {
+              const IconComponent = getIconComponent(feature.icon);
+              return (
+                <Card key={feature.id} className="bg-card/50 backdrop-blur border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <IconComponent className={iconClasses} />
+                      </div>
+                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    </div>
+                    <CardDescription className="text-base">
+                      {feature.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {feature.features.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="text-primary mt-1">✓</span>
+                          <span>{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <p className="col-span-3 text-center text-muted-foreground">No features available</p>
+          )}
         </div>
 
         {/* Payment Methods */}
@@ -213,24 +187,39 @@ export const FeatureHighlights: React.FC = () => {
         </Card>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="text-4xl font-bold text-primary mb-2">1M+</div>
-            <div className="text-lg font-semibold mb-1">Tickets Sold</div>
-            <div className="text-sm text-muted-foreground">Trusted by thousands daily</div>
-          </div>
-          
-          <div>
-            <div className="text-4xl font-bold text-primary mb-2">50K+</div>
-            <div className="text-lg font-semibold mb-1">Happy Customers</div>
-            <div className="text-sm text-muted-foreground">Across all major cities</div>
-          </div>
-          
-          <div>
-            <div className="text-4xl font-bold text-primary mb-2">99.9%</div>
-            <div className="text-lg font-semibold mb-1">Uptime</div>
-            <div className="text-sm text-muted-foreground">Always available when you need us</div>
-          </div>
+        <div className="grid md:grid-cols-3 gap-8 pt-8 border-t border-border/50">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="text-center">
+                <div className="flex justify-center mb-3">
+                  <Skeleton className="h-14 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-10 w-32 mx-auto mb-2" />
+                <Skeleton className="h-5 w-24 mx-auto mb-1" />
+                <Skeleton className="h-4 w-40 mx-auto" />
+              </div>
+            ))
+          ) : stats.length > 0 ? (
+            stats.map((stat) => {
+              const IconComponent = getIconComponent(stat.icon);
+              return (
+                <div key={stat.id} className="text-center">
+                  <div className="flex justify-center mb-3">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <IconComponent className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                  <div className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+                    {stat.value}
+                  </div>
+                  <div className="text-base font-semibold mb-1">{stat.label}</div>
+                  <p className="text-sm text-muted-foreground">{stat.description}</p>
+                </div>
+              );
+            })
+          ) : (
+            <p className="col-span-3 text-center text-muted-foreground">No stats available</p>
+          )}
         </div>
       </div>
     </div>

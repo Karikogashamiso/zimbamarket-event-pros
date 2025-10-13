@@ -769,6 +769,78 @@ export type Database = {
         }
         Relationships: []
       }
+      home_features: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number | null
+          features: Json | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number | null
+          features?: Json | null
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number | null
+          features?: Json | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      home_stats: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number | null
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       newsletter_subscriptions: {
         Row: {
           created_at: string
