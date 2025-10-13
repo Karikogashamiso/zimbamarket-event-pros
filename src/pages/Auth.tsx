@@ -205,16 +205,18 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // CRITICAL: Check URL synchronously - don't rely on state
       const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
       const type = urlParams.get('type');
       
-      // BLOCK ANY REDIRECT if we're in recovery mode
-      if (type === 'recovery') {
+      // BLOCK ANY REDIRECT if we're in recovery mode (has code or type=recovery)
+      if (code || type === 'recovery') {
         // Ensure password update form is shown
         setShowPasswordUpdate(true);
-        return; // Exit immediately
+        return; // Exit immediately - don't redirect
       }
       
-      if (event === 'SIGNED_IN' && session) {
+      // Only redirect on normal sign-in (not recovery)
+      if (event === 'SIGNED_IN' && session && !showPasswordUpdate) {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
@@ -224,7 +226,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+  }, [navigate, toast, showPasswordUpdate]);
 
   const validateField = (schema: z.ZodSchema, data: any, field: string) => {
     try {
