@@ -442,12 +442,31 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
+      // First, verify we have an active session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Session check failed:', sessionError);
+        toast({
+          title: "Session Error",
+          description: "Your reset session has expired. Please request a new password reset link.",
+          variant: "destructive",
+        });
+        setShowPasswordUpdate(false);
+        setShowForgotPassword(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Valid session found, updating password...');
+
       // Update the password - Supabase handles recovery token validation internally
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
 
       if (error) {
+        console.error('Password update error:', error);
         if (error.message.includes('session_not_found') || error.message.includes('invalid_token') || error.message.includes('expired')) {
           toast({
             title: "Reset Link Expired",
