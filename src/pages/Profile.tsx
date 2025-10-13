@@ -5,12 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Calendar, LogOut, Save } from 'lucide-react';
+import { User, Calendar, LogOut, Save, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerBookings } from '@/components/CustomerBookings';
 import { Helmet } from 'react-helmet-async';
+import { z } from 'zod';
 
 const Profile = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,31 @@ const Profile = () => {
     firstName: '',
     lastName: '',
     phoneNumber: '',
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+
+  const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string()
+      .min(6, "Password must be at least 6 characters")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+    confirmPassword: z.string(),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
   });
 
   useEffect(() => {
@@ -93,6 +119,76 @@ const Profile = () => {
         description: "Failed to update profile",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setLoading(true);
+    setPasswordErrors({});
+
+    try {
+      // Validate form
+      const validatedData = changePasswordSchema.parse(passwordForm);
+
+      // First verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: validatedData.currentPassword,
+      });
+
+      if (signInError) {
+        setPasswordErrors({ currentPassword: "Current password is incorrect" });
+        toast({
+          title: "Error",
+          description: "Current password is incorrect",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: validatedData.newPassword
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully",
+      });
+
+      // Clear form
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setPasswordErrors(newErrors);
+      } else {
+        console.error('Error changing password:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to change password",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -210,6 +306,104 @@ const Profile = () => {
                       <Button type="submit" disabled={loading}>
                         <Save className="w-4 h-4 mr-2" />
                         {loading ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Change Password</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="currentPassword"
+                            type={showPasswords.current ? "text" : "password"}
+                            value={passwordForm.currentPassword}
+                            onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                            className={`pl-10 pr-10 ${passwordErrors.currentPassword ? 'border-destructive' : ''}`}
+                            placeholder="Enter current password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                          >
+                            {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {passwordErrors.currentPassword && (
+                          <p className="text-xs text-destructive">{passwordErrors.currentPassword}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="newPassword"
+                            type={showPasswords.new ? "text" : "password"}
+                            value={passwordForm.newPassword}
+                            onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                            className={`pl-10 pr-10 ${passwordErrors.newPassword ? 'border-destructive' : ''}`}
+                            placeholder="Enter new password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                          >
+                            {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {passwordErrors.newPassword && (
+                          <p className="text-xs text-destructive">{passwordErrors.newPassword}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Must contain uppercase, lowercase, and number
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="confirmPassword"
+                            type={showPasswords.confirm ? "text" : "password"}
+                            value={passwordForm.confirmPassword}
+                            onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                            className={`pl-10 pr-10 ${passwordErrors.confirmPassword ? 'border-destructive' : ''}`}
+                            placeholder="Confirm new password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                          >
+                            {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {passwordErrors.confirmPassword && (
+                          <p className="text-xs text-destructive">{passwordErrors.confirmPassword}</p>
+                        )}
+                      </div>
+
+                      <Button type="submit" disabled={loading}>
+                        <Lock className="w-4 h-4 mr-2" />
+                        {loading ? 'Changing Password...' : 'Change Password'}
                       </Button>
                     </form>
                   </CardContent>
