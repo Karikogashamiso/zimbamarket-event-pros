@@ -85,12 +85,21 @@ const Auth = () => {
   // Handle password recovery token exchange
   useEffect(() => {
     const handleRecovery = async () => {
+      console.log('Full URL:', window.location.href);
+      console.log('Hash:', window.location.hash);
+      console.log('Search:', window.location.search);
+      
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const type = hashParams.get('type');
+      
+      console.log('Recovery type from hash:', type);
       
       if (type === 'recovery') {
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+        
+        console.log('Has access token:', !!accessToken);
+        console.log('Has refresh token:', !!refreshToken);
         
         if (accessToken && refreshToken) {
           try {
@@ -109,6 +118,7 @@ const Auth = () => {
               setShowPasswordUpdate(false);
               setShowForgotPassword(true);
             } else {
+              console.log('Session established successfully');
               setShowPasswordUpdate(true);
               setShowForgotPassword(false);
               setResetEmailSent(false);
@@ -117,6 +127,13 @@ const Auth = () => {
           } catch (error) {
             console.error('Recovery error:', error);
           }
+        } else {
+          console.error('Missing tokens in URL - check Supabase email configuration');
+          toast({
+            title: "Configuration Error",
+            description: "Password reset link is invalid. Please check Supabase URL configuration.",
+            variant: "destructive",
+          });
         }
       }
     };
