@@ -402,29 +402,19 @@ const Auth = () => {
           });
         }
       } else {
-        // Wait a moment to ensure password is fully updated in the database
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Sign out the current session
-        await supabase.auth.signOut();
-        
         toast({
           title: "Password Updated Successfully!",
-          description: "Please sign in with your new password.",
+          description: "Redirecting you to the app...",
         });
         
-        // Clear the form and redirect to login
+        // Clear the form
         setPasswordUpdateForm({ password: "", confirmPassword: "" });
         setShowPasswordUpdate(false);
-        setActiveTab("login");
         
-        // Pre-fill the email if we have it from the reset
-        if (resetEmail) {
-          setLoginForm(prev => ({ ...prev, email: resetEmail }));
-        }
-        
-        // Clear URL parameters and force a clean state
-        navigate("/auth?tab=login", { replace: true });
+        // Redirect to home page - user is already authenticated after recovery
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 1500);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
