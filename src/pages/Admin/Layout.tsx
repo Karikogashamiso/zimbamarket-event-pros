@@ -22,6 +22,7 @@ import {
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Home Content", url: "/admin/home-content", icon: Settings },
   { title: "Organizers", url: "/admin/organizers", icon: Users },
   { title: "Venues", url: "/admin/venues", icon: MapPin },
   { title: "Events", url: "/admin/events", icon: Calendar },
