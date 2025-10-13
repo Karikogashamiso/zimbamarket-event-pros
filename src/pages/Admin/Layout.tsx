@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail } from "lucide-react";
+import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ const adminMenuItems = [
   { title: "Orders", url: "/admin/orders", icon: Package },
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
+  { title: "Testimonials", url: "/admin/testimonials", icon: Quote },
 ];
 
 function AdminSidebar() {

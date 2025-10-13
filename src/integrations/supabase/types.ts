@@ -1849,6 +1849,51 @@ export type Database = {
           },
         ]
       }
+      testimonials: {
+        Row: {
+          avatar: string
+          company: string
+          content: string
+          created_at: string
+          display_order: number | null
+          event_type: string
+          id: string
+          is_featured: boolean | null
+          name: string
+          rating: number
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          avatar: string
+          company: string
+          content: string
+          created_at?: string
+          display_order?: number | null
+          event_type: string
+          id?: string
+          is_featured?: boolean | null
+          name: string
+          rating?: number
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string
+          company?: string
+          content?: string
+          created_at?: string
+          display_order?: number | null
+          event_type?: string
+          id?: string
+          is_featured?: boolean | null
+          name?: string
+          rating?: number
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_scans: {
         Row: {
           device_info: Json | null

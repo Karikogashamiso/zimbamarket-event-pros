@@ -1,66 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Star, Quote } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  content: string;
+  rating: number;
+  avatar: string;
+  event_type: string;
+}
 
 export const TestimonialsSection: React.FC = () => {
-  const testimonials = [
-    {
-      name: "Tafadzwa Mutasa",
-      role: "Event Organizer",
-      company: "Harare Music Festival",
-      content: "ZimEventPro transformed how we sell tickets. Last year's festival sold out in 2 hours instead of 2 weeks. The mobile integration with EcoCash made it accessible to everyone.",
-      rating: 5,
-      avatar: "TM",
-      event: "Music Festival"
-    },
-    {
-      name: "Chipo Mubvumbi", 
-      role: "Club Manager",
-      company: "Club Sankayi",
-      content: "Our VIP table bookings increased 300% since using ZimEventPro. Customers love the instant confirmation and QR code entry. No more guest list confusion!",
-      rating: 5,
-      avatar: "CM",
-      event: "Nightlife"
-    },
-    {
-      name: "James Sibanda",
-      role: "Transport Manager", 
-      company: "Eagle Liner",
-      content: "Bus bookings are now completely digital. Passengers can book from anywhere in Zimbabwe and pay with EcoCash. Our no-shows dropped to almost zero.",
-      rating: 5,
-      avatar: "JS",
-      event: "Transport"
-    },
-    {
-      name: "Memory Chikwanha",
-      role: "Frequent Traveler",
-      company: "Marketing Executive",
-      content: "I use ZimEventPro for everything - flights to Cape Town, bus trips to Vic Falls, concert tickets. Everything in one place, always works perfectly.",
-      rating: 5,
-      avatar: "MC",
-      event: "Customer"
-    },
-    {
-      name: "Blessing Ncube",
-      role: "Event Planner",
-      company: "Elite Events Zim",
-      content: "The analytics dashboard shows us exactly which marketing channels work best. We've optimized our campaigns and tripled our ticket sales efficiency.",
-      rating: 5,
-      avatar: "BN",
-      event: "Business"
-    },
-    {
-      name: "Rutendo Mashonganyika",
-      role: "University Student",
-      company: "UZ Student",
-      content: "Finally, a booking platform that actually works in Zimbabwe! I can book concert tickets even when my data is low. The WhatsApp delivery is genius.",
-      rating: 5,
-      avatar: "RM",
-      event: "Student"
-    }
-  ];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .eq('is_featured', true)
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        setTestimonials(data || []);
+      } catch (error) {
+        console.error('Error fetching testimonials:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
 
   return (
     <div className="py-16">
@@ -81,7 +61,27 @@ export const TestimonialsSection: React.FC = () => {
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {testimonials.map((testimonial, index) => (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="h-full">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-12 h-12 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))
+          ) : testimonials.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground">No testimonials available yet.</p>
+            </div>
+          ) : (
+            testimonials.map((testimonial, index) => (
             <Card key={index} className="group hover:shadow-lg transition-all duration-300 h-full">
               <CardContent className="p-6 h-full flex flex-col">
                 {/* Header */}
@@ -99,7 +99,7 @@ export const TestimonialsSection: React.FC = () => {
                     </div>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {testimonial.event}
+                    {testimonial.event_type}
                   </Badge>
                 </div>
 
@@ -119,7 +119,8 @@ export const TestimonialsSection: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))
+          )}
         </div>
 
         {/* Bottom Stats */}
