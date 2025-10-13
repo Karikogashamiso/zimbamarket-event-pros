@@ -30,7 +30,6 @@ const Auth = () => {
     return params.get('type') === 'recovery' || params.get('code') || hash.includes('type=recovery');
   });
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
-  const [hasValidSession, setHasValidSession] = useState(false);
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
     confirmPassword: "",
@@ -119,7 +118,6 @@ const Auth = () => {
               setShowForgotPassword(false);
               setResetEmailSent(false);
               setActiveTab('login');
-              setHasValidSession(true);
             } else {
               console.error('Session not found after exchange');
               toast({
@@ -182,7 +180,6 @@ const Auth = () => {
                 setShowForgotPassword(false);
                 setResetEmailSent(false);
                 setActiveTab('login');
-                setHasValidSession(true);
               } else {
                 console.error('Session not found after setting');
                 toast({
@@ -491,37 +488,7 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
-      // Verify we have a valid session state
-      if (!hasValidSession) {
-        toast({
-          title: "Session Not Ready",
-          description: "Please wait for the session to be established or request a new reset link.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('Session check failed:', session);
-        toast({
-          title: "Session Expired",
-          description: "Your reset session has expired. Please request a new password reset link.",
-          variant: "destructive",
-        });
-        setShowPasswordUpdate(false);
-        setShowForgotPassword(true);
-        setHasValidSession(false);
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('Valid session found, updating password...');
-
-      // Update the password
+      // Update the password - the recovery session is already established when user clicks the email link
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
@@ -911,17 +878,8 @@ const Auth = () => {
                   Your new password will be applied to your account immediately after confirmation.
                 </AlertDescription>
               </Alert>
-              
-              {!hasValidSession && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Session not ready. Please wait or request a new reset link.
-                  </AlertDescription>
-                </Alert>
-              )}
 
-              <Button type="submit" className="w-full" disabled={isLoading || !hasValidSession}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Updating Password..." : "Update Password"}
               </Button>
               
