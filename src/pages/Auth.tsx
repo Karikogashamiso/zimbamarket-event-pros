@@ -108,18 +108,21 @@ const Auth = () => {
             setShowForgotPassword(true);
             setIsVerifyingSession(false);
           } else if (data.session) {
-            console.log('PKCE session established successfully', data.session);
-            // Verify session is actually set
+            console.log('PKCE session established successfully');
+            // Wait a bit to ensure session is persisted
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Double-check session is available
             const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-            console.log('Verified session:', verifiedSession);
             
             if (verifiedSession) {
               setShowPasswordUpdate(true);
               setShowForgotPassword(false);
               setResetEmailSent(false);
               setActiveTab('login');
+              setIsVerifyingSession(false);
             } else {
-              console.error('Session not found after exchange');
+              console.error('Session not persisted after exchange');
               toast({
                 title: "Session Error",
                 description: "Failed to establish session. Please request a new reset link.",
@@ -127,8 +130,8 @@ const Auth = () => {
               });
               setShowPasswordUpdate(false);
               setShowForgotPassword(true);
+              setIsVerifyingSession(false);
             }
-            setIsVerifyingSession(false);
           }
         } catch (error) {
           console.error('PKCE recovery error:', error);
@@ -137,6 +140,8 @@ const Auth = () => {
             description: "An error occurred. Please request a new reset link.",
             variant: "destructive",
           });
+          setShowPasswordUpdate(false);
+          setShowForgotPassword(true);
           setIsVerifyingSession(false);
         }
         return;
@@ -170,18 +175,21 @@ const Auth = () => {
               setShowForgotPassword(true);
               setIsVerifyingSession(false);
             } else {
-              console.log('Hash-based session established successfully', data.session);
+              console.log('Hash-based session established successfully');
+              // Wait to ensure session is persisted
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
               // Verify session
               const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-              console.log('Verified session:', verifiedSession);
               
               if (verifiedSession) {
                 setShowPasswordUpdate(true);
                 setShowForgotPassword(false);
                 setResetEmailSent(false);
                 setActiveTab('login');
+                setIsVerifyingSession(false);
               } else {
-                console.error('Session not found after setting');
+                console.error('Session not persisted after setting');
                 toast({
                   title: "Session Error",
                   description: "Failed to establish session. Please request a new reset link.",
@@ -189,15 +197,24 @@ const Auth = () => {
                 });
                 setShowPasswordUpdate(false);
                 setShowForgotPassword(true);
+                setIsVerifyingSession(false);
               }
-              setIsVerifyingSession(false);
             }
           } catch (error) {
             console.error('Hash recovery error:', error);
+            setShowPasswordUpdate(false);
+            setShowForgotPassword(true);
             setIsVerifyingSession(false);
           }
         } else {
           console.error('Missing tokens in hash');
+          toast({
+            title: "Invalid Reset Link",
+            description: "The reset link is invalid. Please request a new one.",
+            variant: "destructive",
+          });
+          setShowPasswordUpdate(false);
+          setShowForgotPassword(true);
           setIsVerifyingSession(false);
         }
       } else {
@@ -488,7 +505,25 @@ const Auth = () => {
     try {
       const validatedData = updatePasswordSchema.parse(passwordUpdateForm);
 
-      // Update the password - the recovery session is already established when user clicks the email link
+      // Verify session is still valid before attempting update
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Session missing during password update:', sessionError);
+        toast({
+          title: "Session Expired",
+          description: "Your reset session has expired. Please request a new password reset link.",
+          variant: "destructive",
+        });
+        setShowPasswordUpdate(false);
+        setShowForgotPassword(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Valid session confirmed, updating password...');
+
+      // Update the password - the recovery session allows this
       const { error } = await supabase.auth.updateUser({
         password: validatedData.password
       });
