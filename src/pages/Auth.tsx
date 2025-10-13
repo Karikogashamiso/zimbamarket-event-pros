@@ -23,11 +23,13 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const [showPasswordUpdate, setShowPasswordUpdate] = useState(() => {
-    // Check immediately on mount if this is a recovery callback
+  const [isVerifyingSession, setIsVerifyingSession] = useState(() => {
+    // Check if this is a recovery callback
     const params = new URLSearchParams(window.location.search);
-    return params.get('type') === 'recovery';
+    const hash = window.location.hash;
+    return params.get('type') === 'recovery' || params.get('code') || hash.includes('type=recovery');
   });
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
     confirmPassword: "",
@@ -91,6 +93,7 @@ const Auth = () => {
       
       if (code) {
         console.log('Found PKCE code, exchanging for session...');
+        setIsVerifyingSession(true);
         try {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
@@ -103,12 +106,29 @@ const Auth = () => {
             });
             setShowPasswordUpdate(false);
             setShowForgotPassword(true);
+            setIsVerifyingSession(false);
           } else if (data.session) {
-            console.log('PKCE session established successfully');
-            setShowPasswordUpdate(true);
-            setShowForgotPassword(false);
-            setResetEmailSent(false);
-            setActiveTab('login');
+            console.log('PKCE session established successfully', data.session);
+            // Verify session is actually set
+            const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+            console.log('Verified session:', verifiedSession);
+            
+            if (verifiedSession) {
+              setShowPasswordUpdate(true);
+              setShowForgotPassword(false);
+              setResetEmailSent(false);
+              setActiveTab('login');
+            } else {
+              console.error('Session not found after exchange');
+              toast({
+                title: "Session Error",
+                description: "Failed to establish session. Please request a new reset link.",
+                variant: "destructive",
+              });
+              setShowPasswordUpdate(false);
+              setShowForgotPassword(true);
+            }
+            setIsVerifyingSession(false);
           }
         } catch (error) {
           console.error('PKCE recovery error:', error);
@@ -117,6 +137,7 @@ const Auth = () => {
             description: "An error occurred. Please request a new reset link.",
             variant: "destructive",
           });
+          setIsVerifyingSession(false);
         }
         return;
       }
@@ -126,12 +147,14 @@ const Auth = () => {
       const type = hashParams.get('type');
       
       if (type === 'recovery') {
+        console.log('Found hash-based recovery');
+        setIsVerifyingSession(true);
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         
         if (accessToken && refreshToken) {
           try {
-            const { error } = await supabase.auth.setSession({
+            const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             });
@@ -145,17 +168,40 @@ const Auth = () => {
               });
               setShowPasswordUpdate(false);
               setShowForgotPassword(true);
+              setIsVerifyingSession(false);
             } else {
-              console.log('Hash-based session established successfully');
-              setShowPasswordUpdate(true);
-              setShowForgotPassword(false);
-              setResetEmailSent(false);
-              setActiveTab('login');
+              console.log('Hash-based session established successfully', data.session);
+              // Verify session
+              const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+              console.log('Verified session:', verifiedSession);
+              
+              if (verifiedSession) {
+                setShowPasswordUpdate(true);
+                setShowForgotPassword(false);
+                setResetEmailSent(false);
+                setActiveTab('login');
+              } else {
+                console.error('Session not found after setting');
+                toast({
+                  title: "Session Error",
+                  description: "Failed to establish session. Please request a new reset link.",
+                  variant: "destructive",
+                });
+                setShowPasswordUpdate(false);
+                setShowForgotPassword(true);
+              }
+              setIsVerifyingSession(false);
             }
           } catch (error) {
             console.error('Hash recovery error:', error);
+            setIsVerifyingSession(false);
           }
+        } else {
+          console.error('Missing tokens in hash');
+          setIsVerifyingSession(false);
         }
+      } else {
+        setIsVerifyingSession(false);
       }
     };
     
@@ -762,6 +808,24 @@ const Auth = () => {
   }
 
   if (showPasswordUpdate) {
+    // Show loading while verifying session
+    if (isVerifyingSession) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-center text-muted-foreground">
+                  Verifying your reset link...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
