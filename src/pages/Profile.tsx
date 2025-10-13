@@ -318,7 +318,17 @@ const Profile = () => {
                   <CardContent>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="currentPassword">Current Password</Label>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => navigate('/auth?tab=login')}
+                          >
+                            Forgot Password?
+                          </Button>
+                        </div>
                         <div className="relative">
                           <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
