@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SectionErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface CheckoutData {
   event?: {
@@ -84,10 +85,55 @@ export const CheckoutFlow: React.FC = () => {
   });
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [orderCreated, setOrderCreated] = useState(false);
+  const [isOwnEvent, setIsOwnEvent] = useState(false);
+  const [checkingOwnership, setCheckingOwnership] = useState(true);
   
   const { processCheckout, isProcessing } = useSimpleCheckout();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+
+  // Check if user owns the event
+  useEffect(() => {
+    const checkEventOwnership = async () => {
+      if (!user || !eventId) {
+        setCheckingOwnership(false);
+        setIsOwnEvent(false);
+        return;
+      }
+
+      try {
+        const { data: ownership, error } = await supabase
+          .rpc('user_owns_event', {
+            event_id_param: eventId,
+            user_id_param: user.id
+          });
+
+        if (error) {
+          console.error('Error checking event ownership:', error);
+          setCheckingOwnership(false);
+          return;
+        }
+
+        setIsOwnEvent(ownership === true);
+        
+        if (ownership === true) {
+          toast({
+            title: "Cannot Purchase Own Tickets",
+            description: "Event organizers cannot buy tickets for their own events.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error checking ownership:', error);
+      } finally {
+        setCheckingOwnership(false);
+      }
+    };
+
+    checkEventOwnership();
+  }, [user, eventId]);
 
   // Calculate total amount helper
   const calculateTotal = (tiers: any[] = [], addons: any[] = []) => {
@@ -318,6 +364,40 @@ export const CheckoutFlow: React.FC = () => {
   };
 
   const renderStepContent = () => {
+    if (checkingOwnership) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Checking access...</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (isOwnEvent) {
+      return (
+        <Card className="border-destructive">
+          <CardContent className="py-12 text-center space-y-4">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <X className="w-8 h-8 text-destructive" />
+            </div>
+            <h2 className="text-2xl font-bold">Cannot Purchase Tickets</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              As the organizer of this event, you cannot purchase tickets for yourself. 
+              This restriction is in place to maintain transparency and prevent conflicts of interest.
+            </p>
+            <Button 
+              onClick={() => navigate('/events')}
+              className="mt-4"
+            >
+              Browse Other Events
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    
     if (loadingEvent) {
       return (
         <Card>
@@ -441,7 +521,7 @@ export const CheckoutFlow: React.FC = () => {
       </div>
 
       {/* Mobile Footer Navigation */}
-      {currentStep !== 'confirmation' && (
+      {currentStep !== 'confirmation' && !isOwnEvent && !checkingOwnership && (
         <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t">
           <div className="container mx-auto px-4 py-4 max-w-2xl">
             <div className="flex items-center justify-between gap-4">
