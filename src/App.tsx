@@ -43,7 +43,9 @@ import AdminTestimonials from "./pages/Admin/Testimonials";
 import AdminHomeContent from "./pages/Admin/HomeContent";
 import AdminNewsletter from "./pages/Admin/Newsletter";
 import AdminBlogPosts from "./pages/Admin/BlogPosts";
+import AdminBlogComments from "./pages/Admin/BlogComments";
 import AdminVideoTutorials from "./pages/Admin/VideoTutorials";
+import AdminVideoComments from "./pages/Admin/VideoComments";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -124,7 +126,9 @@ const App = () => {
                     <Route path="contacts" element={<AdminContacts />} />
                     <Route path="testimonials" element={<AdminTestimonials />} />
             <Route path="blog" element={<AdminBlogPosts />} />
+            <Route path="blog-comments" element={<AdminBlogComments />} />
             <Route path="video-tutorials" element={<AdminVideoTutorials />} />
+            <Route path="video-comments" element={<AdminVideoComments />} />
                   </Route>
                   
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote, BookOpen, Video } from "lucide-react";
+import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote, BookOpen, Video, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,9 @@ const adminMenuItems = [
   { title: "Services", url: "/admin/services", icon: Briefcase },
   { title: "Orders", url: "/admin/orders", icon: Package },
   { title: "Blog Posts", url: "/admin/blog", icon: BookOpen },
+  { title: "Blog Comments", url: "/admin/blog-comments", icon: MessageSquare },
   { title: "Video Tutorials", url: "/admin/video-tutorials", icon: Video },
+  { title: "Video Comments", url: "/admin/video-comments", icon: MessageSquare },
   { title: "Newsletter", url: "/admin/newsletter", icon: Mail },
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
