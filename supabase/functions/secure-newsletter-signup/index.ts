@@ -1,10 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { validateCSRFToken } from '../_shared/csrf-validation.ts'
 import { sanitizeEmail, validateSecureInput } from '../_shared/input-sanitization.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-csrf-token',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -33,6 +32,8 @@ Deno.serve(async (req) => {
     );
 
     const rawData = await req.json() as NewsletterSignupData;
+    
+    console.log('Newsletter signup request received:', { email: rawData.email, source: rawData.source });
 
     // Validate required fields
     if (!rawData.email) {
