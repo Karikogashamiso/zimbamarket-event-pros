@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Menu, Heart, LogOut, Search, User, Shield, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import MobileMenu from "./MobileMenu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,8 +25,10 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasBusinessListings, setHasBusinessListings] = useState(false);
   const [hasOrganizerProfile, setHasOrganizerProfile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkUserAccess = async () => {
@@ -97,6 +99,19 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
     }
   };
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const headerStyles = variant === "solid" 
     ? "bg-white dark:bg-card border-border shadow-md" 
     : "bg-white/20 md:bg-white/10 backdrop-blur-md border-white/30 md:border-white/20 shadow-lg md:shadow-none";
@@ -118,48 +133,67 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
     : "hover:bg-white/20";
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles} transition-all duration-300`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 md:h-20 gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center mr-8">
-            <h1 className={`text-2xl md:text-3xl font-bold ${textStyles}`}>
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <h1 className={`text-xl md:text-2xl lg:text-3xl font-bold ${textStyles} transition-colors`}>
               Zim<span className={logoAccentStyles}>EventPro</span>
             </h1>
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Browse</Link>
-            <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Events & Tickets</Link>
-            <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Organizer</Link>
-            <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>About</Link>
-            <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Contact</Link>
+          <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
+            <Link to="/categories" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm xl:text-base`}>
+              Browse
+            </Link>
+            <Link to="/events" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm xl:text-base whitespace-nowrap`}>
+              Events
+            </Link>
+            <Link to="/organizer" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm xl:text-base`}>
+              Organizer
+            </Link>
+            <Link to="/about" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm xl:text-base`}>
+              About
+            </Link>
+            <Link to="/contact" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm xl:text-base`}>
+              Contact
+            </Link>
           </nav>
           
           {/* Desktop Search */}
-          <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${variant === "solid" ? "text-muted-foreground" : "text-white/70"}`} />
+          <div className="hidden lg:flex items-center flex-1 max-w-md">
+            <div className="relative w-full group">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors ${variant === "solid" ? "text-muted-foreground group-focus-within:text-primary" : "text-white/70 group-focus-within:text-white"}`} />
               <Input
-                placeholder="Search services..."
-                className={`pl-10 ${searchStyles}`}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    const target = e.target as HTMLInputElement;
-                    if (target.value.trim()) {
-                      window.location.href = `/search?q=${encodeURIComponent(target.value.trim())}`;
-                    }
-                  }
-                }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                placeholder="Search services, events..."
+                className={`pl-10 h-10 transition-all duration-200 ${searchStyles}`}
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSearch}
+                  className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 ${variant === "solid" ? "hover:bg-muted" : "hover:bg-white/10"}`}
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
           
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
             <Link to="/favorites">
-              <Button variant="ghost" size="icon" className={`${textStyles} ${buttonStyles}`}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`${textStyles} ${buttonStyles} transition-all duration-200`}
+              >
                 <Heart className="w-5 h-5" />
               </Button>
             </Link>
@@ -168,21 +202,21 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className={`flex items-center gap-2 ${variant === "solid" ? "text-foreground hover:bg-muted hover:text-foreground" : "text-white hover:bg-white/20 hover:text-white"}`}
+                    className={`flex items-center gap-2 transition-all duration-200 ${variant === "solid" ? "text-foreground hover:bg-muted hover:text-foreground" : "text-white hover:bg-white/20 hover:text-white"}`}
                   >
                     <User className="w-4 h-4" />
-                    <span className="text-sm">
+                    <span className="text-sm hidden xl:inline">
                       {user.user_metadata?.first_name || user.email?.split('@')[0]}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-md border-border z-[100]">
+                  <DropdownMenuLabel className="text-popover-foreground">My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {isAdmin && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link to="/admin" className="flex items-center cursor-pointer">
+                        <Link to="/admin" className="flex items-center cursor-pointer text-popover-foreground hover:text-primary">
                           <Shield className="mr-2 h-4 w-4" />
                           <span>Admin Dashboard</span>
                         </Link>
@@ -192,15 +226,15 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                   )}
                   {hasBusinessListings && (
                     <DropdownMenuItem asChild>
-                      <Link to="/service-provider" className="flex items-center cursor-pointer">
+                      <Link to="/service-provider" className="flex items-center cursor-pointer text-popover-foreground hover:text-primary">
                         <FileText className="mr-2 h-4 w-4" />
-                        <span>Service Provider Dashboard</span>
+                        <span>Service Provider</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
                   {hasOrganizerProfile && (
                     <DropdownMenuItem asChild>
-                      <Link to="/organizer" className="flex items-center cursor-pointer">
+                      <Link to="/organizer" className="flex items-center cursor-pointer text-popover-foreground hover:text-primary">
                         <FileText className="mr-2 h-4 w-4" />
                         <span>Organizer Dashboard</span>
                       </Link>
@@ -208,21 +242,21 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                   )}
                   {(hasBusinessListings || hasOrganizerProfile) && <DropdownMenuSeparator />}
                   <DropdownMenuItem asChild>
-                    <Link to="/my-applications" className="flex items-center cursor-pointer">
+                    <Link to="/my-applications" className="flex items-center cursor-pointer text-popover-foreground hover:text-primary">
                       <FileText className="mr-2 h-4 w-4" />
                       <span>My Applications</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center cursor-pointer">
+                    <Link to="/profile" className="flex items-center cursor-pointer text-popover-foreground hover:text-primary">
                       <User className="mr-2 h-4 w-4" />
-                      <span>My Profile & Bookings</span>
+                      <span>Profile & Bookings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleSignOut}
-                    className="cursor-pointer text-destructive focus:text-destructive"
+                    className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign Out</span>
@@ -231,15 +265,16 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
               </DropdownMenu>
             ) : (
               <Link to="/auth?tab=login">
-                <Button variant={variant === "solid" ? "default" : "glass"} size="sm">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
+                <Button variant={variant === "solid" ? "default" : "glass"} size="sm" className="transition-all duration-200">
+                  <User className="w-4 h-4 lg:mr-2" />
+                  <span className="hidden lg:inline">Sign In</span>
                 </Button>
               </Link>
             )}
             <Link to="/list-business">
-              <Button variant={variant === "solid" ? "default" : "hero"} size="sm">
-                List Business
+              <Button variant={variant === "solid" ? "default" : "hero"} size="sm" className="transition-all duration-200 whitespace-nowrap">
+                <span className="hidden lg:inline">List Business</span>
+                <span className="lg:hidden">List</span>
               </Button>
             </Link>
           </div>
