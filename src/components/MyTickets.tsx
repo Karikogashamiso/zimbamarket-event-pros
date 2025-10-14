@@ -67,13 +67,32 @@ export const MyTickets = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
+      
+      // First get orders for the user
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user!.id);
+
+      if (ordersError) throw ordersError;
+      
+      const orderIds = ordersData?.map(o => o.id) || [];
+      
+      if (orderIds.length === 0) {
+        setTickets([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then fetch tickets with all related data
       const { data, error } = await supabase
         .from('tickets')
         .select(`
           id,
           ticket_number,
           ticket_status,
-          order:orders(
+          order_id,
+          orders!inner(
             id,
             order_number,
             booking_status,
@@ -82,20 +101,22 @@ export const MyTickets = () => {
             currency,
             created_at
           ),
-          ticket_type:ticket_types(
+          ticket_types!inner(
             name,
             description,
-            event:events(
+            event_id,
+            trip_id,
+            events(
               id,
               title,
               start_datetime,
-              venue:venues(name, city)
+              venues(name, city)
             ),
-            trip:transport_trips(
+            transport_trips(
               id,
               trip_number,
               departure_datetime,
-              route:transport_routes(
+              transport_routes(
                 route_name,
                 transport_type,
                 origin_venue:venues!transport_routes_origin_venue_id_fkey(name, city),
@@ -104,11 +125,34 @@ export const MyTickets = () => {
             )
           )
         `)
-        .eq('order.user_id', user!.id)
+        .in('order_id', orderIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets((data as any) || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map((ticket: any) => ({
+        ...ticket,
+        order: ticket.orders,
+        ticket_type: {
+          name: ticket.ticket_types.name,
+          description: ticket.ticket_types.description,
+          event: ticket.ticket_types.events ? {
+            id: ticket.ticket_types.events.id,
+            title: ticket.ticket_types.events.title,
+            start_datetime: ticket.ticket_types.events.start_datetime,
+            venue: ticket.ticket_types.events.venues
+          } : undefined,
+          trip: ticket.ticket_types.transport_trips ? {
+            id: ticket.ticket_types.transport_trips.id,
+            trip_number: ticket.ticket_types.transport_trips.trip_number,
+            departure_datetime: ticket.ticket_types.transport_trips.departure_datetime,
+            route: ticket.ticket_types.transport_trips.transport_routes
+          } : undefined
+        }
+      }));
+      
+      setTickets(transformedData);
     } catch (error: any) {
       console.error('Error fetching tickets:', error);
       toast({
