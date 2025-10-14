@@ -12,7 +12,9 @@ import SearchResults from "./pages/SearchResults";
 import ServiceDetail from "./pages/ServiceDetail";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
 import VideoTutorials from "./pages/VideoTutorials";
+import VideoTutorialDetail from "./pages/VideoTutorialDetail";
 import ListBusiness from "./pages/ListBusiness";
 import Help from "./pages/Help";
 import Contact from "./pages/Contact";
@@ -87,7 +89,9 @@ const App = () => {
                   <Route path="/business/:id" element={<Layout><BusinessListingDetail /></Layout>} />
                   <Route path="/about" element={<Layout><About /></Layout>} />
                   <Route path="/blog" element={<Layout><Blog /></Layout>} />
+                  <Route path="/blog/:slug" element={<Layout><BlogDetail /></Layout>} />
                   <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
+                  <Route path="/video-tutorial/:id" element={<Layout><VideoTutorialDetail /></Layout>} />
                   <Route path="/favorites" element={<Layout><Favorites /></Layout>} />
                   <Route path="/profile" element={<Layout><Profile /></Layout>} />
                   <Route path="/booking-payment-success" element={<Layout><BookingPaymentSuccess /></Layout>} />

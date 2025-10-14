@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_comments: {
+        Row: {
+          author_email: string | null
+          author_name: string
+          blog_post_id: string
+          content: string
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_name: string
+          blog_post_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          author_email?: string | null
+          author_name?: string
+          blog_post_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_comments_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_likes: {
+        Row: {
+          blog_post_id: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          blog_post_id: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          blog_post_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_likes_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author_avatar: string | null
@@ -2648,6 +2721,79 @@ export type Database = {
             columns: ["organizer_id"]
             isOneToOne: false
             referencedRelation: "organizers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_comments: {
+        Row: {
+          author_email: string | null
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          updated_at: string
+          user_id: string | null
+          video_id: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_name: string
+          content: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          video_id: string
+        }
+        Update: {
+          author_email?: string | null
+          author_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_tutorials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string | null
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_tutorials"
             referencedColumns: ["id"]
           },
         ]
