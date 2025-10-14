@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useOrderCreation } from './useOrderCreation';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TicketTier {
   ticketTypeId: string;
@@ -34,6 +35,7 @@ export const useSimpleCheckout = () => {
   const { createOrder, loading: orderLoading } = useOrderCreation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const processCheckout = async (checkoutData: CheckoutData) => {
     setIsProcessing(true);
@@ -45,6 +47,23 @@ export const useSimpleCheckout = () => {
       // Validate required data
       if (!checkoutData.customerInfo || !checkoutData.ticketTiers || checkoutData.ticketTiers.length === 0) {
         throw new Error('Missing required checkout information');
+      }
+
+      // Check if user is trying to buy tickets for their own event
+      if (user && checkoutData.event?.id) {
+        const { data: eventOwnership, error: ownershipError } = await supabase
+          .rpc('user_owns_event', {
+            event_id_param: checkoutData.event.id,
+            user_id_param: user.id
+          });
+
+        if (ownershipError) {
+          console.error('Error checking event ownership:', ownershipError);
+        }
+
+        if (eventOwnership === true) {
+          throw new Error('Event organizers cannot purchase tickets for their own events');
+        }
       }
 
       // Prepare order items from ticket tiers
