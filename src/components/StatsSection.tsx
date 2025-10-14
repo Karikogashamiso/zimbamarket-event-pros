@@ -1,24 +1,29 @@
 import { useEffect, useState } from "react";
 import { Users, Award, MapPin, Calendar } from "lucide-react";
+import { useStats } from "@/hooks/useStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const StatsSection = () => {
-  const [stats, setStats] = useState({
+  const { data: statsData, isLoading } = useStats();
+  const [animatedStats, setAnimatedStats] = useState({
     providers: 0,
     events: 0,
     cities: 0,
     satisfaction: 0
   });
 
-  // Animate numbers on mount
+  // Animate numbers when data loads
   useEffect(() => {
+    if (!statsData) return;
+
     const targets = {
-      providers: 2500,
-      events: 15000,
-      cities: 12,
-      satisfaction: 98
+      providers: statsData.totalProviders,
+      events: statsData.totalEvents,
+      cities: statsData.totalCities,
+      satisfaction: statsData.satisfactionRate
     };
 
-    const duration = 2000; // 2 seconds
+    const duration = 2000;
     const steps = 60;
     const stepDuration = duration / steps;
 
@@ -28,7 +33,7 @@ const StatsSection = () => {
       currentStep++;
       const progress = currentStep / steps;
       
-      setStats({
+      setAnimatedStats({
         providers: Math.floor(targets.providers * progress),
         events: Math.floor(targets.events * progress),
         cities: Math.floor(targets.cities * progress),
@@ -37,39 +42,57 @@ const StatsSection = () => {
       
       if (currentStep >= steps) {
         clearInterval(timer);
-        setStats(targets);
+        setAnimatedStats(targets);
       }
     }, stepDuration);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [statsData]);
 
   const statItems = [
     {
       icon: Users,
-      value: stats.providers.toLocaleString(),
+      value: animatedStats.providers.toLocaleString(),
       label: "Trusted Providers",
       suffix: "+"
     },
     {
       icon: Calendar,
-      value: stats.events.toLocaleString(),
+      value: animatedStats.events.toLocaleString(),
       label: "Events Planned",
       suffix: "+"
     },
     {
       icon: MapPin,
-      value: stats.cities,
+      value: animatedStats.cities,
       label: "Cities Covered",
       suffix: ""
     },
     {
       icon: Award,
-      value: stats.satisfaction,
+      value: animatedStats.satisfaction,
       label: "Client Satisfaction",
       suffix: "%"
     }
   ];
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-gradient-to-r from-primary/5 via-background to-accent/5">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="text-center">
+                <Skeleton className="w-16 h-16 rounded-2xl mx-auto mb-4" />
+                <Skeleton className="h-10 w-24 mx-auto mb-2" />
+                <Skeleton className="h-4 w-32 mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-gradient-to-r from-primary/5 via-background to-accent/5">

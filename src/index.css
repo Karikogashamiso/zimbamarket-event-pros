@@ -164,24 +164,47 @@ All colors MUST be HSL.
   }
   
   .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105 cursor-pointer;
+    @apply transition-transform duration-300 hover:scale-105 cursor-pointer active:scale-95;
   }
 
   .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl;
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-xl active:translate-y-0;
   }
 
   .hover-glow {
     @apply transition-all duration-300 hover:shadow-glow-primary;
   }
+
+  .smooth-bounce {
+    @apply animate-bounce hover:animate-none;
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   
   /* Card Components */
   .card-interactive {
-    @apply hover-scale hover:shadow-card-hover transition-all duration-300;
+    @apply hover-scale hover:shadow-card-hover transition-all duration-300 active:scale-100;
   }
 
   .card-elegant {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl shadow-elegant;
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl shadow-elegant hover:shadow-card-hover transition-shadow duration-300;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/30 rounded-2xl;
   }
 
   /* Button Enhancements */
@@ -219,10 +242,25 @@ All colors MUST be HSL.
 
   /* Glass morphism */
   .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-colors duration-300;
   }
 
   .glass-dark {
-    @apply bg-black/10 backdrop-blur-md border border-black/20;
+    @apply bg-black/10 backdrop-blur-md border border-black/20 hover:bg-black/15 transition-colors duration-300;
+  }
+
+  /* Smooth transitions for all interactive elements */
+  button, a, [role="button"] {
+    @apply active:scale-95 transition-all duration-200;
+  }
+
+  /* Focus improvements for accessibility */
+  input:focus, textarea:focus, select:focus {
+    @apply ring-2 ring-primary ring-offset-2 transition-all duration-200;
+  }
+
+  /* Smooth scroll padding for anchor links */
+  html {
+    scroll-padding-top: 80px;
   }
 }

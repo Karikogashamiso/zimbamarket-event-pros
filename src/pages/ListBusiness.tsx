@@ -28,6 +28,7 @@ import {
   Globe,
   Zap
 } from "lucide-react";
+import { useStats } from "@/hooks/useStats";
 
 const ListBusiness = () => {
   const { toast } = useToast();
@@ -372,11 +373,13 @@ const ListBusiness = () => {
     { name: "Transportation", icon: Globe, popular: false, color: "bg-gradient-to-br from-slate-500 to-slate-600" }
   ];
 
+  const { data: statsData } = useStats();
+  
   const stats = [
-    { number: "500+", label: "Active Vendors" },
-    { number: "10,000+", label: "Monthly Visitors" },
-    { number: "5,000+", label: "Events Booked" },
-    { number: "98%", label: "Customer Satisfaction" }
+    { number: `${statsData?.totalProviders || "500"}+`, label: "Active Vendors" },
+    { number: `${statsData?.totalOrders.toLocaleString() || "10,000"}+`, label: "Monthly Visitors" },
+    { number: `${statsData?.totalEvents.toLocaleString() || "5,000"}+`, label: "Events Booked" },
+    { number: `${statsData?.satisfactionRate || "98"}%`, label: "Customer Satisfaction" }
   ];
 
   return (

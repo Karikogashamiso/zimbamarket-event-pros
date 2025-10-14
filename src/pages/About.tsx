@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import LocationsAndServices from "@/components/LocationsAndServices";
+import { useStats } from "@/hooks/useStats";
 
 const About = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -97,11 +98,13 @@ const About = () => {
     }
   ];
 
+  const { data: statsData } = useStats();
+  
   const stats = [
-    { number: "10,000+", label: "Happy Customers" },
-    { number: "5,000+", label: "Successful Events" },
-    { number: "500+", label: "Verified Vendors" },
-    { number: "98%", label: "Satisfaction Rate" }
+    { number: `${statsData?.totalOrders.toLocaleString() || "10,000"}+`, label: "Happy Customers" },
+    { number: `${statsData?.totalEvents.toLocaleString() || "5,000"}+`, label: "Successful Events" },
+    { number: `${statsData?.totalProviders.toLocaleString() || "500"}+`, label: "Verified Vendors" },
+    { number: `${statsData?.satisfactionRate || "98"}%`, label: "Satisfaction Rate" }
   ];
 
   return (
