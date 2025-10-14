@@ -194,6 +194,24 @@ const ServiceDetail = () => {
       return;
     }
 
+    // Check if user owns this service (prevent self-booking)
+    if (user) {
+      const { data: businessCheck } = await supabase
+        .from('services')
+        .select('business_listings!inner(user_id)')
+        .eq('id', service.id)
+        .single();
+
+      if (businessCheck?.business_listings?.user_id === user.id) {
+        toast({
+          title: "Cannot Book Own Service",
+          description: "Service providers cannot create booking requests for their own services.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Validate form
     if (!validateForm()) {
       return;

@@ -84,11 +84,12 @@ serve(async (req: Request) => {
     // Fetch ticket types and calculate total
     let totalAmount = 0;
     const ticketTypesData = [];
+    let eventId = null;
 
     for (const item of orderData.items) {
       const { data: ticketType, error: ticketError } = await supabaseAdmin
         .from('ticket_types')
-        .select('id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active')
+        .select('id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active, event_id, trip_id')
         .eq('id', item.ticket_type_id)
         .single();
 
@@ -114,6 +115,11 @@ serve(async (req: Request) => {
         );
       }
 
+      // Store event_id for ownership check
+      if (ticketType.event_id) {
+        eventId = ticketType.event_id;
+      }
+
       // Determine price (early bird or regular)
       let price = ticketType.base_price;
       if (ticketType.early_bird_price && ticketType.early_bird_end_datetime) {
@@ -135,6 +141,22 @@ serve(async (req: Request) => {
     }
 
     console.log('Order total calculated:', totalAmount);
+
+    // Check if user is trying to buy their own event tickets
+    if (user && eventId) {
+      const { data: eventOwnership } = await supabaseAdmin
+        .rpc('user_owns_event', { 
+          event_id_param: eventId, 
+          user_id_param: user.id 
+        });
+
+      if (eventOwnership === true) {
+        return new Response(
+          JSON.stringify({ error: 'Event organizers cannot purchase tickets for their own events' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Create order using admin client to bypass RLS
     // IMPORTANT: Link to user_id if authenticated, otherwise use email for guest tracking

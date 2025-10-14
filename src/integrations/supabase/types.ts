@@ -2649,6 +2649,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      user_owns_event: {
+        Args: { event_id_param: string; user_id_param: string }
+        Returns: boolean
+      }
       user_owns_order_tickets: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
