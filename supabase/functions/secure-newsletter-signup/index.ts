@@ -182,10 +182,14 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Newsletter signup processing error:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        message: 'Unable to process your subscription. Please try again later.'
+        message: error instanceof Error ? error.message : 'Unable to process your subscription. Please try again later.',
+        errorType: error instanceof Error ? error.constructor.name : typeof error
       }),
       { 
         status: 500, 
