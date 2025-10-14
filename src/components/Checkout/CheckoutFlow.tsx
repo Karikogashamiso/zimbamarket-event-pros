@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Users, Shield } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Users, Shield, X } from 'lucide-react';
 import { EventSelection } from './EventSelection';
 import { SeatSelection } from './SeatSelection';
 import { TicketTiers } from './TicketTiers';
@@ -411,9 +411,20 @@ export const CheckoutFlow: React.FC = () => {
               </p>
             </div>
           </div>
-          <Badge variant="secondary">
-            {currentStepIndex + 1}/{STEPS.length}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">
+              {currentStepIndex + 1}/{STEPS.length}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="h-9 w-9 p-0"
+              title="Cancel and go back"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
         {/* Progress Bar */}
