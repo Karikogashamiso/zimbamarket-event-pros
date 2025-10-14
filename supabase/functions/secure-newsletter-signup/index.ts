@@ -72,11 +72,22 @@ Deno.serve(async (req) => {
       'unknown';
 
     // Check if email already exists
-    const { data: existingSubscription } = await supabaseClient
+    const { data: existingSubscription, error: checkError } = await supabaseClient
       .from('newsletter_subscriptions')
       .select('id, is_active')
       .eq('email', sanitizedEmail)
       .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error checking existing subscription:', checkError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Database error',
+          message: 'Unable to check existing subscriptions'
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (existingSubscription) {
       if (existingSubscription.is_active) {
@@ -138,10 +149,12 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('Database insertion error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return new Response(
         JSON.stringify({ 
           error: 'Failed to subscribe',
-          message: 'Unable to process your subscription. Please try again.'
+          message: error.message || 'Unable to process your subscription. Please try again.',
+          details: error.hint || error.details
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
