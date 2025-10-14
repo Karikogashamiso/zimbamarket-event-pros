@@ -18,11 +18,15 @@ import {
   Share2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const VideoTutorials = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [tutorials, setTutorials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { id: "all", label: "All Tutorials" },
@@ -33,92 +37,44 @@ const VideoTutorials = () => {
     { id: "tips", label: "Pro Tips" }
   ];
 
-  const tutorials = [
-    {
-      id: 1,
-      title: "Complete Wedding Planning Guide for Zimbabwe",
-      description: "Learn how to plan the perfect Zimbabwean wedding from start to finish. This comprehensive tutorial covers everything from budget planning to vendor selection.",
-      duration: "15:30",
-      views: 12500,
-      likes: 890,
-      category: "wedding",
-      level: "Beginner",
-      instructor: "Sarah Mukamuri",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: true,
-      topics: ["Budget Planning", "Venue Selection", "Vendor Management", "Timeline Creation"]
-    },
-    {
-      id: 2,
-      title: "Corporate Event Planning: From Concept to Execution",
-      description: "Master the art of corporate event planning with this step-by-step guide covering strategy, logistics, and execution for professional events.",
-      duration: "22:45",
-      views: 8200,
-      likes: 650,
-      category: "corporate",
-      level: "Intermediate",
-      instructor: "David Chikwanha",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      topics: ["Corporate Strategy", "Logistics", "ROI Measurement", "Networking"]
-    },
-    {
-      id: 3,
-      title: "Event Budgeting Made Simple",
-      description: "Discover how to create realistic event budgets that maximize impact while minimizing costs. Perfect for beginners and experienced planners alike.",
-      duration: "12:20",
-      views: 15600,
-      likes: 1200,
-      category: "basics",
-      level: "Beginner",
-      instructor: "Grace Mutasa",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: true,
-      topics: ["Budget Allocation", "Cost Control", "Vendor Negotiations", "Contingency Planning"]
-    },
-    {
-      id: 4,
-      title: "Growing Your Event Business on ZimEventPro",
-      description: "Learn how to maximize your business potential on ZimEventPro platform. Get tips on profile optimization, customer engagement, and booking success.",
-      duration: "18:15",
-      views: 5400,
-      likes: 420,
-      category: "vendor",
-      level: "Intermediate",
-      instructor: "Michael Banda",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      topics: ["Profile Optimization", "Customer Service", "Marketing", "Reviews Management"]
-    },
-    {
-      id: 5,
-      title: "Traditional Zimbabwean Wedding Ceremonies",
-      description: "Understand the cultural significance and proper execution of traditional Zimbabwean wedding ceremonies while blending modern elements.",
-      duration: "25:40",
-      views: 9800,
-      likes: 750,
-      category: "wedding",
-      level: "Intermediate",
-      instructor: "Patricia Dube",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: true,
-      topics: ["Cultural Traditions", "Ceremony Planning", "Modern Integration", "Family Coordination"]
-    },
-    {
-      id: 6,
-      title: "Event Day Crisis Management",
-      description: "Prepare for the unexpected with professional crisis management techniques. Learn how to handle common event day challenges with confidence.",
-      duration: "14:55",
-      views: 6700,
-      likes: 480,
-      category: "tips",
-      level: "Advanced",
-      instructor: "Jennifer Moyo",
-      thumbnail: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      topics: ["Crisis Prevention", "Quick Solutions", "Team Coordination", "Client Communication"]
+  useEffect(() => {
+    fetchTutorials();
+  }, []);
+
+  const fetchTutorials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('video_tutorials')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Transform data to match component structure
+      const transformedData = (data || []).map(tutorial => ({
+        id: tutorial.id,
+        title: tutorial.title,
+        description: tutorial.description,
+        duration: tutorial.duration || "0:00",
+        views: tutorial.view_count || 0,
+        likes: 0,
+        category: tutorial.category,
+        level: tutorial.difficulty_level.charAt(0).toUpperCase() + tutorial.difficulty_level.slice(1),
+        instructor: "ZimEventPro Team",
+        thumbnail: tutorial.thumbnail_url || "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
+        featured: tutorial.is_featured,
+        topics: tutorial.tags || []
+      }));
+      
+      setTutorials(transformedData);
+    } catch (error) {
+      console.error('Error fetching tutorials:', error);
+      toast.error('Failed to load video tutorials');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const resources = [
     {
@@ -156,6 +112,17 @@ const VideoTutorials = () => {
   });
 
   const featuredTutorials = tutorials.filter(tutorial => tutorial.featured);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">Loading video tutorials...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

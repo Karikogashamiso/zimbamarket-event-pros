@@ -66,6 +66,8 @@ export const BlogPostsManager = () => {
     is_featured: false,
     is_published: false,
   });
+  
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -282,14 +284,56 @@ export const BlogPostsManager = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="featured_image">Featured Image URL</Label>
+              <div>
+                <Label htmlFor="featured_image">Featured Image</Label>
+                <div className="space-y-2">
                   <Input
                     id="featured_image"
-                    value={formData.featured_image}
-                    onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      setUploadingImage(true);
+                      try {
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${Math.random()}.${fileExt}`;
+                        const filePath = `${fileName}`;
+
+                        const { error: uploadError } = await supabase.storage
+                          .from('blog-images')
+                          .upload(filePath, file);
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('blog-images')
+                          .getPublicUrl(filePath);
+
+                        setFormData({ ...formData, featured_image: publicUrl });
+                        toast.success('Image uploaded successfully');
+                      } catch (error: any) {
+                        console.error('Error uploading image:', error);
+                        toast.error(error.message || 'Failed to upload image');
+                      } finally {
+                        setUploadingImage(false);
+                      }
+                    }}
+                    disabled={uploadingImage}
                   />
+                  {uploadingImage && <p className="text-sm text-muted-foreground">Uploading...</p>}
+                  {formData.featured_image && (
+                    <div className="relative w-full h-40 border rounded overflow-hidden">
+                      <img 
+                        src={formData.featured_image} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                 </div>
+              </div>
 
                 <div>
                   <Label htmlFor="read_time">Read Time (minutes)</Label>

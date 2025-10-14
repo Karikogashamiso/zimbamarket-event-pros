@@ -10,3 +10,4 @@ export { default as AdminNewsletter } from './Newsletter';
 export { default as AdminReports } from './Reports';
 export { default as AdminContacts } from './Contacts';
 export { default as AdminBlogPosts } from './BlogPosts';
+export { default as AdminVideoTutorials } from './VideoTutorials';

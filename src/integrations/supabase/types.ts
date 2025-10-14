@@ -2652,6 +2652,60 @@ export type Database = {
           },
         ]
       }
+      video_tutorials: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          difficulty_level: string | null
+          duration: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          published_at: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+          view_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          difficulty_level?: string | null
+          duration?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty_level?: string | null
+          duration?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       business_metrics: {
