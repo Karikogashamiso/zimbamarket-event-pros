@@ -28,6 +28,7 @@ const adminMenuItems = [
   { title: "Events", url: "/admin/events", icon: Calendar },
   { title: "Services", url: "/admin/services", icon: Briefcase },
   { title: "Orders", url: "/admin/orders", icon: Package },
+  { title: "Newsletter", url: "/admin/newsletter", icon: Mail },
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
   { title: "Testimonials", url: "/admin/testimonials", icon: Quote },

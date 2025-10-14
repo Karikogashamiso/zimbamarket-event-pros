@@ -39,6 +39,7 @@ import AdminReports from "./pages/Admin/Reports";
 import AdminContacts from "./pages/Admin/Contacts";
 import AdminTestimonials from "./pages/Admin/Testimonials";
 import AdminHomeContent from "./pages/Admin/HomeContent";
+import AdminNewsletter from "./pages/Admin/Newsletter";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import Auth from "./pages/Auth";
@@ -112,6 +113,7 @@ const App = () => {
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="services" element={<AdminServices />} />
                     <Route path="orders" element={<AdminOrders />} />
+                    <Route path="newsletter" element={<AdminNewsletter />} />
                     <Route path="reports" element={<AdminReports />} />
                     <Route path="contacts" element={<AdminContacts />} />
                     <Route path="testimonials" element={<AdminTestimonials />} />

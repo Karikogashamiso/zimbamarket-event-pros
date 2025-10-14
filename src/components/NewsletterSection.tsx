@@ -3,27 +3,55 @@ import { Input } from "@/components/ui/input";
 import { Mail, Gift, Bell, Users } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const emailSchema = z.string().email("Please enter a valid email address");
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubscribe = () => {
-    if (!email || !email.includes('@')) {
+  const handleSubscribe = async () => {
+    // Validate email
+    const validation = emailSchema.safeParse(email);
+    if (!validation.success) {
       toast({
         title: "Invalid Email",
-        description: "Please enter a valid email address.",
+        description: validation.error.errors[0].message,
         variant: "destructive",
       });
       return;
     }
-    
-    // Navigate to contact page or show success
-    toast({
-      title: "Thank You!",
-      description: "Please visit our contact page to complete your subscription.",
-    });
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.functions.invoke('secure-newsletter-signup', {
+        body: {
+          email: email.trim().toLowerCase(),
+          source: 'footer'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Thank You!",
+        description: "Successfully subscribed to our newsletter!",
+      });
+      setEmail("");
+    } catch (error: any) {
+      console.error('Newsletter signup error:', error);
+      toast({
+        title: "Subscription Failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const benefits = [
@@ -96,6 +124,8 @@ const NewsletterSection = () => {
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
+                    disabled={isLoading}
                     className="pl-12 h-14 text-lg bg-background border-border focus:border-primary"
                   />
                 </div>
@@ -104,14 +134,11 @@ const NewsletterSection = () => {
                   size="lg" 
                   className="h-14 px-8 text-lg font-semibold hover-scale"
                   onClick={handleSubscribe}
+                  disabled={isLoading}
                 >
-                  Subscribe Now
+                  {isLoading ? "Subscribing..." : "Subscribe Now"}
                 </Button>
               </div>
-              
-              <Link to="/contact" className="text-sm text-primary hover:underline block mb-4">
-                Or subscribe via our contact form
-              </Link>
               
               <p className="text-sm text-muted-foreground">
                 We respect your privacy. Unsubscribe at any time. 
