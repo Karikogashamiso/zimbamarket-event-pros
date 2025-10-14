@@ -45,8 +45,10 @@ Deno.serve(async (req) => {
 
     // Sanitize email
     const sanitizedEmail = sanitizeEmail(rawData.email);
+    console.log('Email sanitized:', sanitizedEmail);
     
     if (!sanitizedEmail) {
+      console.error('Email sanitization failed for:', rawData.email);
       return new Response(
         JSON.stringify({ error: 'Invalid email format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,6 +57,8 @@ Deno.serve(async (req) => {
 
     // Additional security validation
     const validation = validateSecureInput(sanitizedEmail);
+    console.log('Security validation result:', validation);
+    
     if (!validation.isValid) {
       console.warn('Potentially malicious email input detected:', validation.reason);
       return new Response(
@@ -70,26 +74,33 @@ Deno.serve(async (req) => {
     const sanitizedSource = rawData.source ? 
       rawData.source.toLowerCase().replace(/[^a-z0-9_-]/g, '').substring(0, 50) : 
       'unknown';
+    
+    console.log('Proceeding with sanitized data:', { email: sanitizedEmail, source: sanitizedSource });
 
     // Check if email already exists
+    console.log('Checking for existing subscription...');
     const { data: existingSubscription, error: checkError } = await supabaseClient
       .from('newsletter_subscriptions')
       .select('id, is_active')
       .eq('email', sanitizedEmail)
       .single();
 
+    console.log('Check result:', { existingSubscription, checkError });
+
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking existing subscription:', checkError);
       return new Response(
         JSON.stringify({ 
           error: 'Database error',
-          message: 'Unable to check existing subscriptions'
+          message: 'Unable to check existing subscriptions',
+          details: checkError.message
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (existingSubscription) {
+      console.log('Found existing subscription:', existingSubscription);
       if (existingSubscription.is_active) {
         return new Response(
           JSON.stringify({ 
@@ -132,6 +143,7 @@ Deno.serve(async (req) => {
     }
 
     // Create new subscription
+    console.log('Creating new subscription...');
     const { data, error } = await supabaseClient
       .from('newsletter_subscriptions')
       .insert({
@@ -146,6 +158,8 @@ Deno.serve(async (req) => {
       })
       .select()
       .single();
+    
+    console.log('Insert result:', { data, error });
 
     if (error) {
       console.error('Database insertion error:', error);
