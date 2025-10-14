@@ -68,11 +68,11 @@ export const MyTickets = () => {
     try {
       setLoading(true);
       
-      // First get orders for the user
+      // Fetch orders by user_id OR customer_email (for guest purchases)
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id')
-        .eq('user_id', user!.id);
+        .or(`user_id.eq.${user!.id},customer_email.eq.${user!.email}`);
 
       if (ordersError) throw ordersError;
       
