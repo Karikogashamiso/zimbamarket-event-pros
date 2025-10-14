@@ -39,9 +39,14 @@ const VideoTutorialDetail = () => {
 
   useEffect(() => {
     fetchVideo();
-    fetchComments();
-    fetchLikes();
   }, [id]);
+
+  useEffect(() => {
+    if (video?.id) {
+      fetchComments();
+      fetchLikes();
+    }
+  }, [video?.id, user]);
 
   const fetchVideo = async () => {
     try {

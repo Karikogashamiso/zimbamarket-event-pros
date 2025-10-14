@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const VideoTutorials = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -222,9 +223,11 @@ const VideoTutorials = () => {
                             {tutorial.level}
                           </Badge>
                         </div>
-                        <h3 className="font-bold text-xl mb-3 hover:text-secondary transition-colors cursor-pointer">
-                          {tutorial.title}
-                        </h3>
+                        <Link to={`/video-tutorial/${tutorial.id}`}>
+                          <h3 className="font-bold text-xl mb-3 hover:text-secondary transition-colors cursor-pointer">
+                            {tutorial.title}
+                          </h3>
+                        </Link>
                         <p className="text-muted-foreground mb-4 leading-relaxed">
                           {tutorial.description}
                         </p>
@@ -247,10 +250,12 @@ const VideoTutorials = () => {
                             </Badge>
                           ))}
                         </div>
-                        <Button className="w-full">
-                          <Play className="w-4 h-4 mr-2" />
-                          Watch Tutorial
-                        </Button>
+                        <Link to={`/video-tutorial/${tutorial.id}`}>
+                          <Button className="w-full">
+                            <Play className="w-4 h-4 mr-2" />
+                            Watch Tutorial
+                          </Button>
+                        </Link>
                       </CardContent>
                     </Card>
                   ))}
@@ -288,9 +293,11 @@ const VideoTutorials = () => {
                         </Badge>
                         <span className="text-xs text-muted-foreground">{tutorial.instructor}</span>
                       </div>
-                      <h3 className="font-bold text-lg mb-2 hover:text-secondary transition-colors cursor-pointer line-clamp-2">
-                        {tutorial.title}
-                      </h3>
+                      <Link to={`/video-tutorial/${tutorial.id}`}>
+                        <h3 className="font-bold text-lg mb-2 hover:text-secondary transition-colors cursor-pointer line-clamp-2">
+                          {tutorial.title}
+                        </h3>
+                      </Link>
                       <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                         {tutorial.description}
                       </p>
@@ -304,10 +311,12 @@ const VideoTutorials = () => {
                           {tutorial.likes}
                         </span>
                       </div>
-                      <Button size="sm" className="w-full">
-                        <Play className="w-4 h-4 mr-2" />
-                        Watch Now
-                      </Button>
+                      <Link to={`/video-tutorial/${tutorial.id}`}>
+                        <Button size="sm" className="w-full">
+                          <Play className="w-4 h-4 mr-2" />
+                          Watch Now
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}

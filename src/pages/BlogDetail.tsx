@@ -38,9 +38,14 @@ const BlogDetail = () => {
 
   useEffect(() => {
     fetchBlogPost();
-    fetchComments();
-    fetchLikes();
   }, [slug]);
+
+  useEffect(() => {
+    if (post?.id) {
+      fetchComments();
+      fetchLikes();
+    }
+  }, [post?.id, user]);
 
   const fetchBlogPost = async () => {
     try {

@@ -56,6 +56,7 @@ const Blog = () => {
       // Transform database posts to match component format
       const transformedPosts = (data || []).map(post => ({
         id: post.id,
+        slug: post.slug,
         title: post.title,
         excerpt: post.excerpt,
         author: post.author_name,
@@ -198,9 +199,11 @@ const Blog = () => {
                             {post.readTime}
                           </span>
                         </div>
-                        <h3 className="font-bold text-xl mb-3 hover:text-primary transition-colors cursor-pointer">
-                          {post.title}
-                        </h3>
+                        <Link to={`/blog/${post.slug}`}>
+                          <h3 className="font-bold text-xl mb-3 hover:text-primary transition-colors cursor-pointer">
+                            {post.title}
+                          </h3>
+                        </Link>
                         <p className="text-muted-foreground mb-4 leading-relaxed">
                           {post.excerpt}
                         </p>
@@ -212,15 +215,12 @@ const Blog = () => {
                               </Badge>
                             ))}
                           </div>
-                          <Button variant="ghost" size="sm" className="group" onClick={() => {
-                            toast({
-                              title: "Coming Soon",
-                              description: "Full blog articles are being prepared. Stay tuned!",
-                            });
-                          }}>
-                            Read More
-                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                          </Button>
+                          <Link to={`/blog/${post.slug}`}>
+                            <Button variant="ghost" size="sm" className="group">
+                              Read More
+                              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                          </Link>
                         </div>
                       </CardContent>
                     </Card>
@@ -260,9 +260,11 @@ const Blog = () => {
                             {post.views}
                           </span>
                         </div>
-                        <h3 className="font-bold text-xl mb-3 hover:text-primary transition-colors cursor-pointer">
-                          {post.title}
-                        </h3>
+                        <Link to={`/blog/${post.slug}`}>
+                          <h3 className="font-bold text-xl mb-3 hover:text-primary transition-colors cursor-pointer">
+                            {post.title}
+                          </h3>
+                        </Link>
                         <p className="text-muted-foreground mb-4 leading-relaxed">
                           {post.excerpt}
                         </p>
@@ -282,15 +284,12 @@ const Blog = () => {
                             <Button variant="ghost" size="sm">
                               <Share2 className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="group" onClick={() => {
-                              toast({
-                                title: "Coming Soon",
-                                description: "Full blog articles are being prepared. Stay tuned!",
-                              });
-                            }}>
-                              Read More
-                              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                            </Button>
+                            <Link to={`/blog/${post.slug}`}>
+                              <Button variant="ghost" size="sm" className="group">
+                                Read More
+                                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                              </Button>
+                            </Link>
                           </div>
                         </div>
                       </CardContent>
@@ -338,17 +337,11 @@ const Blog = () => {
                           className="w-16 h-16 object-cover rounded-lg"
                         />
                         <div className="flex-1">
-                          <h4 
-                            className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2 cursor-pointer"
-                            onClick={() => {
-                              toast({
-                                title: "Coming Soon",
-                                description: "Full blog articles are being prepared. Stay tuned!",
-                              });
-                            }}
-                          >
-                            {post.title}
-                          </h4>
+                          <Link to={`/blog/${post.slug}`}>
+                            <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2 cursor-pointer">
+                              {post.title}
+                            </h4>
+                          </Link>
                           <p className="text-xs text-muted-foreground">
                             {new Date(post.date).toLocaleDateString()}
                           </p>
