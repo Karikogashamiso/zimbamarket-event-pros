@@ -53,9 +53,15 @@ serve(async (req: Request) => {
       data: { user },
     } = await supabaseClient.auth.getUser();
 
+    console.log('Authenticated user:', user ? user.id : 'No user (guest checkout)');
+
     const orderData: CreateOrderRequest = await req.json();
-    console.log('Creating order with data:', { ...orderData, items: orderData.items.length });
-    console.log('Using booking_status and payment_status columns (not order_status)');
+    console.log('Creating order with data:', { 
+      customer: `${orderData.customer_first_name} ${orderData.customer_last_name}`,
+      email: orderData.customer_email,
+      items: orderData.items.length,
+      user_id: user?.id || 'null (guest)'
+    });
 
     // Validate required fields
     if (!orderData.customer_first_name || !orderData.customer_last_name || 
@@ -131,21 +137,26 @@ serve(async (req: Request) => {
     console.log('Order total calculated:', totalAmount);
 
     // Create order using admin client to bypass RLS
+    // IMPORTANT: Link to user_id if authenticated, otherwise use email for guest tracking
+    const orderInsertData = {
+      user_id: user?.id || null,  // Link to authenticated user
+      customer_first_name: orderData.customer_first_name,
+      customer_last_name: orderData.customer_last_name,
+      customer_email: orderData.customer_email,
+      customer_phone: orderData.customer_phone,
+      subtotal: totalAmount,
+      total_amount: totalAmount,
+      currency: ticketTypesData[0].currency,
+      booking_status: 'pending' as 'pending',
+      payment_status: 'pending' as 'pending',
+      order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+    };
+
+    console.log('Inserting order with user_id:', orderInsertData.user_id ? 'LINKED to user' : 'GUEST order');
+
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .insert({
-        user_id: user?.id || null,
-        customer_first_name: orderData.customer_first_name,
-        customer_last_name: orderData.customer_last_name,
-        customer_email: orderData.customer_email,
-        customer_phone: orderData.customer_phone,
-        subtotal: totalAmount,
-        total_amount: totalAmount,
-        currency: ticketTypesData[0].currency,
-        booking_status: 'pending',
-        payment_status: 'pending',
-        order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      })
+      .insert(orderInsertData)
       .select()
       .single();
 
