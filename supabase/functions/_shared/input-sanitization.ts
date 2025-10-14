@@ -97,17 +97,13 @@ export function sanitizeEmail(email: string): string {
     return '';
   }
 
-  // Remove dangerous characters and normalize
-  let sanitized = email
-    .toLowerCase()
-    .trim()
-    .replace(/[<>()[\]\\.,;:\s@"]/g, (match) => {
-      // Only allow @ symbol in emails
-      return match === '@' ? match : '';
-    });
-
-  // Basic email format validation
+  // Basic email format validation first
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  
+  // Normalize and trim
+  let sanitized = email.toLowerCase().trim();
+  
+  // Validate format
   if (!emailRegex.test(sanitized)) {
     return '';
   }
