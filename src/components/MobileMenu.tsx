@@ -73,11 +73,9 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
   const menuItems = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: Building2, label: "Venues", href: "/categories?category=venues" },
-    { icon: Users, label: "Service Providers", href: "/categories?category=services" },
-    { icon: Music, label: "Entertainers", href: "/categories?category=entertainment" },
-    { icon: Ticket, label: "Events & Tickets", href: "/events" },
-    { icon: Settings, label: "Organizer Dashboard", href: "/organizer" },
+    { icon: Building2, label: "Browse Services", href: "/categories" },
+    { icon: Ticket, label: "Events", href: "/events" },
+    { icon: Settings, label: "For Organizers", href: "/organizer" },
     { icon: PlusCircle, label: "List Your Business", href: "/list-business" },
   ];
 

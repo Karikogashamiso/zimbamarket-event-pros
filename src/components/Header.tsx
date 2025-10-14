@@ -129,12 +129,12 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors`}>Browse</Link>
-            <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors`}>Events & Tickets</Link>
-            <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors`}>Organizer</Link>
-            <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors`}>About</Link>
-            <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors`}>Contact</Link>
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/categories" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Browse</Link>
+            <Link to="/events" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Events</Link>
+            <Link to="/organizer" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>For Organizers</Link>
+            <Link to="/about" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>About</Link>
+            <Link to="/contact" className={`${textStyles} hover:text-secondary transition-colors font-medium`}>Contact</Link>
           </nav>
           
           {/* Desktop Search */}
