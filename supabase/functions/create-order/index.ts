@@ -185,22 +185,40 @@ serve(async (req: Request) => {
       }
     }
 
+    console.log('Attempting to create tickets:', ticketsToCreate.length);
+    console.log('Sample ticket data:', JSON.stringify(ticketsToCreate[0], null, 2));
+
     const { data: tickets, error: ticketsError } = await supabaseAdmin
       .from('tickets')
       .insert(ticketsToCreate)
       .select();
 
     if (ticketsError) {
-      console.error('Tickets creation error:', ticketsError);
+      console.error('Tickets creation error:', JSON.stringify(ticketsError, null, 2));
+      console.error('Failed ticket data:', JSON.stringify(ticketsToCreate, null, 2));
       // Rollback order if tickets fail
       await supabaseAdmin.from('orders').delete().eq('id', order.id);
       return new Response(
-        JSON.stringify({ error: 'Failed to create tickets', details: ticketsError.message }),
+        JSON.stringify({ 
+          error: 'Failed to create tickets', 
+          details: ticketsError.message,
+          code: ticketsError.code,
+          hint: ticketsError.hint
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Tickets created:', tickets.length);
+    if (!tickets || tickets.length === 0) {
+      console.error('No tickets were created despite no error');
+      await supabaseAdmin.from('orders').delete().eq('id', order.id);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create tickets - no tickets returned' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Successfully created ${tickets.length} tickets:`, tickets.map(t => t.ticket_number));
 
     // Return success response
     return new Response(

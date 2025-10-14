@@ -57,6 +57,7 @@ export const MyTickets = () => {
   const { toast } = useToast();
   const [tickets, setTickets] = useState<TicketWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -77,6 +78,7 @@ export const MyTickets = () => {
       if (ordersError) throw ordersError;
       
       const orderIds = ordersData?.map(o => o.id) || [];
+      setOrderCount(orderIds.length);
       
       if (orderIds.length === 0) {
         setTickets([]);
@@ -211,13 +213,29 @@ export const MyTickets = () => {
       <Card>
         <CardContent className="py-12 text-center">
           <Ticket className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No Tickets Yet</h3>
+          <h3 className="text-xl font-semibold mb-2">No Tickets Available</h3>
           <p className="text-muted-foreground mb-6">
-            You haven't purchased any tickets yet. Browse events and transport to get started!
+            {orderCount > 0 ? (
+              <>
+                You have {orderCount} order{orderCount !== 1 ? 's' : ''} but no tickets were generated. 
+                This may be due to pending payment or a system issue. Please make a new purchase or contact support if you've already paid.
+              </>
+            ) : (
+              <>
+                You haven't purchased any tickets yet. Browse events and transport to get started!
+              </>
+            )}
           </p>
-          <Button onClick={() => window.location.href = '/events'}>
-            Browse Events & Transport
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => window.location.href = '/events'}>
+              Browse Events
+            </Button>
+            {orderCount > 0 && (
+              <Button variant="outline" onClick={() => window.location.href = '/contact'}>
+                Contact Support
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
