@@ -171,20 +171,9 @@ const Categories = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const featuredVenues = [
-    {
-      title: "Premium Wedding Venues",
-      description: "Discover Zimbabwe's most beautiful wedding venues",
-      image: "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
-      count: "50+ venues"
-    },
-    {
-      title: "Corporate Event Spaces", 
-      description: "Professional venues for business events",
-      image: "/lovable-uploads/e49bac6e-5130-4e8d-aa17-17dc70c87e04.png",
-      count: "30+ venues"
-    }
-  ];
+  // Get dynamic counts from categories
+  const venuesCategory = categories.find(c => c.slug === 'venues');
+  const totalServices = categories.reduce((sum, cat) => sum + (cat.service_count || 0), 0);
 
   return (
     <>
@@ -408,14 +397,14 @@ const Categories = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             <Card className="overflow-hidden hover-scale transition-all duration-300 hover:shadow-xl cursor-pointer"
-                  onClick={() => navigate('/search?category=venues')}>
+                  onClick={() => handleCategoryCardClick({ slug: venuesCategory?.slug || 'venues' })}>
               <div className="relative h-64 bg-gradient-to-br from-primary to-primary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-2xl font-bold mb-2">VENUES</h3>
                   <p className="text-white/90 mb-3">Discover premium event spaces</p>
                   <Badge className="bg-white/20 text-white border-white/30">
-                    150+ Available
+                    {venuesCategory?.service_count || 0} Available
                   </Badge>
                 </div>
               </div>
@@ -426,10 +415,10 @@ const Categories = () => {
               <div className="relative h-64 bg-gradient-to-br from-secondary to-secondary/80">
                 <div className="absolute inset-0 bg-black/20"></div>
                 <div className="absolute bottom-6 left-6 text-white">
-                  <h3 className="text-2xl font-bold mb-2">EVENT SERVICES</h3>
+                  <h3 className="text-2xl font-bold mb-2">ALL SERVICES</h3>
                   <p className="text-white/90 mb-3">Complete event solutions</p>
                   <Badge className="bg-white/20 text-white border-white/30">
-                    500+ Professionals
+                    {totalServices} Total
                   </Badge>
                 </div>
               </div>
