@@ -32,21 +32,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate CSRF token
-    const csrfValidation = await validateCSRFToken(req, supabaseClient);
-    if (!csrfValidation.isValid) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'CSRF validation failed',
-          message: csrfValidation.error 
-        }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
     const rawData = await req.json() as NewsletterSignupData;
 
     // Validate required fields
