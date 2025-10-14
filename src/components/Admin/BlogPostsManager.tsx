@@ -13,6 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
@@ -40,6 +50,7 @@ export const BlogPostsManager = () => {
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deletePostId, setDeletePostId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -117,17 +128,18 @@ export const BlogPostsManager = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+  const handleDelete = async () => {
+    if (!deletePostId) return;
 
     try {
       const { error } = await supabase
         .from('blog_posts')
         .delete()
-        .eq('id', id);
+        .eq('id', deletePostId);
 
       if (error) throw error;
       toast.success('Blog post deleted');
+      setDeletePostId(null);
       fetchPosts();
     } catch (error) {
       console.error('Error deleting post:', error);
@@ -358,7 +370,7 @@ export const BlogPostsManager = () => {
                 <Button size="sm" variant="outline" onClick={() => handleEdit(post)}>
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(post.id)}>
+                <Button size="sm" variant="destructive" onClick={() => setDeletePostId(post.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -366,6 +378,21 @@ export const BlogPostsManager = () => {
           </Card>
         ))}
       </div>
+
+      <AlertDialog open={!!deletePostId} onOpenChange={(open) => !open && setDeletePostId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Blog Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this blog post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
