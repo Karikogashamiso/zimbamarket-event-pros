@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author_avatar: string | null
+          author_name: string
+          category: string
+          content: string
+          created_at: string | null
+          excerpt: string
+          featured_image: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          published_at: string | null
+          read_time: number | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          views: number | null
+        }
+        Insert: {
+          author_avatar?: string | null
+          author_name: string
+          category: string
+          content: string
+          created_at?: string | null
+          excerpt: string
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          read_time?: number | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Update: {
+          author_avatar?: string | null
+          author_name?: string
+          category?: string
+          content?: string
+          created_at?: string | null
+          excerpt?: string
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          read_time?: number | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
       booking_analytics: {
         Row: {
           created_at: string

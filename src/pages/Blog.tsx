@@ -17,104 +17,69 @@ import {
   Tag,
   Search
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [blogPosts, setBlogPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const categories = [
     { id: "all", label: "All Posts" },
-    { id: "wedding", label: "Wedding Planning" },
-    { id: "corporate", label: "Corporate Events" },
-    { id: "tips", label: "Event Tips" },
-    { id: "trends", label: "Industry Trends" },
-    { id: "vendor", label: "Vendor Spotlight" }
+    { id: "Events", label: "Events" },
+    { id: "Wedding Planning", label: "Wedding Planning" },
+    { id: "Corporate Events", label: "Corporate Events" },
+    { id: "Event Tips", label: "Event Tips" },
+    { id: "Industry Trends", label: "Industry Trends" },
+    { id: "Vendor Spotlight", label: "Vendor Spotlight" }
   ];
 
-  const blogPosts = [
-    {
-      id: 1,
-      title: "10 Must-Have Features for Your Dream Wedding Venue in Zimbabwe",
-      excerpt: "Planning a wedding in Zimbabwe? Discover the essential features to look for when choosing your perfect wedding venue, from traditional garden settings to modern conference halls.",
-      author: "Sarah Mukamuri",
-      date: "2024-01-15",
-      category: "wedding",
-      readTime: "5 min read",
-      views: 1250,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: true,
-      tags: ["Wedding Venues", "Zimbabwe", "Planning Tips"]
-    },
-    {
-      id: 2,
-      title: "Corporate Event Trends 2024: What's Hot in Zimbabwe's Business Scene",
-      excerpt: "Stay ahead of the curve with the latest corporate event trends making waves in Zimbabwe. From hybrid events to sustainable practices, discover what's shaping the industry.",
-      author: "David Chikwanha",
-      date: "2024-01-12",
-      category: "corporate",
-      readTime: "7 min read",
-      views: 890,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      tags: ["Corporate Events", "Trends", "Business"]
-    },
-    {
-      id: 3,
-      title: "How to Plan a Traditional Zimbabwean Wedding: A Complete Guide",
-      excerpt: "Honor your heritage while creating a memorable celebration. This comprehensive guide covers everything from traditional ceremonies to modern twists on classic customs.",
-      author: "Grace Mutasa",
-      date: "2024-01-10",
-      category: "wedding",
-      readTime: "10 min read",
-      views: 2100,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: true,
-      tags: ["Traditional Wedding", "Culture", "Zimbabwe"]
-    },
-    {
-      id: 4,
-      title: "Budget-Friendly Event Planning: Maximum Impact, Minimum Cost",
-      excerpt: "Create stunning events without breaking the bank. Learn insider tips from Zimbabwe's top event planners on how to stretch your budget while maintaining quality.",
-      author: "Michael Banda",
-      date: "2024-01-08",
-      category: "tips",
-      readTime: "6 min read",
-      views: 1450,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      tags: ["Budget Planning", "Tips", "Cost Saving"]
-    },
-    {
-      id: 5,
-      title: "Vendor Spotlight: Meet Zimbabwe's Rising Catering Stars",
-      excerpt: "Discover the talented chefs and catering companies making a mark in Zimbabwe's event scene. From traditional cuisine to international flavors, meet the culinary artists.",
-      author: "Jennifer Moyo",
-      date: "2024-01-05",
-      category: "vendor",
-      readTime: "8 min read",
-      views: 720,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      tags: ["Vendors", "Catering", "Spotlight"]
-    },
-    {
-      id: 6,
-      title: "The Ultimate Event Timeline: 12 Months to Your Perfect Day",
-      excerpt: "Never miss a deadline again! Our comprehensive 12-month event planning timeline ensures you stay organized and stress-free throughout your planning journey.",
-      author: "Patricia Dube",
-      date: "2024-01-03",
-      category: "tips",
-      readTime: "12 min read",
-      views: 1800,
-      image: "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
-      featured: false,
-      tags: ["Timeline", "Organization", "Planning"]
+  useEffect(() => {
+    fetchBlogPosts();
+  }, []);
+
+  const fetchBlogPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Transform database posts to match component format
+      const transformedPosts = (data || []).map(post => ({
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt,
+        author: post.author_name,
+        date: post.published_at || post.created_at,
+        category: post.category,
+        readTime: `${post.read_time} min read`,
+        views: post.views,
+        image: post.featured_image || "/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png",
+        featured: post.is_featured,
+        tags: post.tags || []
+      }));
+      
+      setBlogPosts(transformedPosts);
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load blog posts",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredPosts = blogPosts.filter(post => {
     const matchesCategory = selectedCategory === "all" || post.category === selectedCategory;
@@ -126,6 +91,17 @@ const Blog = () => {
 
   const featuredPosts = blogPosts.filter(post => post.featured);
   const recentPosts = blogPosts.slice(0, 3);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="h-20"></div>
+        <div className="container mx-auto px-4 py-16 text-center">
+          <p className="text-lg">Loading blog posts...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
