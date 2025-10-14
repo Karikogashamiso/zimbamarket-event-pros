@@ -5,11 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Calendar, LogOut, Save, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Calendar, LogOut, Save, Lock, Eye, EyeOff, Ticket } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerBookings } from '@/components/CustomerBookings';
+import { MyTickets } from '@/components/MyTickets';
 import { Helmet } from 'react-helmet-async';
 import { z } from 'zod';
 
@@ -238,14 +239,18 @@ const Profile = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile">
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </TabsTrigger>
+                <TabsTrigger value="tickets">
+                  <Ticket className="w-4 h-4 mr-2" />
+                  My Tickets
+                </TabsTrigger>
                 <TabsTrigger value="bookings">
                   <Calendar className="w-4 h-4 mr-2" />
-                  My Bookings
+                  Service Bookings
                 </TabsTrigger>
               </TabsList>
 
@@ -408,6 +413,10 @@ const Profile = () => {
                     </form>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="tickets" className="mt-6">
+                <MyTickets />
               </TabsContent>
 
               <TabsContent value="bookings" className="mt-6">
