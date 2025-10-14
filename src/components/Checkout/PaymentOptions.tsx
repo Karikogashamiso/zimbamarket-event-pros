@@ -25,7 +25,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     processingTime: 'Instant',
     fees: 'No additional fees',
     popular: true,
-    available: true
+    available: false
   },
   {
     id: 'onemoney',
@@ -34,7 +34,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     icon: <Smartphone className="h-5 w-5" />,
     processingTime: 'Instant',
     fees: 'No additional fees',
-    available: true
+    available: false
   },
   {
     id: 'card',
