@@ -32,6 +32,7 @@ import Favorites from "./pages/Favorites";
 import BusinessListingDetail from "./pages/BusinessListingDetail";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminCategories from "./pages/Admin/Categories";
 import AdminOrganizers from "./pages/Admin/Organizers";
 import AdminVenues from "./pages/Admin/Venues";
 import AdminEvents from "./pages/Admin/Events";
@@ -116,6 +117,7 @@ const App = () => {
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminDashboard />} />
                     <Route path="home-content" element={<AdminHomeContent />} />
+                    <Route path="categories" element={<AdminCategories />} />
                     <Route path="organizers" element={<AdminOrganizers />} />
                     <Route path="venues" element={<AdminVenues />} />
                     <Route path="events" element={<AdminEvents />} />
