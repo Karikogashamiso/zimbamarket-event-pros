@@ -140,30 +140,48 @@ const VideoTutorialDetail = () => {
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: video.title,
-          text: shareText,
-          url: shareUrl,
-        });
-        toast({
-          title: "Shared successfully",
-          description: "Thanks for sharing!",
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({
-          title: "Link copied",
-          description: "Share link copied to clipboard",
-        });
+        try {
+          await navigator.share({
+            title: video.title,
+            text: shareText,
+            url: shareUrl,
+          });
+          toast({
+            title: "Shared successfully",
+            description: "Thanks for sharing!",
+          });
+          
+          await supabase.from("booking_analytics").insert({
+            service_id: video.id,
+            event_type: "share",
+            event_data: { method: "native" },
+          });
+          return;
+        } catch (shareError) {
+          // If share fails, fall through to clipboard
+          console.log("Share API failed, falling back to clipboard");
+        }
       }
-
+      
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied",
+        description: "Share link copied to clipboard",
+      });
+      
       await supabase.from("booking_analytics").insert({
         service_id: video.id,
         event_type: "share",
-        event_data: { method: navigator.share ? "native" : "clipboard" },
+        event_data: { method: "clipboard" },
       });
     } catch (error) {
       console.error("Error sharing:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

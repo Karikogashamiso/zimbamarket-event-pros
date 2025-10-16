@@ -105,24 +105,38 @@ const VideoTutorials = () => {
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: tutorial.title,
-          text: shareText,
-          url: shareUrl,
-        });
-        toast.success("Shared successfully");
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Link copied to clipboard");
+        try {
+          await navigator.share({
+            title: tutorial.title,
+            text: shareText,
+            url: shareUrl,
+          });
+          toast.success("Shared successfully");
+          
+          await supabase.from("booking_analytics").insert({
+            service_id: tutorial.id,
+            event_type: "share",
+            event_data: { method: "native" },
+          });
+          return;
+        } catch (shareError) {
+          // If share fails, fall through to clipboard
+          console.log("Share API failed, falling back to clipboard");
+        }
       }
-
+      
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+      
       await supabase.from("booking_analytics").insert({
         service_id: tutorial.id,
         event_type: "share",
-        event_data: { method: navigator.share ? "native" : "clipboard" },
+        event_data: { method: "clipboard" },
       });
     } catch (error) {
       console.error("Error sharing:", error);
+      toast.error("Failed to share. Please try again.");
     }
   };
 
