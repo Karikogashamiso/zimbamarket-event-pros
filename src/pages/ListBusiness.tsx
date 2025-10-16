@@ -242,8 +242,13 @@ const ListBusiness = () => {
       // Success
       toast({
         title: "Application Submitted Successfully!",
-        description: "Check your email for confirmation. Our team will review your application within 24 hours.",
+        description: "You can now track your application status in 'My Applications'. Our team will review within 24 hours.",
       });
+
+      // Navigate to applications page after short delay
+      setTimeout(() => {
+        navigate("/my-business-applications");
+      }, 2000);
 
       // Reset form and validation states
       setFormData({
@@ -413,7 +418,7 @@ const ListBusiness = () => {
               Join hundreds of successful event professionals who are growing their businesses with ZimEventPro. Get discovered by thousands of customers planning their perfect events across Zimbabwe.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8 py-4 h-auto hover-scale" onClick={scrollToForm}>
                 <Plus className="w-5 h-5 mr-2" />
                 List Your Business Free
@@ -421,6 +426,14 @@ const ListBusiness = () => {
               <Button variant="outline" size="lg" className="text-lg px-8 py-4 h-auto hover-scale" onClick={scrollToBenefits}>
                 <Users className="w-5 h-5 mr-2" />
                 Learn More
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                className="text-lg px-8 py-4 h-auto hover-scale" 
+                onClick={() => navigate("/my-business-applications")}
+              >
+                View My Applications
               </Button>
             </div>
           </div>
@@ -792,9 +805,9 @@ const ListBusiness = () => {
               </Card>
               
               <div className="space-y-8">
-                <Card className="p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
+                 <Card className="p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
                   <h3 className="text-2xl font-bold mb-4">What Happens Next?</h3>
-                  <div className="space-y-4">
+                  <div className="space-y-4 mb-6">
                     <div className="flex items-start gap-4">
                       <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                         1
@@ -823,6 +836,13 @@ const ListBusiness = () => {
                       </div>
                     </div>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => navigate("/my-business-applications")}
+                  >
+                    Track Your Applications
+                  </Button>
                 </Card>
                 
                 <Card className="p-8 bg-background border-2">
