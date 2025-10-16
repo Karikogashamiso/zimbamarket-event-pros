@@ -48,7 +48,6 @@ const Footer = () => {
 
   const quickLinks = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Browse Services", href: "/categories", icon: Search },
     { name: "Tickets", href: "/tickets", icon: QrCode },
     { name: "Blog", href: "/blog", icon: BookOpen },
     { name: "Video Tutorials", href: "/video-tutorials", icon: Users },
@@ -59,14 +58,14 @@ const Footer = () => {
   ];
 
   const serviceCategories = [
-    { name: "Wedding Venues", href: "/categories?category=venues" },
-    { name: "Catering Services", href: "/categories?category=food" },
-    { name: "Event DJs", href: "/categories?category=entertainment" },
-    { name: "Photography", href: "/categories?category=media" },
-    { name: "Event Planning", href: "/categories?category=planning" },
-    { name: "Decor & Flowers", href: "/categories?category=decor" },
-    { name: "Entertainment", href: "/categories?category=entertainment" },
-    { name: "Audio Visual", href: "/categories?category=technical" }
+    { name: "Wedding Venues", href: "/search?category=venues" },
+    { name: "Catering Services", href: "/search?category=food" },
+    { name: "Event DJs", href: "/search?category=entertainment" },
+    { name: "Photography", href: "/search?category=media" },
+    { name: "Event Planning", href: "/search?category=planning" },
+    { name: "Decor & Flowers", href: "/search?category=decor" },
+    { name: "Entertainment", href: "/search?category=entertainment" },
+    { name: "Audio Visual", href: "/search?category=technical" }
   ];
 
   const locations = [
