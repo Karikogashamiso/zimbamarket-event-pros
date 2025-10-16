@@ -98,26 +98,68 @@ const Profile = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      console.log('Updating profile for user:', user.id);
+      
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          first_name: profileForm.firstName,
-          last_name: profileForm.lastName,
-          phone_number: profileForm.phoneNumber,
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error fetching existing profile:', fetchError);
+        throw fetchError;
+      }
 
+      console.log('Existing profile:', existingProfile);
+
+      // Prepare profile data
+      const profileData = {
+        user_id: user.id,
+        first_name: profileForm.firstName,
+        last_name: profileForm.lastName,
+        phone_number: profileForm.phoneNumber,
+      };
+
+      let error;
+      if (existingProfile) {
+        // Update existing profile
+        console.log('Updating existing profile');
+        const result = await supabase
+          .from('profiles')
+          .update({
+            first_name: profileForm.firstName,
+            last_name: profileForm.lastName,
+            phone_number: profileForm.phoneNumber,
+          })
+          .eq('user_id', user.id);
+        error = result.error;
+      } else {
+        // Insert new profile
+        console.log('Inserting new profile');
+        const result = await supabase
+          .from('profiles')
+          .insert([profileData]);
+        error = result.error;
+      }
+
+      if (error) {
+        console.error('Profile operation error:', error);
+        throw error;
+      }
+
+      console.log('Profile updated successfully');
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully",
       });
     } catch (error: any) {
       console.error('Error updating profile:', error);
+      const errorMessage = error.message || error.hint || 'Failed to update profile';
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
