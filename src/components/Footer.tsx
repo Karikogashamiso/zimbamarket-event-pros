@@ -59,13 +59,13 @@ const Footer = () => {
 
   const serviceCategories = [
     { name: "Wedding Venues", href: "/search?category=venues" },
-    { name: "Catering Services", href: "/search?category=food" },
-    { name: "Event DJs", href: "/search?category=entertainment" },
-    { name: "Photography", href: "/search?category=media" },
-    { name: "Event Planning", href: "/search?category=planning" },
+    { name: "Catering Services", href: "/search?category=catering" },
+    { name: "DJ & Music", href: "/search?category=dj" },
+    { name: "Photography", href: "/search?category=photography" },
+    { name: "Event Planning", href: "/search?category=event-planners" },
     { name: "Decor & Flowers", href: "/search?category=decor" },
-    { name: "Entertainment", href: "/search?category=entertainment" },
-    { name: "Audio Visual", href: "/search?category=technical" }
+    { name: "Entertainment", href: "/search?category=entertainers" },
+    { name: "Videography", href: "/search?category=videography" }
   ];
 
   const locations = [
