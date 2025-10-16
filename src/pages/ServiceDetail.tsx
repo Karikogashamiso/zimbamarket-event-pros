@@ -43,16 +43,40 @@ import { ServiceErrorBoundary, SectionErrorBoundary } from "@/components/ErrorBo
 
 // Booking form validation schema
 const guestBookingSchema = z.object({
-  selectedDate: z.string().optional(),
-  message: z.string().max(1000, "Message must be less than 1000 characters").optional(),
-  guestName: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  guestEmail: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  guestPhone: z.string().max(20, "Phone number must be less than 20 characters").optional(),
+  selectedDate: z.string().min(1, "Please select a date").refine((date) => {
+    const selected = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected >= today;
+  }, "Date must be today or in the future"),
+  message: z.string()
+    .min(10, "Please provide at least 10 characters to describe your event")
+    .max(1000, "Message must be less than 1000 characters"),
+  guestName: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name should only contain letters and spaces"),
+  guestEmail: z.string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  guestPhone: z.string()
+    .min(1, "Phone number is required")
+    .min(10, "Phone number must be at least 10 digits")
+    .max(20, "Phone number must be less than 20 characters")
+    .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, "Please enter a valid phone number"),
 });
 
 const userBookingSchema = z.object({
-  selectedDate: z.string().optional(),
-  message: z.string().max(1000, "Message must be less than 1000 characters").optional(),
+  selectedDate: z.string().min(1, "Please select a date").refine((date) => {
+    const selected = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected >= today;
+  }, "Date must be today or in the future"),
+  message: z.string()
+    .min(10, "Please provide at least 10 characters to describe your event")
+    .max(1000, "Message must be less than 1000 characters"),
 });
 
 const ServiceDetail = () => {
@@ -144,21 +168,22 @@ const ServiceDetail = () => {
         throw new Error("Service information is missing");
       }
 
-      if (user) {
-        // Validate authenticated user form
-        userBookingSchema.parse({
-          selectedDate,
-          message: message.trim(),
-        });
-      } else {
-        // Validate guest user form
-        guestBookingSchema.parse({
-          selectedDate,
-          message: message.trim(),
+      const formData = {
+        selectedDate,
+        message: message.trim(),
+        ...(user ? {} : {
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim(),
-          guestPhone: guestPhone.trim() || undefined,
-        });
+          guestPhone: guestPhone.trim(),
+        })
+      };
+
+      if (user) {
+        // Validate authenticated user form
+        userBookingSchema.parse(formData);
+      } else {
+        // Validate guest user form
+        guestBookingSchema.parse(formData);
       }
 
       setErrors({});
@@ -172,6 +197,14 @@ const ServiceDetail = () => {
           }
         });
         setErrors(newErrors);
+        
+        // Show toast with first error
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive",
+        });
       } else if (error instanceof Error) {
         toast({
           title: "Validation Error",
@@ -231,10 +264,10 @@ const ServiceDetail = () => {
       if (user) {
         bookingData.user_id = user.id;
       } else {
-        // Guest user data
+        // Guest user data - all required fields
         bookingData.guest_name = guestName.trim();
         bookingData.guest_email = guestEmail.trim().toLowerCase();
-        bookingData.guest_phone = guestPhone.trim() || null;
+        bookingData.guest_phone = guestPhone.trim();
       }
 
       console.log('Submitting booking data:', {
@@ -645,74 +678,152 @@ const ServiceDetail = () => {
                         {!user && (
                           <>
                             <div>
-                              <label className="text-sm font-medium mb-2 block">Your Name *</label>
+                              <label className="text-sm font-medium mb-2 block">
+                                Your Name <span className="text-destructive">*</span>
+                              </label>
                               <Input 
                                 type="text"
-                                placeholder="Full name"
+                                placeholder="e.g., John Doe"
                                 value={guestName}
-                                onChange={(e) => setGuestName(e.target.value)}
+                                onChange={(e) => {
+                                  setGuestName(e.target.value);
+                                  if (errors.guestName) {
+                                    const newErrors = { ...errors };
+                                    delete newErrors.guestName;
+                                    setErrors(newErrors);
+                                  }
+                                }}
                                 onBlur={() => handleFieldBlur('guestName')}
-                                className={errors.guestName || (touchedFields.guestName && !guestName.trim()) ? 'border-destructive' : ''}
+                                className={errors.guestName ? 'border-destructive focus-visible:ring-destructive' : ''}
+                                required
                               />
-                              {(errors.guestName || (touchedFields.guestName && !guestName.trim())) && (
-                                <p className="text-sm text-destructive mt-1">
-                                  {errors.guestName || 'Name is required'}
+                              {errors.guestName && (
+                                <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                                  <Flag className="w-3 h-3" />
+                                  {errors.guestName}
                                 </p>
                               )}
                             </div>
                             
                             <div>
-                              <label className="text-sm font-medium mb-2 block">Email Address *</label>
+                              <label className="text-sm font-medium mb-2 block">
+                                Email Address <span className="text-destructive">*</span>
+                              </label>
                               <Input 
                                 type="email"
                                 placeholder="your@email.com"
                                 value={guestEmail}
-                                onChange={(e) => setGuestEmail(e.target.value)}
+                                onChange={(e) => {
+                                  setGuestEmail(e.target.value);
+                                  if (errors.guestEmail) {
+                                    const newErrors = { ...errors };
+                                    delete newErrors.guestEmail;
+                                    setErrors(newErrors);
+                                  }
+                                }}
                                 onBlur={() => handleFieldBlur('guestEmail')}
-                                className={errors.guestEmail || (touchedFields.guestEmail && !guestEmail.trim()) ? 'border-destructive' : ''}
+                                className={errors.guestEmail ? 'border-destructive focus-visible:ring-destructive' : ''}
+                                required
                               />
-                              {(errors.guestEmail || (touchedFields.guestEmail && !guestEmail.trim())) && (
-                                <p className="text-sm text-destructive mt-1">
-                                  {errors.guestEmail || 'Email is required'}
+                              {errors.guestEmail && (
+                                <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                                  <Flag className="w-3 h-3" />
+                                  {errors.guestEmail}
                                 </p>
                               )}
                             </div>
                             
                             <div>
-                              <label className="text-sm font-medium mb-2 block">Phone Number</label>
+                              <label className="text-sm font-medium mb-2 block">
+                                Phone Number <span className="text-destructive">*</span>
+                              </label>
                               <Input 
                                 type="tel"
-                                placeholder="+1 (555) 123-4567"
+                                placeholder="+263 77 123 4567"
                                 value={guestPhone}
-                                onChange={(e) => setGuestPhone(e.target.value)}
+                                onChange={(e) => {
+                                  setGuestPhone(e.target.value);
+                                  if (errors.guestPhone) {
+                                    const newErrors = { ...errors };
+                                    delete newErrors.guestPhone;
+                                    setErrors(newErrors);
+                                  }
+                                }}
                                 onBlur={() => handleFieldBlur('guestPhone')}
-                                className={errors.guestPhone ? 'border-destructive' : ''}
+                                className={errors.guestPhone ? 'border-destructive focus-visible:ring-destructive' : ''}
+                                required
                               />
                               {errors.guestPhone && (
-                                <p className="text-sm text-destructive mt-1">{errors.guestPhone}</p>
+                                <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                                  <Flag className="w-3 h-3" />
+                                  {errors.guestPhone}
+                                </p>
                               )}
                             </div>
                           </>
                         )}
                         
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Preferred Date</label>
+                          <label className="text-sm font-medium mb-2 block">
+                            Preferred Date <span className="text-destructive">*</span>
+                          </label>
                           <Input 
                             type="date" 
                             value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            onChange={(e) => {
+                              setSelectedDate(e.target.value);
+                              if (errors.selectedDate) {
+                                const newErrors = { ...errors };
+                                delete newErrors.selectedDate;
+                                setErrors(newErrors);
+                              }
+                            }}
+                            onBlur={() => handleFieldBlur('selectedDate')}
                             min={new Date().toISOString().split('T')[0]}
+                            className={errors.selectedDate ? 'border-destructive focus-visible:ring-destructive' : ''}
+                            required
                           />
+                          {errors.selectedDate && (
+                            <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                              <Flag className="w-3 h-3" />
+                              {errors.selectedDate}
+                            </p>
+                          )}
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Message</label>
+                          <label className="text-sm font-medium mb-2 block">
+                            Message <span className="text-destructive">*</span>
+                          </label>
                           <Textarea 
-                            placeholder="Tell us about your event..."
+                            placeholder="Tell us about your event, number of guests, specific requirements..."
                             value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            rows={3}
+                            onChange={(e) => {
+                              setMessage(e.target.value);
+                              if (errors.message) {
+                                const newErrors = { ...errors };
+                                delete newErrors.message;
+                                setErrors(newErrors);
+                              }
+                            }}
+                            onBlur={() => handleFieldBlur('message')}
+                            rows={4}
+                            className={errors.message ? 'border-destructive focus-visible:ring-destructive' : ''}
+                            required
                           />
+                          <div className="flex justify-between items-center mt-1">
+                            {errors.message ? (
+                              <p className="text-sm text-destructive flex items-center gap-1">
+                                <Flag className="w-3 h-3" />
+                                {errors.message}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">Minimum 10 characters</p>
+                            )}
+                            <p className={`text-xs ${message.length > 1000 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              {message.length}/1000
+                            </p>
+                          </div>
                         </div>
                         
                         <Button 
