@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageCircle, Clock, Tag, ArrowLeft } from "lucide-react";
+import { Heart, MessageCircle, Clock, Tag, ArrowLeft, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -131,6 +131,39 @@ const VideoTutorialDetail = () => {
       }
     } catch (error) {
       console.error("Error toggling like:", error);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareText = `Check out this video tutorial: ${video.title}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: video.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast({
+          title: "Shared successfully",
+          description: "Thanks for sharing!",
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link copied",
+          description: "Share link copied to clipboard",
+        });
+      }
+
+      await supabase.from("booking_analytics").insert({
+        service_id: video.id,
+        event_type: "share",
+        event_data: { method: navigator.share ? "native" : "clipboard" },
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
     }
   };
 
@@ -283,6 +316,14 @@ const VideoTutorialDetail = () => {
             >
               <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
               {likes}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="flex items-center gap-2"
+            >
+              <Share2 className="h-5 w-5" />
+              Share
             </Button>
             <div className="flex items-center gap-2 text-muted-foreground">
               <MessageCircle className="h-5 w-5" />
