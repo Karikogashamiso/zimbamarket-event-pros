@@ -107,9 +107,19 @@ export const useSimpleCheckout = () => {
           }
         });
 
+        console.log('Checkout session response:', { checkoutSession, checkoutError });
+
         if (checkoutError) {
-          console.error('Checkout session error:', checkoutError);
-          throw new Error('Failed to create payment session. Please try again.');
+          console.error('Checkout session error details:', {
+            message: checkoutError.message,
+            details: checkoutError,
+          });
+          throw new Error(`Payment session failed: ${checkoutError.message || 'Please try again.'}`);
+        }
+
+        if (checkoutSession?.error) {
+          console.error('Checkout session returned error:', checkoutSession.error);
+          throw new Error(`Payment error: ${checkoutSession.error}`);
         }
 
         if (!checkoutSession?.configured) {
