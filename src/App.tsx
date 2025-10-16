@@ -95,7 +95,7 @@ const App = () => {
                   <Route path="/blog" element={<Layout><Blog /></Layout>} />
                   <Route path="/blog/:slug" element={<Layout><BlogDetail /></Layout>} />
                   <Route path="/video-tutorials" element={<Layout><VideoTutorials /></Layout>} />
-                  <Route path="/video-tutorial/:id" element={<Layout><VideoTutorialDetail /></Layout>} />
+                  <Route path="/video-tutorial/:id" element={<VideoTutorialDetail />} />
                   <Route path="/favorites" element={<Layout><Favorites /></Layout>} />
                   <Route path="/profile" element={<Layout><Profile /></Layout>} />
                   <Route path="/booking-payment-success" element={<Layout><BookingPaymentSuccess /></Layout>} />

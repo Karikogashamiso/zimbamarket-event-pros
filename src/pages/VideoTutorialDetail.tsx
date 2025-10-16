@@ -2,6 +2,8 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MetaTags from "@/components/SEO/MetaTags";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -298,7 +300,7 @@ const VideoTutorialDetail = () => {
         description={video.description}
         image={video.thumbnail_url}
       />
-      
+      <Header variant="solid" />
       <div className="min-h-screen bg-background py-12">
         <div className="container max-w-4xl mx-auto px-4">
           <Link to="/video-tutorials">
@@ -431,6 +433,7 @@ const VideoTutorialDetail = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };
