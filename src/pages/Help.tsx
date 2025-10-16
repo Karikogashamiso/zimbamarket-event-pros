@@ -137,15 +137,24 @@ const Help = () => {
                 placeholder="Search for help articles, guides, or FAQs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    // This filters help articles locally
-                    console.log('Help search:', searchQuery);
-                  }
-                }}
-                className="pl-12 h-14 text-lg"
+                className="pl-12 pr-12 h-14 text-lg"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 w-10 p-0"
+                >
+                  ×
+                </Button>
+              )}
             </div>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground mt-4">
+                Found {filteredFaqs.length} result{filteredFaqs.length !== 1 ? 's' : ''} for "{searchQuery}"
+              </p>
+            )}
           </div>
         </div>
       </section>
