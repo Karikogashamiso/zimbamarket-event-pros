@@ -13,8 +13,6 @@ import {
   Filter,
   Search,
   Video,
-  FileText,
-  Download,
   Share2,
   Heart
 } from "lucide-react";
@@ -187,33 +185,6 @@ const VideoTutorials = () => {
       setLoading(false);
     }
   };
-
-  const resources = [
-    {
-      title: "Event Planning Checklist",
-      description: "Comprehensive 12-month planning checklist",
-      type: "PDF",
-      downloads: 2400
-    },
-    {
-      title: "Budget Planning Template",
-      description: "Excel template for event budget management",
-      type: "XLSX",
-      downloads: 1800
-    },
-    {
-      title: "Vendor Comparison Sheet",
-      description: "Compare multiple vendors side-by-side",
-      type: "PDF",
-      downloads: 1500
-    },
-    {
-      title: "Timeline Template",
-      description: "Day-of-event timeline template",
-      type: "DOC",
-      downloads: 2100
-    }
-  ];
 
   const filteredTutorials = tutorials.filter(tutorial => {
     const matchesCategory = selectedCategory === "all" || tutorial.category === selectedCategory;
@@ -504,47 +475,6 @@ const VideoTutorials = () => {
                       <Play className="w-4 h-4 mr-2" />
                       Vendor Selection Guide
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Free Resources */}
-              <Card className="p-6">
-                <CardHeader className="p-0 mb-6">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Download className="w-5 h-5" />
-                    Free Resources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="space-y-4">
-                    {resources.map((resource, index) => (
-                      <div 
-                        key={index} 
-                        className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => {
-                          toast.info("Resource downloads coming soon!", {
-                            description: `${resource.title} will be available for download shortly.`
-                          });
-                        }}
-                      >
-                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileText className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm mb-1">{resource.title}</h4>
-                          <p className="text-xs text-muted-foreground mb-2">{resource.description}</p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline" className="text-xs">
-                              {resource.type}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {resource.downloads} downloads
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
