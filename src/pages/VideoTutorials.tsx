@@ -468,15 +468,39 @@ const VideoTutorials = () => {
                     New to event planning? Start with these essential tutorials.
                   </p>
                   <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setSelectedCategory("basics");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
                       <Play className="w-4 h-4 mr-2" />
                       Event Planning Basics
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setSearchQuery("budget");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
                       <Play className="w-4 h-4 mr-2" />
                       Budget Planning 101
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setSelectedCategory("vendor");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
                       <Play className="w-4 h-4 mr-2" />
                       Vendor Selection Guide
                     </Button>
@@ -495,7 +519,15 @@ const VideoTutorials = () => {
                 <CardContent className="p-0">
                   <div className="space-y-4">
                     {resources.map((resource, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                      <div 
+                        key={index} 
+                        className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          toast.info("Resource downloads coming soon!", {
+                            description: `${resource.title} will be available for download shortly.`
+                          });
+                        }}
+                      >
                         <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-primary" />
                         </div>
