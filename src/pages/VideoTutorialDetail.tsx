@@ -249,6 +249,11 @@ const VideoTutorialDetail = () => {
 
   const getVideoEmbedUrl = (url: string) => {
     try {
+      // Check if URL is valid
+      if (!url || url.length < 10) {
+        return null;
+      }
+
       if (url.includes("youtube.com") || url.includes("youtu.be")) {
         let videoId = '';
         if (url.includes("youtu.be")) {
@@ -257,18 +262,19 @@ const VideoTutorialDetail = () => {
           const urlObj = new URL(url);
           videoId = urlObj.searchParams.get("v") || '';
         }
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
       }
       
       if (url.includes("vimeo.com")) {
         const videoId = url.split("/").pop()?.split("?")[0];
-        return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+        return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
       }
       
-      return url;
+      // If not YouTube or Vimeo, return null
+      return null;
     } catch (error) {
       console.error("Error parsing video URL:", error);
-      return url;
+      return null;
     }
   };
 
@@ -325,14 +331,28 @@ const VideoTutorialDetail = () => {
             </Button>
           </Link>
 
-          <div className="aspect-video mb-8 rounded-lg overflow-hidden">
-            <iframe
-              src={getVideoEmbedUrl(video.video_url)}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
+          {getVideoEmbedUrl(video.video_url) ? (
+            <div className="aspect-video mb-8 rounded-lg overflow-hidden bg-muted">
+              <iframe
+                src={getVideoEmbedUrl(video.video_url) || ''}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <Card className="aspect-video mb-8 flex items-center justify-center bg-muted">
+              <div className="text-center p-8">
+                <h3 className="text-xl font-semibold mb-2">Invalid Video URL</h3>
+                <p className="text-muted-foreground mb-4">
+                  This video has an invalid URL. Please contact the administrator.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Supported platforms: YouTube and Vimeo
+                </p>
+              </div>
+            </Card>
+          )}
 
           <h1 className="text-4xl font-bold mb-4">{video.title}</h1>
 
