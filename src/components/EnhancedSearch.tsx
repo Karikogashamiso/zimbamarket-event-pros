@@ -90,6 +90,12 @@ const EnhancedSearch = () => {
     // Clear any previous errors
     setError(null);
     
+    // Check if at least one search criteria is provided
+    if (!searchQuery.trim() && !location.trim() && !category && !priceRange && !guestCount && !eventDate) {
+      setError('Please enter a search term or select at least one filter to search.');
+      return;
+    }
+    
     const params = new URLSearchParams();
     
     if (searchQuery.trim()) params.set('q', searchQuery.trim());
