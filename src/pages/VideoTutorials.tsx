@@ -15,19 +15,86 @@ import {
   Video,
   FileText,
   Download,
-  Share2
+  Share2,
+  Heart
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const VideoTutorials = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [tutorials, setTutorials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const handleLike = async (videoId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Please login to like videos");
+      return;
+    }
+
+    try {
+      const { data: existingLike } = await supabase
+        .from("video_likes")
+        .select("id")
+        .eq("video_id", videoId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingLike) {
+        await supabase
+          .from("video_likes")
+          .delete()
+          .eq("id", existingLike.id);
+        toast.success("Removed from favorites");
+      } else {
+        await supabase
+          .from("video_likes")
+          .insert({ video_id: videoId, user_id: user.id });
+        toast.success("Added to favorites");
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+  const handleShare = async (tutorial: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const shareUrl = `${window.location.origin}/video-tutorial/${tutorial.id}`;
+    const shareText = `Check out this video tutorial: ${tutorial.title}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: tutorial.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast.success("Shared successfully");
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      }
+
+      await supabase.from("booking_analytics").insert({
+        service_id: tutorial.id,
+        event_type: "share",
+        event_data: { method: navigator.share ? "native" : "clipboard" },
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
 
   const categories = [
     { id: "all", label: "All Tutorials" },
@@ -310,6 +377,22 @@ const VideoTutorials = () => {
                           <ThumbsUp className="w-3 h-3" />
                           {tutorial.likes}
                         </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-auto p-0 ml-auto"
+                          onClick={(e) => handleLike(tutorial.id, e)}
+                        >
+                          <Heart className="w-3 h-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-auto p-0"
+                          onClick={(e) => handleShare(tutorial, e)}
+                        >
+                          <Share2 className="w-3 h-3" />
+                        </Button>
                       </div>
                       <Link to={`/video-tutorial/${tutorial.id}`}>
                         <Button size="sm" className="w-full">

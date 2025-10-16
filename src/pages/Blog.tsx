@@ -21,6 +21,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,6 +29,84 @@ const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const handleLike = async (postId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please login to like posts",
+      });
+      return;
+    }
+
+    try {
+      const { data: existingLike } = await supabase
+        .from("blog_likes")
+        .select("id")
+        .eq("blog_post_id", postId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingLike) {
+        await supabase
+          .from("blog_likes")
+          .delete()
+          .eq("id", existingLike.id);
+        toast({
+          title: "Removed from favorites",
+        });
+      } else {
+        await supabase
+          .from("blog_likes")
+          .insert({ blog_post_id: postId, user_id: user.id });
+        toast({
+          title: "Added to favorites",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+  const handleShare = async (post: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const shareUrl = `${window.location.origin}/blog/${post.slug}`;
+    const shareText = `Check out this blog post: ${post.title}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: post.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast({
+          title: "Shared successfully",
+          description: "Thanks for sharing!",
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Link copied",
+          description: "Share link copied to clipboard",
+        });
+      }
+
+      await supabase.from("booking_analytics").insert({
+        service_id: post.id,
+        event_type: "share",
+        event_data: { method: navigator.share ? "native" : "clipboard" },
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
 
   const categories = [
     { id: "all", label: "All Posts" },
@@ -278,10 +357,18 @@ const Blog = () => {
                             ))}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => handleLike(post.id, e)}
+                            >
                               <Heart className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => handleShare(post, e)}
+                            >
                               <Share2 className="w-4 h-4" />
                             </Button>
                             <Link to={`/blog/${post.slug}`}>
