@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { videoFormSchema } from '@/utils/videoValidation';
 import {
   Dialog,
   DialogContent,
@@ -96,6 +97,20 @@ export const VideoTutorialsManager = () => {
     
     try {
       const tags = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      
+      const dataToValidate = {
+        ...formData,
+        tags,
+      };
+
+      // Validate form data
+      const validationResult = videoFormSchema.safeParse(dataToValidate);
+      
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error(firstError.message);
+        return;
+      }
       
       const tutorialData = {
         ...formData,

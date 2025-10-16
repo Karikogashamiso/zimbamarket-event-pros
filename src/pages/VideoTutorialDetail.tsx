@@ -246,13 +246,28 @@ const VideoTutorialDetail = () => {
   };
 
   const getVideoEmbedUrl = (url: string) => {
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-      const videoId = url.includes("youtu.be") 
-        ? url.split("/").pop() 
-        : new URL(url).searchParams.get("v");
-      return `https://www.youtube.com/embed/${videoId}`;
+    try {
+      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        let videoId = '';
+        if (url.includes("youtu.be")) {
+          videoId = url.split("/").pop()?.split("?")[0] || '';
+        } else if (url.includes("youtube.com")) {
+          const urlObj = new URL(url);
+          videoId = urlObj.searchParams.get("v") || '';
+        }
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+      }
+      
+      if (url.includes("vimeo.com")) {
+        const videoId = url.split("/").pop()?.split("?")[0];
+        return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+      }
+      
+      return url;
+    } catch (error) {
+      console.error("Error parsing video URL:", error);
+      return url;
     }
-    return url;
   };
 
   if (loading) {
