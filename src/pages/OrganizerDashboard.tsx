@@ -18,6 +18,9 @@ import { AddEventAddonForm } from "@/components/AddEventAddonForm";
 import { AddTripTicketTypeForm } from "@/components/AddTripTicketTypeForm";
 import { AddTripAddonForm } from "@/components/AddTripAddonForm";
 import { OrganizerProfileSwitcher } from "@/components/OrganizerProfileSwitcher";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Edit, Trash2 } from "lucide-react";
 
 const OrganizerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -35,6 +38,9 @@ const OrganizerDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingVenue, setEditingVenue] = useState<any>(null);
+  const [showVenueDialog, setShowVenueDialog] = useState(false);
+  const [deleteVenueId, setDeleteVenueId] = useState<string | null>(null);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -394,6 +400,71 @@ const OrganizerDashboard = () => {
     }
   };
 
+  const updateVenue = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const venueData = {
+        name: formData.get('venue_name') as string,
+        venue_type: formData.get('venue_type') as string,
+        address: formData.get('address') as string,
+        city: formData.get('city') as string,
+        capacity: parseInt(formData.get('capacity') as string) || null,
+        description: formData.get('venue_description') as string,
+      };
+
+      const { error } = await supabase
+        .from('venues')
+        .update(venueData)
+        .eq('id', editingVenue.id)
+        .eq('organizer_id', selectedOrganizer.id); // Security: ensure organizer owns the venue
+
+      if (error) throw error;
+
+      toast({ title: "Venue updated successfully!" });
+      setShowVenueDialog(false);
+      setEditingVenue(null);
+      await fetchOrganizerData(selectedOrganizer.id);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update venue.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteVenue = async () => {
+    if (!deleteVenueId) return;
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .delete()
+        .eq('id', deleteVenueId)
+        .eq('organizer_id', selectedOrganizer.id); // Security: ensure organizer owns the venue
+
+      if (error) throw error;
+
+      toast({ title: "Venue deleted successfully!" });
+      await fetchOrganizerData(selectedOrganizer.id);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete venue.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteVenueId(null);
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -638,15 +709,104 @@ const OrganizerDashboard = () => {
                     <div className="space-y-3">
                       {venues.map((venue) => (
                         <div key={venue.id} className="border rounded-lg p-4">
-                          <h3 className="font-semibold">{venue.name}</h3>
-                          <p className="text-sm text-muted-foreground">{venue.address}, {venue.city}</p>
-                          {venue.capacity && <p className="text-sm">Capacity: {venue.capacity}</p>}
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h3 className="font-semibold">{venue.name}</h3>
+                              <p className="text-sm text-muted-foreground">{venue.venue_type}</p>
+                              <p className="text-sm text-muted-foreground">{venue.address}, {venue.city}</p>
+                              {venue.capacity && <p className="text-sm">Capacity: {venue.capacity}</p>}
+                              {venue.description && <p className="text-sm text-muted-foreground mt-2">{venue.description}</p>}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingVenue(venue);
+                                  setShowVenueDialog(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setDeleteVenueId(venue.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
                 </CardContent>
               </Card>
+
+              {/* Edit Venue Dialog */}
+              <Dialog open={showVenueDialog} onOpenChange={setShowVenueDialog}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Edit Venue</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={updateVenue} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit_venue_name">Venue Name *</Label>
+                      <Input id="edit_venue_name" name="venue_name" defaultValue={editingVenue?.name} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_venue_type">Venue Type *</Label>
+                      <Input id="edit_venue_type" name="venue_type" defaultValue={editingVenue?.venue_type} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_address">Address *</Label>
+                      <Input id="edit_address" name="address" defaultValue={editingVenue?.address} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_city">City *</Label>
+                      <Input id="edit_city" name="city" defaultValue={editingVenue?.city} required />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_capacity">Capacity</Label>
+                      <Input id="edit_capacity" name="capacity" type="number" defaultValue={editingVenue?.capacity} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="edit_venue_description">Description</Label>
+                      <Textarea id="edit_venue_description" name="venue_description" defaultValue={editingVenue?.description} rows={2} />
+                    </div>
+                    <div className="md:col-span-2 flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => {
+                        setShowVenueDialog(false);
+                        setEditingVenue(null);
+                      }}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {/* Delete Venue Confirmation */}
+              <AlertDialog open={!!deleteVenueId} onOpenChange={(open) => !open && setDeleteVenueId(null)}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Venue</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this venue? This action cannot be undone and may affect associated events.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteVenue} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               </TabsContent>
             )}
 
