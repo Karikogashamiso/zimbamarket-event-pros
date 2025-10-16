@@ -49,6 +49,7 @@ import AdminVideoTutorials from "./pages/Admin/VideoTutorials";
 import AdminVideoComments from "./pages/Admin/VideoComments";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
+import { ScanTicket } from "./pages/ScanTicket";
 import Auth from "./pages/Auth";
 import MyBusinessApplications from "./pages/MyBusinessApplications";
 import Profile from "./pages/Profile";
@@ -135,6 +136,7 @@ const App = () => {
                   
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />
                   <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
+                  <Route path="/scan-ticket" element={<Layout><ScanTicket /></Layout>} />
                   <Route path="/launch-plan" element={<Layout><LaunchPlan /></Layout>} />
                   <Route path="/ux-guide" element={<Layout><UXOptimizationGuide /></Layout>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
