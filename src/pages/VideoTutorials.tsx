@@ -29,8 +29,32 @@ const VideoTutorials = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [tutorials, setTutorials] = useState<any[]>([]);
+  const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && tutorials.length > 0) {
+      fetchLikedVideos();
+    }
+  }, [user, tutorials.length]);
+
+  const fetchLikedVideos = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from("video_likes")
+        .select("video_id")
+        .eq("user_id", user.id);
+      
+      if (data) {
+        setLikedVideos(new Set(data.map(like => like.video_id)));
+      }
+    } catch (error) {
+      console.error("Error fetching liked videos:", error);
+    }
+  };
 
   const handleLike = async (videoId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,24 +65,30 @@ const VideoTutorials = () => {
       return;
     }
 
-    try {
-      const { data: existingLike } = await supabase
-        .from("video_likes")
-        .select("id")
-        .eq("video_id", videoId)
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const isLiked = likedVideos.has(videoId);
 
-      if (existingLike) {
+    try {
+      if (isLiked) {
         await supabase
           .from("video_likes")
           .delete()
-          .eq("id", existingLike.id);
+          .eq("video_id", videoId)
+          .eq("user_id", user.id);
+        
+        setLikedVideos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(videoId);
+          return newSet;
+        });
+        
         toast.success("Removed from favorites");
       } else {
         await supabase
           .from("video_likes")
           .insert({ video_id: videoId, user_id: user.id });
+        
+        setLikedVideos(prev => new Set(prev).add(videoId));
+        
         toast.success("Added to favorites");
       }
     } catch (error) {
@@ -380,10 +410,10 @@ const VideoTutorials = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="h-auto p-0 ml-auto"
+                          className={`h-auto p-0 ml-auto ${likedVideos.has(tutorial.id) ? "text-red-500" : ""}`}
                           onClick={(e) => handleLike(tutorial.id, e)}
                         >
-                          <Heart className="w-3 h-3" />
+                          <Heart className={`w-3 h-3 ${likedVideos.has(tutorial.id) ? "fill-current" : ""}`} />
                         </Button>
                         <Button 
                           variant="ghost" 

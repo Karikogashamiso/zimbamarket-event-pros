@@ -27,9 +27,33 @@ const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [blogPosts, setBlogPosts] = useState<any[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && blogPosts.length > 0) {
+      fetchLikedPosts();
+    }
+  }, [user, blogPosts.length]);
+
+  const fetchLikedPosts = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from("blog_likes")
+        .select("blog_post_id")
+        .eq("user_id", user.id);
+      
+      if (data) {
+        setLikedPosts(new Set(data.map(like => like.blog_post_id)));
+      }
+    } catch (error) {
+      console.error("Error fetching liked posts:", error);
+    }
+  };
 
   const handleLike = async (postId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,19 +67,22 @@ const Blog = () => {
       return;
     }
 
-    try {
-      const { data: existingLike } = await supabase
-        .from("blog_likes")
-        .select("id")
-        .eq("blog_post_id", postId)
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const isLiked = likedPosts.has(postId);
 
-      if (existingLike) {
+    try {
+      if (isLiked) {
         await supabase
           .from("blog_likes")
           .delete()
-          .eq("id", existingLike.id);
+          .eq("blog_post_id", postId)
+          .eq("user_id", user.id);
+        
+        setLikedPosts(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(postId);
+          return newSet;
+        });
+        
         toast({
           title: "Removed from favorites",
         });
@@ -63,6 +90,9 @@ const Blog = () => {
         await supabase
           .from("blog_likes")
           .insert({ blog_post_id: postId, user_id: user.id });
+        
+        setLikedPosts(prev => new Set(prev).add(postId));
+        
         toast({
           title: "Added to favorites",
         });
@@ -361,8 +391,9 @@ const Blog = () => {
                               variant="ghost" 
                               size="sm"
                               onClick={(e) => handleLike(post.id, e)}
+                              className={likedPosts.has(post.id) ? "text-red-500" : ""}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart className={`w-4 h-4 ${likedPosts.has(post.id) ? "fill-current" : ""}`} />
                             </Button>
                             <Button 
                               variant="ghost" 
