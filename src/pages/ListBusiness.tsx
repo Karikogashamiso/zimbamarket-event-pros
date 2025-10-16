@@ -750,18 +750,13 @@ const ListBusiness = () => {
                         type="email"
                         placeholder="your@email.com"
                         value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        onBlur={() => handleFieldBlur('email')}
-                        className={`${
-                          touchedFields.email && formErrors.email 
-                            ? 'border-destructive focus:border-destructive' 
-                            : ''
-                        }`}
-                        required
+                        readOnly
+                        disabled
+                        className="bg-muted cursor-not-allowed"
                       />
-                      {touchedFields.email && formErrors.email && (
-                        <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Email cannot be changed
+                      </p>
                     </div>
                     
                     <div>

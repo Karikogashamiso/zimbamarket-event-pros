@@ -520,7 +520,18 @@ const OrganizerDashboard = () => {
                 </div>
                 <div>
                   <Label htmlFor="email">Email *</Label>
-                  <Input id="email" name="email" type="email" defaultValue={user?.email} required />
+                  <Input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    defaultValue={user?.email} 
+                    readOnly 
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Email cannot be changed
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="phone_number">Phone Number</Label>
