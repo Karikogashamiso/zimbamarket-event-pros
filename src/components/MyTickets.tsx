@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Ticket, Calendar, MapPin, Download, QrCode } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Download, QrCode, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import QRCodeLib from 'qrcode';
 
 interface TicketWithDetails {
   id: string;
@@ -58,6 +62,8 @@ export const MyTickets = () => {
   const [tickets, setTickets] = useState<TicketWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [orderCount, setOrderCount] = useState(0);
+  const [viewingQR, setViewingQR] = useState<{ ticketNumber: string; qrData: string; title: string } | null>(null);
+  const [qrImageUrl, setQrImageUrl] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -199,6 +205,174 @@ export const MyTickets = () => {
     return `${symbol}${amount}`;
   };
 
+  const handleViewQR = async (ticket: TicketWithDetails) => {
+    try {
+      // Fetch the full ticket data with QR code
+      const { data: ticketData, error } = await supabase
+        .from('tickets')
+        .select('qr_code_data, ticket_number')
+        .eq('id', ticket.id)
+        .single();
+
+      if (error || !ticketData) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load QR code',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Generate QR code image
+      const qrUrl = await QRCodeLib.toDataURL(ticketData.qr_code_data, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'H'
+      });
+
+      const title = ticket.ticket_type.event?.title || ticket.ticket_type.trip?.route.route_name || 'Event';
+      
+      setQrImageUrl(qrUrl);
+      setViewingQR({
+        ticketNumber: ticketData.ticket_number,
+        qrData: ticketData.qr_code_data,
+        title
+      });
+    } catch (error) {
+      console.error('Error viewing QR:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate QR code',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadTicket = async (ticket: TicketWithDetails) => {
+    try {
+      toast({
+        title: 'Generating ticket...',
+        description: 'Please wait while we prepare your ticket',
+      });
+
+      // Create a temporary container for the ticket
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '800px';
+      container.style.backgroundColor = 'white';
+      container.style.padding = '40px';
+      document.body.appendChild(container);
+
+      // Get ticket data
+      const { data: ticketData, error } = await supabase
+        .from('tickets')
+        .select('qr_code_data, ticket_number')
+        .eq('id', ticket.id)
+        .single();
+
+      if (error || !ticketData) throw new Error('Failed to fetch ticket data');
+
+      // Generate QR code
+      const qrUrl = await QRCodeLib.toDataURL(ticketData.qr_code_data, {
+        width: 300,
+        margin: 2,
+        errorCorrectionLevel: 'H'
+      });
+
+      const isEvent = !!ticket.ticket_type.event;
+      const title = isEvent ? ticket.ticket_type.event?.title : ticket.ticket_type.trip?.route.route_name;
+      const dateTime = isEvent ? ticket.ticket_type.event?.start_datetime : ticket.ticket_type.trip?.departure_datetime;
+      const location = isEvent 
+        ? `${ticket.ticket_type.event?.venue.name}, ${ticket.ticket_type.event?.venue.city}`
+        : `${ticket.ticket_type.trip?.route.origin_venue.name} → ${ticket.ticket_type.trip?.route.destination_venue.name}`;
+
+      // Build ticket HTML
+      container.innerHTML = `
+        <div style="font-family: Arial, sans-serif; border: 2px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0 0 10px 0; font-size: 32px;">ZimEventPro</h1>
+            <p style="margin: 0; font-size: 18px; opacity: 0.9;">Your Digital Ticket</p>
+          </div>
+          
+          <div style="padding: 30px;">
+            <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #333;">${title}</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+              <div>
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Date & Time</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">${formatDate(dateTime || '')}</p>
+                <p style="margin: 0; font-size: 14px;">${formatTime(dateTime || '')}</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Location</p>
+                <p style="margin: 0; font-size: 14px;">${location}</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Ticket Type</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">${ticket.ticket_type.name}</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Amount Paid</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">${formatCurrency(ticket.order.total_amount, ticket.order.currency)}</p>
+              </div>
+            </div>
+
+            <div style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px; margin-bottom: 20px;">
+              <img src="${qrUrl}" alt="QR Code" style="width: 300px; height: 300px;" />
+              <p style="margin: 15px 0 0 0; font-family: monospace; font-size: 14px; color: #666;">Ticket #${ticketData.ticket_number}</p>
+            </div>
+
+            <div style="border-top: 2px dashed #e0e0e0; padding-top: 20px; font-size: 12px; color: #666; line-height: 1.6;">
+              <p style="margin: 0 0 10px 0;"><strong>Important:</strong></p>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>Present this ticket (digital or printed) at the venue entrance</li>
+                <li>Bring a valid ID that matches the ticket holder name</li>
+                <li>Each ticket can only be used once</li>
+                <li>Order #${ticket.order.order_number}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Generate canvas and PDF
+      const canvas = await html2canvas(container, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        logging: false
+      });
+
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width * 0.75, canvas.height * 0.75]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width * 0.75, canvas.height * 0.75);
+      pdf.save(`ticket-${ticketData.ticket_number}.pdf`);
+
+      toast({
+        title: 'Success!',
+        description: 'Your ticket has been downloaded',
+      });
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download ticket. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -242,8 +416,53 @@ export const MyTickets = () => {
   }
 
   return (
-    <div className="space-y-4">
-      {tickets.map((ticket) => {
+    <>
+      {/* QR Code Modal */}
+      <Dialog open={!!viewingQR} onOpenChange={() => setViewingQR(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Your Ticket QR Code</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setViewingQR(null)}
+                className="h-6 w-6"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {viewingQR && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="font-semibold text-lg mb-2">{viewingQR.title}</h3>
+                <div className="bg-white p-4 rounded-lg border-2 border-primary/20 inline-block">
+                  <img 
+                    src={qrImageUrl} 
+                    alt="Ticket QR Code" 
+                    className="w-64 h-64"
+                  />
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground font-mono">
+                  {viewingQR.ticketNumber}
+                </p>
+              </div>
+              <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-900">
+                <p className="font-semibold mb-1">📱 How to use:</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• Screenshot or save this QR code</li>
+                  <li>• Present it at the venue entrance</li>
+                  <li>• Bring a valid ID for verification</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-4">
+        {tickets.map((ticket) => {
         const isEvent = !!ticket.ticket_type.event;
         const isTrip = !!ticket.ticket_type.trip;
 
@@ -341,11 +560,21 @@ export const MyTickets = () => {
 
               {/* Actions */}
               <div className="flex gap-2 pt-4 border-t">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleViewQR(ticket)}
+                >
                   <QrCode className="w-4 h-4 mr-2" />
                   View QR Code
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => handleDownloadTicket(ticket)}
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Download Ticket
                 </Button>
@@ -354,6 +583,7 @@ export const MyTickets = () => {
           </Card>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 };
