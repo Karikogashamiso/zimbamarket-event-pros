@@ -188,6 +188,10 @@ const CreateService = () => {
         : [];
 
       const allImages = [...existingImages, ...imageUrls];
+      
+      // Ensure at least one image is present (required by database)
+      const defaultImage = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800';
+      const finalImages = allImages.length > 0 ? allImages : [defaultImage];
 
       const serviceData = {
         category_id: selectedBusinessListing?.category_id,
@@ -201,10 +205,10 @@ const CreateService = () => {
         capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
         capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
         amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
-        images: allImages.length > 0 ? allImages : undefined,
+        images: finalImages,
+        image_url: finalImages[0],
         is_featured: formData.is_featured,
         is_verified: formData.is_verified,
-        active: true,
         rating: 0,
         review_count: 0,
         response_time: '24h',

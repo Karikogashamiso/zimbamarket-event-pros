@@ -188,6 +188,10 @@ export const ServiceCreationForm = () => {
     
     // Combine existing and new images
     const allImages = [...existingImages, ...newImageUrls];
+    
+    // Ensure at least one image is present (required by database)
+    const defaultImage = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800';
+    const finalImages = allImages.length > 0 ? allImages : [defaultImage];
 
     // Find the selected business listing to get its ID
     const selectedBusinessListing = businessListings.find(
@@ -210,7 +214,8 @@ export const ServiceCreationForm = () => {
       capacity_min: formData.capacity_min ? parseInt(formData.capacity_min) : undefined,
       capacity_max: formData.capacity_max ? parseInt(formData.capacity_max) : undefined,
       amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
-      images: allImages.length > 0 ? allImages : undefined,
+      images: finalImages,
+      image_url: finalImages[0],
       is_featured: formData.is_featured,
       is_verified: formData.is_verified
     };

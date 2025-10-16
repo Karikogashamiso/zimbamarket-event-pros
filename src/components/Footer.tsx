@@ -8,6 +8,7 @@ import {
   Facebook, 
   Instagram, 
   Twitter, 
+  Linkedin,
   Mail, 
   Phone, 
   MapPin,
@@ -133,17 +134,17 @@ const Footer = () => {
                     </Card>
                   </a>
                   
-                  {/* Facebook Group */}
+                  {/* LinkedIn */}
                   <a 
-                    href="https://facebook.com/groups/zimeventpro" 
+                    href="https://linkedin.com/company/zimeventpro" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300 cursor-pointer">
                       <CardContent className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                          <Facebook className="w-5 h-5 text-blue-400" />
-                          <span className="text-sm font-medium">Group</span>
+                          <Linkedin className="w-5 h-5 text-blue-500" />
+                          <span className="text-sm font-medium">LinkedIn</span>
                         </div>
                         <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto">
                           <QrCode className="w-12 h-12 text-primary" />

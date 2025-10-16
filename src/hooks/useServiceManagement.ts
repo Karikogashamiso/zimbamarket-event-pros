@@ -23,6 +23,7 @@ interface ServiceData {
 
 interface CreateServiceData {
   category_id: string;
+  business_listing_id?: string;
   title: string;
   description: string;
   location: string;
@@ -32,7 +33,8 @@ interface CreateServiceData {
   capacity_min?: number;
   capacity_max?: number;
   amenities?: string[];
-  images?: string[];
+  images: string[];
+  image_url: string;
   is_featured?: boolean;
   is_verified?: boolean;
 }
@@ -118,7 +120,6 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
         .from('services')
         .insert({
           ...serviceData,
-          active: true,
           rating: 0,
           review_count: 0,
           response_time: '24h',
