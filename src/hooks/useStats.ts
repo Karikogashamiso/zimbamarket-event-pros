@@ -52,7 +52,7 @@ export const useStats = () => {
 
         const avgRating = reviews?.length
           ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-          : 4.8;
+          : 0;
 
         // Calculate satisfaction rate based on completed bookings
         const { data: ordersList } = await supabase
@@ -67,12 +67,12 @@ export const useStats = () => {
         const satisfactionRate =
           totalOrders > 0
             ? Math.round((successfulOrders / totalOrders) * 100)
-            : 98;
+            : 0;
 
         return {
           totalServices: servicesCount || 0,
           totalOrders: ordersCount || 0,
-          totalCities: uniqueCities.size || 12,
+          totalCities: uniqueCities.size || 0,
           averageRating: Math.round(avgRating * 10) / 10,
           totalProviders: servicesCount || 0,
           totalEvents: eventsCount || 0,
@@ -81,16 +81,16 @@ export const useStats = () => {
         };
       } catch (error) {
         console.error("Error fetching stats:", error);
-        // Return fallback values
+        // Return actual zero values instead of fake numbers
         return {
-          totalServices: 2500,
-          totalOrders: 15000,
-          totalCities: 12,
-          averageRating: 4.8,
-          totalProviders: 2500,
-          totalEvents: 15000,
-          totalVenues: 150,
-          satisfactionRate: 98,
+          totalServices: 0,
+          totalOrders: 0,
+          totalCities: 0,
+          averageRating: 0,
+          totalProviders: 0,
+          totalEvents: 0,
+          totalVenues: 0,
+          satisfactionRate: 0,
         };
       }
     },

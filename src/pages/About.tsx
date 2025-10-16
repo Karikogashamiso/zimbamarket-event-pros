@@ -101,10 +101,10 @@ const About = () => {
   const { data: statsData } = useStats();
   
   const stats = [
-    { number: `${statsData?.totalOrders.toLocaleString() || "10,000"}+`, label: "Happy Customers" },
-    { number: `${statsData?.totalEvents.toLocaleString() || "5,000"}+`, label: "Successful Events" },
-    { number: `${statsData?.totalProviders.toLocaleString() || "500"}+`, label: "Verified Vendors" },
-    { number: `${statsData?.satisfactionRate || "98"}%`, label: "Satisfaction Rate" }
+    { number: statsData?.totalOrders ? `${statsData.totalOrders.toLocaleString()}+` : "0", label: "Happy Customers" },
+    { number: statsData?.totalEvents ? `${statsData.totalEvents.toLocaleString()}+` : "0", label: "Successful Events" },
+    { number: statsData?.totalProviders ? `${statsData.totalProviders.toLocaleString()}+` : "0", label: "Verified Vendors" },
+    { number: statsData?.satisfactionRate ? `${statsData.satisfactionRate}%` : "0%", label: "Satisfaction Rate" }
   ];
 
   return (
