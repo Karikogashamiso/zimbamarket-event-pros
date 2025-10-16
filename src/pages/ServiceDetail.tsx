@@ -26,7 +26,7 @@ import {
   Send,
   ThumbsUp
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useService } from "@/hooks/useServices";
 import { useReviews } from "@/hooks/useReviews";
@@ -81,6 +81,8 @@ const userBookingSchema = z.object({
 
 const ServiceDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const bookingRef = React.useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [message, setMessage] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -97,6 +99,15 @@ const ServiceDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { saveService, shareService, reportService, isSaving, isReporting } = useServiceActions();
+
+  // Handle auto-scroll to booking section when calendar icon is clicked
+  useEffect(() => {
+    if (searchParams.get('action') === 'book' && bookingRef.current && !serviceLoading) {
+      setTimeout(() => {
+        bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [searchParams, serviceLoading]);
 
   // Check if service is saved
   useEffect(() => {
@@ -660,7 +671,7 @@ const ServiceDetail = () => {
                 <div className="sticky top-24 space-y-6">
                   
                   {/* Booking Card */}
-                  <Card className="p-6">
+                  <Card className="p-6" ref={bookingRef}>
                     <div className="space-y-6">
                       <div>
                         <div className="text-3xl font-bold text-primary mb-2">
