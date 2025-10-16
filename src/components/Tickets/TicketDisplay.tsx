@@ -138,34 +138,14 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
               
               return (
                 <div key={ticket.id} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
-                      Ticket {index + 1} of {tickets.length}
-                    </h3>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(ticket.id, 'pdf')}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        PDF
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleShare(ticket, 'whatsapp')}
-                      >
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold">
+                    Ticket {index + 1} of {tickets.length}
+                  </h3>
                   
                   <TicketTemplate
                     ticket={ticketData}
                     variant="standard"
-                    showDownloadButton={true}
+                    showDownloadButton={false}
                     onDownload={(format) => handleDownload(ticket.id, format)}
                     onShare={() => handleShare(ticket, 'whatsapp')}
                   />
