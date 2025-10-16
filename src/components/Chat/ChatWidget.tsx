@@ -90,6 +90,12 @@ const ChatWidget = () => {
       });
 
       if (error) {
+        // Check for specific HTTP status codes
+        if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+          throw { status: 429, message: error.message };
+        } else if (error.message?.includes('402') || error.message?.includes('payment')) {
+          throw { status: 402, message: error.message };
+        }
         throw error;
       }
 
@@ -107,11 +113,24 @@ const ChatWidget = () => {
         setConversationId(data.conversationId);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
+      
+      let errorTitle = "Chat Error";
+      let errorDescription = "Sorry, I couldn't process your message. Please try again.";
+      
+      // Check if it's a response error with status
+      if (error?.status === 429) {
+        errorTitle = "Rate Limit Exceeded";
+        errorDescription = "Too many requests. Please wait a moment and try again.";
+      } else if (error?.status === 402) {
+        errorTitle = "Service Unavailable";
+        errorDescription = "AI service requires payment. Please contact support.";
+      }
+      
       toast({
-        title: "Chat Error",
-        description: "Sorry, I couldn't process your message. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
       
@@ -119,7 +138,7 @@ const ChatWidget = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        content: errorDescription,
         timestamp: new Date()
       };
       

@@ -119,28 +119,53 @@ Be friendly, helpful, and knowledgeable about event planning in Zimbabwe. If ask
       }
     ];
 
-    // Call OpenAI API with GPT-4o-mini (legacy model supports temperature)
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Lovable AI Gateway with Gemini Flash model
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-2.5-flash',
         messages: openAIMessages,
         max_tokens: 1000,
-        temperature: 0.7,
       }),
     });
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.json();
-      console.error('OpenAI API error:', error);
+    if (!aiResponse.ok) {
+      // Handle rate limit errors
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded. Please try again in a moment.' 
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      // Handle payment/credits errors
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI service requires payment. Please contact support.' 
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      const error = await aiResponse.json();
+      console.error('Lovable AI Gateway error:', error);
       throw new Error('Failed to get AI response');
     }
 
-    const aiData = await openAIResponse.json();
+    const aiData = await aiResponse.json();
     const aiMessage = aiData.choices[0].message.content;
 
     // Save AI response
