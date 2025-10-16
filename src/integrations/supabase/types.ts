@@ -386,7 +386,7 @@ export type Database = {
           email: string | null
           featured: boolean | null
           id: string
-          images: string[] | null
+          images: string[]
           location: string
           phone_number: string | null
           price_from: number | null
@@ -408,7 +408,7 @@ export type Database = {
           email?: string | null
           featured?: boolean | null
           id?: string
-          images?: string[] | null
+          images?: string[]
           location: string
           phone_number?: string | null
           price_from?: number | null
@@ -430,7 +430,7 @@ export type Database = {
           email?: string | null
           featured?: boolean | null
           id?: string
-          images?: string[] | null
+          images?: string[]
           location?: string
           phone_number?: string | null
           price_from?: number | null
@@ -1959,8 +1959,8 @@ export type Database = {
           featured: boolean | null
           full_description: string | null
           id: string
-          image_url: string | null
-          images: string[] | null
+          image_url: string
+          images: string[]
           is_featured: boolean | null
           is_verified: boolean | null
           location: string
@@ -1990,8 +1990,8 @@ export type Database = {
           featured?: boolean | null
           full_description?: string | null
           id?: string
-          image_url?: string | null
-          images?: string[] | null
+          image_url: string
+          images?: string[]
           is_featured?: boolean | null
           is_verified?: boolean | null
           location: string
@@ -2021,8 +2021,8 @@ export type Database = {
           featured?: boolean | null
           full_description?: string | null
           id?: string
-          image_url?: string | null
-          images?: string[] | null
+          image_url?: string
+          images?: string[]
           is_featured?: boolean | null
           is_verified?: boolean | null
           location?: string
