@@ -23,7 +23,7 @@ const TrendingServices = () => {
   }
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-12 md:py-20 lg:py-24 relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-muted/5 via-primary/5 to-background pointer-events-none" />
       <div className="absolute top-10 right-10 text-primary/5 animate-float hidden lg:block">
@@ -33,8 +33,8 @@ const TrendingServices = () => {
         <Sparkles className="w-40 h-40" />
       </div>
       
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-16 space-y-6">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center mb-8 md:mb-12 lg:mb-16 space-y-4 md:space-y-6">
           {/* Trending Badge */}
           <div className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-full px-6 py-3 border border-orange-500/20 shadow-glow">
             <Flame className="w-5 h-5 text-orange-500 animate-pulse" />
@@ -46,12 +46,12 @@ const TrendingServices = () => {
           
           {/* Main Heading */}
           <div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-3 md:mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
                 Most Popular
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4">
               Discover what's hot right now - the most booked and loved services by customers like you
             </p>
           </div>
@@ -69,7 +69,7 @@ const TrendingServices = () => {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
               <Card 
@@ -226,7 +226,7 @@ const TrendingServices = () => {
         </div>
 
         {/* Mobile CTA Button */}
-        <div className="text-center mt-16 md:hidden">
+        <div className="text-center mt-8 md:mt-16 md:hidden">
           <Link to="/search?featured=true">
             <Button 
               size="lg"
@@ -239,7 +239,7 @@ const TrendingServices = () => {
         </div>
 
         {/* Social Proof */}
-        <div className="text-center mt-16 space-y-4">
+        <div className="text-center mt-8 md:mt-16 space-y-3 md:space-y-4">
           <p className="text-sm text-muted-foreground">
             Join thousands of satisfied customers
           </p>

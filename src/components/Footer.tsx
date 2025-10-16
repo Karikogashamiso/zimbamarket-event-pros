@@ -87,22 +87,22 @@ const Footer = () => {
         <div className="absolute bottom-20 right-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
       </div>
       
-      <div className="container mx-auto px-4 py-16 relative">
+      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-16 relative">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-16">
           
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mr-4">
-                  <span className="text-3xl font-bold text-primary">Z</span>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-2xl flex items-center justify-center mr-3 sm:mr-4">
+                  <span className="text-2xl sm:text-3xl font-bold text-primary">Z</span>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold">
+                  <h3 className="text-xl sm:text-2xl font-bold">
                     Zim<span className="text-secondary">EventPro</span>
                   </h3>
-                  <p className="text-sm text-white/70">Zimbabwe's Event Platform</p>
+                  <p className="text-xs sm:text-sm text-white/70">Zimbabwe's Event Platform</p>
                 </div>
               </div>
               <p className="text-white/80 mb-6 leading-relaxed">
@@ -111,9 +111,9 @@ const Footer = () => {
               
               {/* Social Media with QR Codes */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-lg mb-3">Connect With Us</h4>
+                <h4 className="font-semibold text-base sm:text-lg mb-3">Connect With Us</h4>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {/* Facebook Page */}
                   <a 
                     href="https://facebook.com/zimeventpro" 
@@ -186,8 +186,8 @@ const Footer = () => {
           
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Star className="w-5 h-5 text-secondary" />
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 flex items-center gap-2">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
               Quick Links
             </h4>
             <ul className="space-y-3">
@@ -207,7 +207,7 @@ const Footer = () => {
           
           {/* Services */}
           <div>
-            <h4 className="text-lg font-semibold mb-6">Popular Services</h4>
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Popular Services</h4>
             <ul className="space-y-3">
               {serviceCategories.map((service, index) => (
                 <li key={index}>
@@ -221,7 +221,7 @@ const Footer = () => {
           
           {/* Locations & Contact */}
           <div>
-            <h4 className="text-lg font-semibold mb-6">Event Locations</h4>
+            <h4 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Event Locations</h4>
             <ul className="space-y-3 mb-8">
               {locations.slice(0, 6).map((location, index) => (
                 <li key={index}>
@@ -261,9 +261,9 @@ const Footer = () => {
         </div>
         
         {/* Newsletter Section */}
-        <div className="border-t border-white/20 pt-12 mb-12">
+        <div className="border-t border-white/20 pt-8 md:pt-12 mb-8 md:mb-12">
           <div className="max-w-2xl mx-auto text-center">
-            <h4 className="text-2xl font-bold mb-4">Stay Updated</h4>
+            <h4 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Stay Updated</h4>
             <p className="text-white/80 mb-6">
               Get the latest event planning tips, vendor updates, and special offers delivered to your inbox.
             </p>
@@ -283,7 +283,7 @@ const Footer = () => {
         </div>
         
         {/* Bottom Bar */}
-        <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-white/20 pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
             <p className="text-white/60 text-sm">
               © 2025 ZimEventPro. All rights reserved.
@@ -307,14 +307,15 @@ const Footer = () => {
       </div>
       
       {/* Floating Help Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
         <Link to="/help">
           <Button 
             size="lg" 
-            className="rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover-scale flex items-center"
+            className="rounded-full bg-green-500 hover:bg-green-600 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover-scale flex items-center text-sm sm:text-base"
           >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            Need Help?
+            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden sm:inline">Need Help?</span>
+            <span className="sm:hidden">Help</span>
           </Button>
         </Link>
       </div>
