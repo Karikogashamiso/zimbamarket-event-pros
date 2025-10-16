@@ -189,9 +189,10 @@ const Help = () => {
                     </a>
                   ) : (
                     <Button className="w-full" onClick={() => {
-                      const chatWidget = document.querySelector('[data-chat-widget]');
-                      if (chatWidget) {
-                        (chatWidget as HTMLElement).click();
+                      // Close any open dialogs first
+                      const chatButton = document.querySelector('button[aria-label="Open chat"]');
+                      if (chatButton) {
+                        (chatButton as HTMLElement).click();
                       }
                     }}>
                       {method.action}

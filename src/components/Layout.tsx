@@ -1,5 +1,6 @@
 import Header from "./Header";
 import Footer from "./Footer";
+import ChatWidget from "./Chat/ChatWidget";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 };
