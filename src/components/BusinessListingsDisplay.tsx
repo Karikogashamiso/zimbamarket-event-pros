@@ -193,16 +193,16 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
                           <MapPin className="w-3 h-3" />
                           {listing.location}
                         </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Mail className="w-3 h-3" />
-                          {listing.email}
-                        </div>
                         {listing.phone_number && (
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <Phone className="w-3 h-3" />
                             {listing.phone_number}
                           </div>
                         )}
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Mail className="w-3 h-3" />
+                          {listing.email}
+                        </div>
                         {listing.price_from && (
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="w-3 h-3" />
