@@ -1,5 +1,6 @@
 import { Shield, Award, Users, Clock, CheckCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const TrustSection = () => {
   const trustFeatures = [
@@ -142,13 +143,17 @@ const TrustSection = () => {
             Join thousands of satisfied customers who trust ZimEventPro for their special occasions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-3 h-auto">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Start Planning Now
-            </Button>
-            <Button variant="glass" size="lg" className="text-lg px-8 py-3 h-auto">
-              Browse Services
-            </Button>
+            <Link to="/categories">
+              <Button variant="hero" size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-3 h-auto">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Start Planning Now
+              </Button>
+            </Link>
+            <Link to="/categories">
+              <Button variant="glass" size="lg" className="text-lg px-8 py-3 h-auto">
+                Browse Services
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
