@@ -58,14 +58,15 @@ export const useServiceActions = () => {
 
   const shareService = async (serviceId: string, serviceName: string) => {
     try {
-      const currentUrl = window.location.href;
+      // Build clean URL without query parameters for sharing
+      const baseUrl = `${window.location.origin}/service/${serviceId}`;
       
       if (navigator.share) {
         // Use native sharing if available
         await navigator.share({
           title: serviceName,
           text: `Check out this service: ${serviceName}`,
-          url: currentUrl,
+          url: baseUrl,
         });
         
         toast({
@@ -74,7 +75,7 @@ export const useServiceActions = () => {
         });
       } else {
         // Fallback to clipboard
-        await navigator.clipboard.writeText(currentUrl);
+        await navigator.clipboard.writeText(baseUrl);
         
         toast({
           title: "Link Copied",
@@ -99,15 +100,17 @@ export const useServiceActions = () => {
       
       // Fallback: try to copy to clipboard
       try {
-        await navigator.clipboard.writeText(window.location.href);
+        const baseUrl = `${window.location.origin}/service/${serviceId}`;
+        await navigator.clipboard.writeText(baseUrl);
         toast({
           title: "Link Copied",
           description: "Service link has been copied to your clipboard.",
         });
       } catch (clipboardError) {
+        console.error('Clipboard error:', clipboardError);
         toast({
           title: "Sharing Failed",
-          description: "Unable to share or copy link. Please manually copy the URL.",
+          description: "Unable to share or copy link. Please manually copy the URL from your browser.",
           variant: "destructive",
         });
       }
