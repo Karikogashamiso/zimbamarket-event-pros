@@ -227,19 +227,6 @@ const SearchResults = () => {
           </div>
           
           <div className="absolute top-4 right-4 flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`bg-white/90 hover:bg-white shadow-lg transition-colors ${
-                isSaved ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                toggleSaveService(result.id, result.title);
-              }}
-            >
-              <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-            </Button>
             <Link to={`/service/${result.id}`}>
               <Button variant="ghost" size="icon" className="bg-white/90 hover:bg-white text-gray-600 hover:text-primary shadow-lg">
                 <Eye className="w-4 h-4" />
