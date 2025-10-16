@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { 
@@ -11,41 +10,50 @@ import {
   Star,
   CheckCircle
 } from "lucide-react";
+import { useVenueAndServiceCounts } from "@/hooks/useVenueAndServiceCounts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LocationsAndServices = () => {
+  const { data: counts, isLoading } = useVenueAndServiceCounts();
+
+  const formatCount = (num: number | undefined) => {
+    if (!num || num === 0) return "0";
+    return num > 0 ? `${num}` : "0";
+  };
+
   const venueLocations = [
-    { name: "All Venues", count: "150+", url: "/search?category=venues" },
-    { name: "Venues in Harare", count: "65+", url: "/search?category=venues&location=Harare" },
-    { name: "Venues in Bulawayo", count: "35+", url: "/search?category=venues&location=Bulawayo" },
-    { name: "Venues in Mutare", count: "15+", url: "/search?category=venues&location=Mutare" },
-    { name: "Venues in Gweru", count: "12+", url: "/search?category=venues&location=Gweru" },
-    { name: "Venues in Kwekwe", count: "8+", url: "/search?category=venues&location=Kwekwe" },
-    { name: "Venues in Masvingo", count: "10+", url: "/search?category=venues&location=Masvingo" },
-    { name: "Venues in Chinhoyi", count: "6+", url: "/search?category=venues&location=Chinhoyi" },
-    { name: "Venues in Victoria Falls", count: "20+", url: "/search?category=venues&location=Victoria Falls" },
-    { name: "Wedding Venues in Harare", count: "45+", url: "/search?category=wedding-venues&location=Harare" },
-    { name: "Wedding Venues in Bulawayo", count: "25+", url: "/search?category=wedding-venues&location=Bulawayo" },
-    { name: "Conference Centers in Harare", count: "30+", url: "/search?category=conference-venues&location=Harare" }
+    { name: "All Venues", count: formatCount(counts?.totalVenues), url: "/search?category=venues" },
+    { name: "Venues in Harare", count: formatCount(counts?.venuesByLocation["Harare"]), url: "/search?category=venues&location=Harare" },
+    { name: "Venues in Bulawayo", count: formatCount(counts?.venuesByLocation["Bulawayo"]), url: "/search?category=venues&location=Bulawayo" },
+    { name: "Venues in Mutare", count: formatCount(counts?.venuesByLocation["Mutare"]), url: "/search?category=venues&location=Mutare" },
+    { name: "Venues in Gweru", count: formatCount(counts?.venuesByLocation["Gweru"]), url: "/search?category=venues&location=Gweru" },
+    { name: "Venues in Kwekwe", count: formatCount(counts?.venuesByLocation["Kwekwe"]), url: "/search?category=venues&location=Kwekwe" },
+    { name: "Venues in Masvingo", count: formatCount(counts?.venuesByLocation["Masvingo"]), url: "/search?category=venues&location=Masvingo" },
+    { name: "Venues in Chinhoyi", count: formatCount(counts?.venuesByLocation["Chinhoyi"]), url: "/search?category=venues&location=Chinhoyi" },
+    { name: "Venues in Victoria Falls", count: formatCount(counts?.venuesByLocation["Victoria Falls"]), url: "/search?category=venues&location=Victoria Falls" },
+    { name: "Wedding Venues in Harare", count: formatCount(counts?.venuesByLocation["Harare"]), url: "/search?category=wedding-venues&location=Harare" },
+    { name: "Wedding Venues in Bulawayo", count: formatCount(counts?.venuesByLocation["Bulawayo"]), url: "/search?category=wedding-venues&location=Bulawayo" },
+    { name: "Conference Centers in Harare", count: formatCount(counts?.venuesByLocation["Harare"]), url: "/search?category=conference-venues&location=Harare" }
   ];
 
   const serviceProviders = [
-    { name: "All Event Service Providers", count: "500+", url: "/search?category=event-services" },
-    { name: "Bakers & Cake Designers", count: "60+", url: "/search?category=catering&q=bakers" },
-    { name: "Bartending Services", count: "35+", url: "/search?category=catering&q=bartending" },
-    { name: "Catering Companies", count: "80+", url: "/search?category=catering" },
-    { name: "Decor Services", count: "70+", url: "/search?category=decor" },
-    { name: "Event Planners", count: "45+", url: "/search?category=event-planning" },
-    { name: "Lighting & Sound Services", count: "40+", url: "/search?category=audio-visual" },
-    { name: "Photographers", count: "90+", url: "/search?category=photography" },
-    { name: "Private Chefs", count: "25+", url: "/search?category=catering&q=private chef" },
-    { name: "Wedding Planners", count: "35+", url: "/search?category=event-planning&q=wedding" },
-    { name: "All Event Entertainers", count: "200+", url: "/search?category=entertainment" },
-    { name: "Live Bands", count: "50+", url: "/search?category=entertainment&q=bands" },
-    { name: "Gospel Choirs", count: "25+", url: "/search?category=entertainment&q=gospel choir" },
-    { name: "Professional DJs", count: "120+", url: "/search?category=dj" },
-    { name: "Magicians", count: "15+", url: "/search?category=entertainment&q=magicians" },
-    { name: "Master of Ceremonies", count: "30+", url: "/search?category=entertainment&q=mc" },
-    { name: "Solo Singers", count: "40+", url: "/search?category=entertainment&q=singers" }
+    { name: "All Event Service Providers", count: formatCount(counts?.totalServices), url: "/search?category=event-services" },
+    { name: "Bakers & Cake Designers", count: formatCount(counts?.servicesByCategory.bakers), url: "/search?category=catering&q=bakers" },
+    { name: "Bartending Services", count: formatCount(counts?.servicesByCategory.bartending), url: "/search?category=catering&q=bartending" },
+    { name: "Catering Companies", count: formatCount(counts?.servicesByCategory.catering), url: "/search?category=catering" },
+    { name: "Decor Services", count: formatCount(counts?.servicesByCategory.decor), url: "/search?category=decor" },
+    { name: "Event Planners", count: formatCount(counts?.servicesByCategory.eventPlanning), url: "/search?category=event-planning" },
+    { name: "Lighting & Sound Services", count: formatCount(counts?.servicesByCategory.audioVisual), url: "/search?category=audio-visual" },
+    { name: "Photographers", count: formatCount(counts?.servicesByCategory.photography), url: "/search?category=photography" },
+    { name: "Private Chefs", count: formatCount(counts?.servicesByCategory.privateChef), url: "/search?category=catering&q=private chef" },
+    { name: "Wedding Planners", count: formatCount(counts?.servicesByCategory.weddingPlanning), url: "/search?category=event-planning&q=wedding" },
+    { name: "All Event Entertainers", count: formatCount(counts?.servicesByCategory.entertainment), url: "/search?category=entertainment" },
+    { name: "Live Bands", count: formatCount(counts?.servicesByCategory.bands), url: "/search?category=entertainment&q=bands" },
+    { name: "Gospel Choirs", count: formatCount(counts?.servicesByCategory.gospel), url: "/search?category=entertainment&q=gospel choir" },
+    { name: "Professional DJs", count: formatCount(counts?.servicesByCategory.dj), url: "/search?category=dj" },
+    { name: "Magicians", count: formatCount(counts?.servicesByCategory.magicians), url: "/search?category=entertainment&q=magicians" },
+    { name: "Master of Ceremonies", count: formatCount(counts?.servicesByCategory.mc), url: "/search?category=entertainment&q=mc" },
+    { name: "Solo Singers", count: formatCount(counts?.servicesByCategory.singers), url: "/search?category=entertainment&q=singers" }
   ];
 
   return (
@@ -78,23 +86,32 @@ const LocationsAndServices = () => {
             </div>
             
             <div className="space-y-3">
-              {venueLocations.map((location, index) => (
-                <Link 
-                  key={index} 
-                  to={location.url}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer group block"
-                >
-                  <span className="text-foreground group-hover:text-primary transition-colors">
-                    {location.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-primary border-primary">
-                      {location.count}
-                    </Badge>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
+              {isLoading ? (
+                Array.from({ length: 12 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between p-3">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-6 w-12" />
                   </div>
-                </Link>
-              ))}
+                ))
+              ) : (
+                venueLocations.map((location, index) => (
+                  <Link 
+                    key={index} 
+                    to={location.url}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer group block"
+                  >
+                    <span className="text-foreground group-hover:text-primary transition-colors">
+                      {location.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-primary border-primary">
+                        {location.count}
+                      </Badge>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </Card>
 
@@ -111,23 +128,32 @@ const LocationsAndServices = () => {
             </div>
             
             <div className="space-y-3">
-              {serviceProviders.map((service, index) => (
-                <Link 
-                  key={index} 
-                  to={service.url}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/5 transition-colors cursor-pointer group block"
-                >
-                  <span className="text-foreground group-hover:text-secondary transition-colors">
-                    {service.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-secondary border-secondary">
-                      {service.count}
-                    </Badge>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all duration-200" />
+              {isLoading ? (
+                Array.from({ length: 17 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between p-3">
+                    <Skeleton className="h-5 w-56" />
+                    <Skeleton className="h-6 w-12" />
                   </div>
-                </Link>
-              ))}
+                ))
+              ) : (
+                serviceProviders.map((service, index) => (
+                  <Link 
+                    key={index} 
+                    to={service.url}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/5 transition-colors cursor-pointer group block"
+                  >
+                    <span className="text-foreground group-hover:text-secondary transition-colors">
+                      {service.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-secondary border-secondary">
+                        {service.count}
+                      </Badge>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all duration-200" />
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </Card>
         </div>
