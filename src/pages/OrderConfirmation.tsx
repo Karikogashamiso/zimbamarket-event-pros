@@ -9,6 +9,7 @@ import { CheckCircle, Mail, ArrowLeft, Home, Download, Share2, Receipt } from 'l
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import MetaTags from '@/components/SEO/MetaTags';
+import jsPDF from 'jspdf';
 
 export const OrderConfirmation: React.FC = () => {
   const { orderNumber } = useParams<{ orderNumber: string }>();
@@ -120,6 +121,130 @@ export const OrderConfirmation: React.FC = () => {
   const formatCurrency = (amount: number, currency = 'USD') => {
     const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
     return `${symbol}${amount.toFixed(2)}`;
+  };
+
+  const generateInvoicePDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(37, 99, 235); // Primary color
+      doc.text('ZimEventPro', 20, 20);
+      
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Invoice', 20, 35);
+      
+      // Order details
+      doc.setFontSize(10);
+      doc.text(`Order Number: ${orderDetails.order_number}`, 20, 50);
+      doc.text(`Date: ${new Date(orderDetails.created_at).toLocaleDateString()}`, 20, 57);
+      doc.text(`Payment Status: ${orderDetails.payment_status}`, 20, 64);
+      
+      // Customer details
+      doc.setFontSize(12);
+      doc.text('Bill To:', 20, 80);
+      doc.setFontSize(10);
+      doc.text(`${orderDetails.customer_first_name} ${orderDetails.customer_last_name}`, 20, 87);
+      doc.text(orderDetails.customer_email, 20, 94);
+      if (orderDetails.customer_phone) {
+        doc.text(orderDetails.customer_phone, 20, 101);
+      }
+      
+      // Event details if available
+      let yPos = 115;
+      if (orderDetails.metadata?.event) {
+        doc.setFontSize(12);
+        doc.text('Event Details:', 20, yPos);
+        doc.setFontSize(10);
+        yPos += 7;
+        doc.text(`Event: ${orderDetails.metadata.event.title}`, 20, yPos);
+        yPos += 7;
+        if (orderDetails.metadata.event.date) {
+          doc.text(`Date: ${orderDetails.metadata.event.date}`, 20, yPos);
+          yPos += 7;
+        }
+        if (orderDetails.metadata.event.venue) {
+          doc.text(`Venue: ${orderDetails.metadata.event.venue}`, 20, yPos);
+          yPos += 7;
+        }
+      }
+      
+      yPos += 10;
+      
+      // Tickets table
+      doc.setFontSize(12);
+      doc.text('Tickets:', 20, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(10);
+      doc.text('Description', 20, yPos);
+      doc.text('Quantity', 100, yPos);
+      doc.text('Amount', 160, yPos);
+      yPos += 7;
+      
+      // Draw line
+      doc.line(20, yPos, 190, yPos);
+      yPos += 7;
+      
+      // Tickets
+      if (orderDetails.tickets && orderDetails.tickets.length > 0) {
+        orderDetails.tickets.forEach((ticket: any) => {
+          doc.text(ticket.ticket_type_name || 'Ticket', 20, yPos);
+          doc.text('1', 100, yPos);
+          doc.text(formatCurrency(ticket.price || 0, orderDetails.currency), 160, yPos);
+          yPos += 7;
+        });
+      } else {
+        doc.text('Order Items', 20, yPos);
+        doc.text('-', 100, yPos);
+        doc.text(formatCurrency(orderDetails.subtotal, orderDetails.currency), 160, yPos);
+        yPos += 7;
+      }
+      
+      yPos += 5;
+      doc.line(20, yPos, 190, yPos);
+      yPos += 7;
+      
+      // Subtotal
+      doc.text('Subtotal:', 120, yPos);
+      doc.text(formatCurrency(orderDetails.subtotal, orderDetails.currency), 160, yPos);
+      yPos += 7;
+      
+      // Service fee
+      if (orderDetails.service_fee > 0) {
+        doc.text('Service Fee:', 120, yPos);
+        doc.text(formatCurrency(orderDetails.service_fee, orderDetails.currency), 160, yPos);
+        yPos += 7;
+      }
+      
+      // Tax
+      if (orderDetails.tax_amount > 0) {
+        doc.text('Tax:', 120, yPos);
+        doc.text(formatCurrency(orderDetails.tax_amount, orderDetails.currency), 160, yPos);
+        yPos += 7;
+      }
+      
+      // Total
+      doc.setFontSize(12);
+      doc.text('Total:', 120, yPos);
+      doc.text(formatCurrency(orderDetails.total_amount, orderDetails.currency), 160, yPos);
+      
+      // Footer
+      yPos = 270;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Thank you for your business!', 105, yPos, { align: 'center' });
+      doc.text('For support, contact: support@zimeventpro.com', 105, yPos + 5, { align: 'center' });
+      
+      // Save PDF
+      doc.save(`Invoice-${orderDetails.order_number}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate invoice PDF');
+    }
   };
 
   const handleTicketDownload = (ticketId: string, format: 'pdf' | 'image') => {
@@ -296,7 +421,11 @@ export const OrderConfirmation: React.FC = () => {
           {/* Action Buttons */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={generateInvoicePDF}
+              >
                 <Download className="h-4 w-4" />
                 Download Receipt
               </Button>
