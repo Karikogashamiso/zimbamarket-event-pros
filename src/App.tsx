@@ -38,6 +38,8 @@ import AdminVenues from "./pages/Admin/Venues";
 import AdminEvents from "./pages/Admin/Events";
 import AdminServices from "./pages/Admin/Services";
 import AdminOrders from "./pages/Admin/Orders";
+import AdminTickets from "./pages/Admin/Tickets";
+import AdminUsers from "./pages/Admin/Users";
 import AdminReports from "./pages/Admin/Reports";
 import AdminContacts from "./pages/Admin/Contacts";
 import AdminTestimonials from "./pages/Admin/Testimonials";
@@ -124,11 +126,13 @@ const App = () => {
                     <Route path="events" element={<AdminEvents />} />
                     <Route path="services" element={<AdminServices />} />
                     <Route path="orders" element={<AdminOrders />} />
+                    <Route path="tickets" element={<AdminTickets />} />
+                    <Route path="users" element={<AdminUsers />} />
                     <Route path="newsletter" element={<AdminNewsletter />} />
                     <Route path="reports" element={<AdminReports />} />
                     <Route path="contacts" element={<AdminContacts />} />
                     <Route path="testimonials" element={<AdminTestimonials />} />
-            <Route path="blog" element={<AdminBlogPosts />} />
+            <Route path="blog-posts" element={<AdminBlogPosts />} />
             <Route path="blog-comments" element={<AdminBlogComments />} />
             <Route path="video-tutorials" element={<AdminVideoTutorials />} />
             <Route path="video-comments" element={<AdminVideoComments />} />
