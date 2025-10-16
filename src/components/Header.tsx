@@ -26,9 +26,19 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [hasBusinessListings, setHasBusinessListings] = useState(false);
   const [hasOrganizerProfile, setHasOrganizerProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const checkUserAccess = async () => {
@@ -112,25 +122,25 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
     }
   };
 
-  const headerStyles = variant === "solid" 
-    ? "bg-white dark:bg-card border-border shadow-md" 
-    : "bg-white/20 md:bg-white/10 backdrop-blur-md border-white/30 md:border-white/20 shadow-lg md:shadow-none";
+  const headerStyles = variant === "solid" || isScrolled
+    ? "bg-background/95 dark:bg-card/95 backdrop-blur-lg border-border shadow-lg" 
+    : "bg-white/70 md:bg-white/50 backdrop-blur-xl border-white/40 md:border-white/30 shadow-lg";
 
-  const textStyles = variant === "solid"
+  const textStyles = variant === "solid" || isScrolled
     ? "text-foreground"
-    : "text-white";
+    : "text-foreground md:text-white";
 
-  const logoAccentStyles = variant === "solid"
-    ? "text-secondary"
-    : "text-secondary";
+  const logoAccentStyles = variant === "solid" || isScrolled
+    ? "text-primary"
+    : "text-primary md:text-secondary";
 
-  const searchStyles = variant === "solid"
+  const searchStyles = variant === "solid" || isScrolled
     ? "bg-muted border-border text-foreground placeholder:text-muted-foreground"
-    : "bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20";
+    : "bg-muted md:bg-white/20 border-border md:border-white/30 text-foreground md:text-white placeholder:text-muted-foreground md:placeholder:text-white/70 focus:bg-muted md:focus:bg-white/30";
 
-  const buttonStyles = variant === "solid"
+  const buttonStyles = variant === "solid" || isScrolled
     ? "hover:bg-muted"
-    : "hover:bg-white/20";
+    : "hover:bg-muted md:hover:bg-white/30";
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles} transition-all duration-300`}>
@@ -165,7 +175,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           {/* Desktop Search */}
           <div className="hidden lg:flex items-center flex-1 max-w-md">
             <div className="relative w-full group">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors ${variant === "solid" ? "text-muted-foreground group-focus-within:text-primary" : "text-white/70 group-focus-within:text-white"}`} />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors ${variant === "solid" || isScrolled ? "text-muted-foreground group-focus-within:text-primary" : "text-muted-foreground md:text-white/70 group-focus-within:text-primary md:group-focus-within:text-white"}`} />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -178,7 +188,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                   variant="ghost"
                   size="icon"
                   onClick={handleSearch}
-                  className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 ${variant === "solid" ? "hover:bg-muted" : "hover:bg-white/10"}`}
+                  className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 ${variant === "solid" || isScrolled ? "hover:bg-muted" : "hover:bg-muted md:hover:bg-white/20"}`}
                 >
                   <Search className="w-4 h-4" />
                 </Button>
@@ -202,7 +212,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className={`flex items-center gap-2 transition-all duration-200 ${variant === "solid" ? "text-foreground hover:bg-muted hover:text-foreground" : "text-white hover:bg-white/20 hover:text-white"}`}
+                    className={`flex items-center gap-2 transition-all duration-200 ${variant === "solid" || isScrolled ? "text-foreground hover:bg-muted hover:text-foreground" : "text-foreground md:text-white hover:bg-muted md:hover:bg-white/30 md:hover:text-white"}`}
                   >
                     <User className="w-4 h-4" />
                     <span className="text-sm hidden xl:inline">
