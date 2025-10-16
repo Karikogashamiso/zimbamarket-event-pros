@@ -48,7 +48,7 @@ const Footer = () => {
 
   const quickLinks = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Tickets", href: "/tickets", icon: QrCode },
+    { name: "Browse Services", href: "/categories", icon: Search },
     { name: "Blog", href: "/blog", icon: BookOpen },
     { name: "Video Tutorials", href: "/video-tutorials", icon: Users },
     { name: "List Business", href: "/list-business", icon: Building2 },
