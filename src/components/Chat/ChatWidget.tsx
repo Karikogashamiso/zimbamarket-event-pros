@@ -162,6 +162,7 @@ const ChatWidget = () => {
           onClick={() => setIsOpen(true)}
           size="lg"
           aria-label="Open chat"
+          data-chat-widget
           className="rounded-full bg-primary hover:bg-primary/90 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
         >
           <MessageCircle className="w-5 h-5" />

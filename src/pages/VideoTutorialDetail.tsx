@@ -282,14 +282,29 @@ const VideoTutorialDetail = () => {
 
   if (!video) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Video not found</h1>
-          <Link to="/video-tutorials">
-            <Button>Back to Videos</Button>
-          </Link>
+      <>
+        <Header variant="solid" />
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold mb-4">Video not found</h1>
+            <div className="flex gap-3 justify-center">
+              <Link to="/video-tutorials">
+                <Button>Back to Videos</Button>
+              </Link>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  const chatWidget = document.querySelector('[data-chat-widget]') as HTMLElement;
+                  chatWidget?.click();
+                }}
+              >
+                Chat with AI
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
@@ -301,7 +316,7 @@ const VideoTutorialDetail = () => {
         image={video.thumbnail_url}
       />
       <Header variant="solid" />
-      <div className="min-h-screen bg-background py-12">
+      <div className="bg-background py-12">
         <div className="container max-w-4xl mx-auto px-4">
           <Link to="/video-tutorials">
             <Button variant="ghost" className="mb-6">
