@@ -182,10 +182,40 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString()
     });
 
+    // Send confirmation email
+    try {
+      console.log('Calling send-newsletter-confirmation function...');
+      const emailResponse = await fetch(
+        `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-newsletter-confirmation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          },
+          body: JSON.stringify({
+            email: sanitizedEmail,
+            source: sanitizedSource,
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        console.error('Failed to send confirmation email:', errorData);
+        // Don't fail the subscription if email fails
+      } else {
+        console.log('Confirmation email sent successfully');
+      }
+    } catch (emailError) {
+      console.error('Error calling email function:', emailError);
+      // Don't fail the subscription if email fails
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Successfully subscribed to our newsletter!',
+        message: 'Successfully subscribed to our newsletter! Check your email for confirmation.',
         subscriptionId: data.id
       }),
       { 
