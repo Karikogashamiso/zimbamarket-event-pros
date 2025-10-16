@@ -41,11 +41,18 @@ const adminMenuItems = [
 
 function AdminSidebar() {
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  // Close sidebar on mobile when navigating to a new page
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [location.pathname, isMobile, setOpenMobile]);
+
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-4 py-6">
@@ -184,25 +191,30 @@ const AdminLayout = () => {
         <title>Admin Panel | ZimEventPro</title>
       </Helmet>
 
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full bg-background">
           <AdminSidebar />
           
-          <main className="flex-1 overflow-auto">
-            <header className="sticky top-0 z-10 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-16 items-center gap-4 px-6">
-                <SidebarTrigger>
+          <main className="flex-1 overflow-auto w-full">
+            <header className="sticky top-0 z-10 h-14 md:h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 md:px-6">
+                <SidebarTrigger className="md:hidden">
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SidebarTrigger>
+                <SidebarTrigger className="hidden md:flex">
                   <Button variant="ghost" size="icon">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SidebarTrigger>
                 <div className="flex-1">
-                  <h1 className="text-lg font-semibold">Admin Panel</h1>
+                  <h1 className="text-base md:text-lg font-semibold">Admin Panel</h1>
                 </div>
               </div>
             </header>
             
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <Outlet />
             </div>
           </main>
