@@ -29,6 +29,8 @@ const VideoTutorials = () => {
   const [tutorials, setTutorials] = useState<any[]>([]);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -135,6 +137,49 @@ const VideoTutorials = () => {
     } catch (error) {
       console.error("Error sharing:", error);
       toast.error("Failed to share. Please try again.");
+    }
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newsletterEmail.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newsletterEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setSubscribing(true);
+    
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscriptions")
+        .insert({
+          email: newsletterEmail.toLowerCase().trim(),
+          source: "video_tutorials",
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.error("This email is already subscribed");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success("Successfully subscribed to updates!");
+        setNewsletterEmail("");
+      }
+    } catch (error) {
+      console.error("Error subscribing to newsletter:", error);
+      toast.error("Failed to subscribe. Please try again.");
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -488,12 +533,23 @@ const VideoTutorials = () => {
                   <p className="text-muted-foreground mb-4 text-sm">
                     Get notified when new tutorials are available.
                   </p>
-                  <div className="space-y-3">
-                    <Input placeholder="Enter your email" type="email" />
-                    <Button size="sm" className="w-full">
-                      Subscribe for Updates
+                  <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+                    <Input 
+                      placeholder="Enter your email" 
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      disabled={subscribing}
+                    />
+                    <Button 
+                      type="submit" 
+                      size="sm" 
+                      className="w-full"
+                      disabled={subscribing}
+                    >
+                      {subscribing ? "Subscribing..." : "Subscribe for Updates"}
                     </Button>
-                  </div>
+                  </form>
                 </CardContent>
               </Card>
 
