@@ -255,6 +255,23 @@ export const OrderConfirmation: React.FC = () => {
     toast.success(`Ticket shared via ${method === 'whatsapp' ? 'WhatsApp' : 'Email'}`);
   };
 
+  const handleEmailInvoice = async () => {
+    try {
+      toast.loading('Sending invoice email...', { id: 'email-invoice' });
+      
+      const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        body: { orderNumber: orderDetails.order_number }
+      });
+
+      if (error) throw error;
+
+      toast.success('Invoice email sent successfully!', { id: 'email-invoice' });
+    } catch (error: any) {
+      console.error('Error sending invoice email:', error);
+      toast.error('Failed to send invoice email. Please try again.', { id: 'email-invoice' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/10">
@@ -429,9 +446,13 @@ export const OrderConfirmation: React.FC = () => {
                 <Download className="h-4 w-4" />
                 Download Receipt
               </Button>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={handleEmailInvoice}
+              >
                 <Share2 className="h-4 w-4" />
-                Share Booking
+                Email Invoice
               </Button>
             </div>
 
