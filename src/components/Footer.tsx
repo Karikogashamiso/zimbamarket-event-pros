@@ -274,9 +274,9 @@ const Footer = () => {
                 placeholder="Enter your email"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="flex-1 h-11 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-secondary"
               />
-              <Button type="submit" variant="secondary" className="px-6 py-3 font-semibold">
+              <Button type="submit" variant="secondary" className="h-11 px-6 font-semibold whitespace-nowrap">
                 Subscribe
               </Button>
             </form>
