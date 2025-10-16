@@ -172,75 +172,82 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
           ) : (
             <div className="space-y-4">
               {listings.map((listing) => (
-                <div key={listing.id} className="border rounded-lg p-4 hover:bg-accent/30 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Building2 className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-lg">{listing.business_name}</span>
-                        {getStatusBadge(listing.status)}
-                        {listing.featured && (
-                          <Badge className="bg-gradient-primary text-white">Featured</Badge>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1 text-sm">
-                        <span className="text-muted-foreground">Category: {listing.category?.name || 'N/A'}</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          {listing.location}
-                        </div>
-                        {listing.phone_number && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Phone className="w-3 h-3" />
-                            {listing.phone_number}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Mail className="w-3 h-3" />
-                          {listing.email}
-                        </div>
-                        {listing.price_from && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <DollarSign className="w-3 h-3" />
-                            From ${listing.price_from}
-                          </div>
-                        )}
-                        {listing.website && (
-                          <div className="flex items-center gap-1">
-                            <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                            <a href={listing.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
-                              Website
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      <p className="text-sm text-muted-foreground line-clamp-2">{listing.description}</p>
-
-                      {listing.services && (
-                        <div className="flex items-center gap-2 flex-wrap text-xs mt-2">
-                          <span className="text-muted-foreground">Services:</span>
-                          {listing.services.length === 0 ? (
-                            <Badge variant="outline" className="bg-red-500/10 text-red-600">
-                              No services created yet
-                            </Badge>
-                          ) : (
-                            <>
-                              <Badge variant="outline">
-                                {listing.services.length} total
-                              </Badge>
-                              <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                                {listing.services.filter((s: any) => s.active).length} active
-                              </Badge>
-                            </>
+                  <div key={listing.id} className="border rounded-lg p-4 hover:bg-accent/30 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-3">
+                        {/* Header: Business Name and Badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Building2 className="w-5 h-5 text-muted-foreground" />
+                          <span className="font-semibold text-lg">{listing.business_name}</span>
+                          {getStatusBadge(listing.status)}
+                          {listing.featured && (
+                            <Badge className="bg-gradient-primary text-white">Featured</Badge>
                           )}
                         </div>
-                      )}
-                    </div>
+                        
+                        {/* Location and Category */}
+                        <div className="flex items-center gap-4 text-sm flex-wrap">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-4 h-4" />
+                            <span>{listing.location}</span>
+                          </div>
+                          <div className="text-muted-foreground">
+                            Category: <span className="font-medium">{listing.category?.name || 'N/A'}</span>
+                          </div>
+                        </div>
+
+                        {/* Contact Information */}
+                        <div className="flex items-center gap-4 text-sm flex-wrap">
+                          {listing.phone_number && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Phone className="w-4 h-4" />
+                              <span>{listing.phone_number}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Mail className="w-4 h-4" />
+                            <span>{listing.email}</span>
+                          </div>
+                          {listing.website && (
+                            <a href={listing.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                              <ExternalLink className="w-4 h-4" />
+                              <span>Website</span>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-sm text-muted-foreground line-clamp-2">{listing.description}</p>
+
+                        {/* Bottom Row: Price and Services */}
+                        <div className="flex items-center gap-4 flex-wrap text-sm">
+                          {listing.price_from && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <DollarSign className="w-4 h-4" />
+                              <span>From ${listing.price_from}</span>
+                            </div>
+                          )}
+                          {listing.services && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-muted-foreground text-xs">Services:</span>
+                              {listing.services.length === 0 ? (
+                                <Badge variant="outline" className="bg-red-500/10 text-red-600 text-xs">
+                                  No services yet
+                                </Badge>
+                              ) : (
+                                <>
+                                  <Badge variant="outline" className="text-xs">
+                                    {listing.services.length} total
+                                  </Badge>
+                                  <Badge variant="outline" className="bg-green-500/10 text-green-600 text-xs">
+                                    {listing.services.filter((s: any) => s.active).length} active
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                     <div className="ml-4 flex gap-2">
                       <Button 
