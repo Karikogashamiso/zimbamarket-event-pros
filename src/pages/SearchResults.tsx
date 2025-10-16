@@ -27,6 +27,9 @@ import MetaTags from "@/components/SEO/MetaTags";
 import StructuredData from "@/components/SEO/StructuredData";
 import { trackServiceView, trackSearch } from "@/components/Analytics/GoogleAnalytics";
 import { toast } from "sonner";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/Pagination/PaginationControls";
+import { ServiceListSkeleton } from "@/components/LoadingStates";
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -130,6 +133,16 @@ const SearchResults = () => {
     loadingMore, 
     totalCount 
   } = useServices(searchFilters);
+
+  // Pagination
+  const pagination = usePagination({
+    totalItems: totalCount,
+    itemsPerPage: 12,
+    initialPage: 1,
+  });
+
+  // Get paginated services
+  const paginatedServices = services.slice(pagination.startIndex, pagination.endIndex);
 
   // Handle search form submission
   const handleSearch = (filters: SearchFilters) => {
@@ -408,58 +421,28 @@ const SearchResults = () => {
                     : 'grid-cols-1'
                 }`}>
                   {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <ResultCard key={i} result={null} isLoading={true} />
-                    ))
+                    <ServiceListSkeleton count={6} />
                   ) : (
-                    services.map((result) => (
+                    paginatedServices.map((result) => (
                       <ResultCard key={result.id} result={result} isLoading={false} />
                     ))
                   )}
                 </div>
 
-                {/* Load More Button */}
-                {!loading && services.length > 0 && hasMore && (
-                  <div className="text-center mt-12">
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="hover-scale" 
-                      onClick={loadMore}
-                      disabled={loadingMore}
-                    >
-                      {loadingMore ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                          Loading More...
-                        </>
-                      ) : (
-                        <>
-                          Load More Results
-                          <ChevronDown className="w-4 h-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Showing {services.length} of {totalCount} results
-                    </p>
-                  </div>
-                )}
-
-                {/* No More Results Message */}
-                {!loading && services.length > 0 && !hasMore && (
-                  <div className="text-center mt-12 py-8 border-t border-border">
-                    <p className="text-muted-foreground">
-                      You've seen all {totalCount} results matching your criteria.
-                    </p>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                      className="mt-2"
-                    >
-                      Back to Top
-                    </Button>
-                  </div>
+                {/* Pagination Controls */}
+                {!loading && services.length > 0 && (
+                  <PaginationControls
+                    currentPage={pagination.currentPage}
+                    totalPages={pagination.totalPages}
+                    onPageChange={pagination.goToPage}
+                    canGoNext={pagination.canGoNext}
+                    canGoPrevious={pagination.canGoPrevious}
+                    getPageNumbers={pagination.getPageNumbers}
+                    showPageInfo={true}
+                    totalItems={totalCount}
+                    startIndex={pagination.startIndex}
+                    endIndex={pagination.endIndex}
+                  />
                 )}
               </main>
             </div>
