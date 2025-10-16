@@ -308,9 +308,16 @@ const SearchResults = () => {
                 <ArrowUpRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
-            <Button variant="outline" size="sm" className="hover-scale">
-              <Calendar className="w-4 h-4" />
-            </Button>
+            <Link to={`/service/${result.id}?action=book`}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hover-scale"
+                title="Book Now"
+              >
+                <Calendar className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
