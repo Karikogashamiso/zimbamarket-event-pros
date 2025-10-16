@@ -123,37 +123,55 @@ export const OrderConfirmation: React.FC = () => {
     return `${symbol}${amount.toFixed(2)}`;
   };
 
-  const generateInvoicePDF = () => {
+  const generateInvoicePDF = async () => {
     try {
       const doc = new jsPDF();
       
+      // Add logo if available
+      const logoUrl = '/lovable-uploads/2735172f-d339-4f7b-b058-3787764bf6af.png';
+      try {
+        // Try to load and add logo
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = logoUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          setTimeout(reject, 2000); // Timeout after 2 seconds
+        });
+        doc.addImage(img, 'PNG', 20, 10, 30, 15);
+      } catch {
+        // Logo load failed, continue without it
+        console.log('Logo not loaded, continuing without image');
+      }
+      
       // Header
       doc.setFontSize(20);
-      doc.setTextColor(37, 99, 235); // Primary color
-      doc.text('ZimEventPro', 20, 20);
+      doc.setTextColor(37, 99, 235);
+      doc.text('ZimEventPro', 55, 20);
       
       doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
-      doc.text('Invoice', 20, 35);
+      doc.text('Invoice', 20, 40);
       
       // Order details
       doc.setFontSize(10);
-      doc.text(`Order Number: ${orderDetails.order_number}`, 20, 50);
-      doc.text(`Date: ${new Date(orderDetails.created_at).toLocaleDateString()}`, 20, 57);
-      doc.text(`Payment Status: ${orderDetails.payment_status}`, 20, 64);
+      doc.text(`Order Number: ${orderDetails.order_number}`, 20, 55);
+      doc.text(`Date: ${new Date(orderDetails.created_at).toLocaleDateString()}`, 20, 62);
+      doc.text(`Payment Status: ${orderDetails.payment_status}`, 20, 69);
       
       // Customer details
       doc.setFontSize(12);
-      doc.text('Bill To:', 20, 80);
+      doc.text('Bill To:', 20, 85);
       doc.setFontSize(10);
-      doc.text(`${orderDetails.customer_first_name} ${orderDetails.customer_last_name}`, 20, 87);
-      doc.text(orderDetails.customer_email, 20, 94);
+      doc.text(`${orderDetails.customer_first_name} ${orderDetails.customer_last_name}`, 20, 92);
+      doc.text(orderDetails.customer_email, 20, 99);
       if (orderDetails.customer_phone) {
-        doc.text(orderDetails.customer_phone, 20, 101);
+        doc.text(orderDetails.customer_phone, 20, 106);
       }
       
       // Event details if available
-      let yPos = 115;
+      let yPos = 120;
       if (orderDetails.metadata?.event) {
         doc.setFontSize(12);
         doc.text('Event Details:', 20, yPos);

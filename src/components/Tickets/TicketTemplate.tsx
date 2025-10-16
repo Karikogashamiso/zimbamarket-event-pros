@@ -55,9 +55,6 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
 
   const generateQRCode = async () => {
     try {
-      console.log('Generating QR code for ticket:', ticket.ticketNumber);
-      console.log('QR Data (first 100 chars):', ticket.qrCodeData.substring(0, 100));
-      
       const url = await QRCode.toDataURL(ticket.qrCodeData, {
         width: 120,
         margin: 1,
@@ -67,7 +64,6 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
         },
       });
       setQrCodeUrl(url);
-      console.log('QR code generated successfully for ticket:', ticket.ticketNumber);
     } catch (error) {
       console.error('Error generating QR code:', error);
     }
