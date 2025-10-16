@@ -160,6 +160,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     };
     setFilters(clearedFilters);
     onSearch(clearedFilters);
+    setIsExpanded(false); // Close the filter section
   };
 
   const activeFiltersCount = [
