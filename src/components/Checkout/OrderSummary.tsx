@@ -30,8 +30,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
 
   const fees = calculateFees();
-  const serviceFee = (checkoutData.totalAmount || 0) * 0.05; // 5% service fee
-  const finalTotal = (checkoutData.totalAmount || 0) + fees + serviceFee;
+  const subtotalWithFees = (checkoutData.totalAmount || 0) + fees;
+  const serviceFee = subtotalWithFees * 0.05; // 5% service fee on amount after processing fees
+  const finalTotal = subtotalWithFees + serviceFee;
 
   return (
     <div className="space-y-6">
@@ -176,17 +177,17 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span>{formatCurrency(checkoutData.totalAmount || 0)}</span>
           </div>
           
+          {fees > 0 && (
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Processing Fee (2.9%)</span>
+              <span>{formatCurrency(fees)}</span>
+            </div>
+          )}
+          
           {serviceFee > 0 && (
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Service Fee (5%)</span>
               <span>{formatCurrency(serviceFee)}</span>
-            </div>
-          )}
-          
-          {fees > 0 && (
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Processing Fee</span>
-              <span>{formatCurrency(fees)}</span>
             </div>
           )}
           
