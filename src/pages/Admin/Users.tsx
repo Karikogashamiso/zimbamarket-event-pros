@@ -66,30 +66,12 @@ const Users = () => {
     try {
       setLoading(true);
       
-      // Get users from profiles table
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Call the edge function to get users with auth data
+      const { data, error } = await supabase.functions.invoke('admin-list-users');
 
       if (error) throw error;
 
-      // Get auth users data - note this requires service_role key
-      // For now we'll just show profile data without auth info
-      const mergedUsers = data?.map(profile => ({
-        id: profile.user_id,
-        email: "", // Would need admin API to fetch
-        created_at: profile.created_at,
-        last_sign_in_at: "",
-        profiles: {
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          phone_number: profile.phone_number,
-        },
-        user_roles: [] as Array<{ role: string }>,
-      })) || [];
-
-      setUsers(mergedUsers);
+      setUsers(data.users || []);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast({
