@@ -32,7 +32,7 @@ interface BookingRequestsManagerProps {
 }
 
 export const BookingRequestsManager = () => {
-  const { requests, loading, updateRequestStatus } = useBookingRequests();
+  const { requests, loading, updateRequestStatus, refreshRequests } = useBookingRequests();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showPriceDialog, setShowPriceDialog] = useState(false);
@@ -144,7 +144,7 @@ export const BookingRequestsManager = () => {
 
       setShowPriceDialog(false);
       setShowDetailsDialog(false);
-      window.location.reload();
+      refreshRequests();
     } catch (error: any) {
       console.error('Error approving booking:', error);
       toast({

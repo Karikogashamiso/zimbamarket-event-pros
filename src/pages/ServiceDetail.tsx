@@ -95,7 +95,7 @@ const ServiceDetail = () => {
   const [isSaved, setIsSaved] = useState(false);
   
   const { service, loading: serviceLoading, error: serviceError } = useService(id || '');
-  const { reviews, loading: reviewsLoading } = useReviews(id || '');
+  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews(id || '');
   const { user } = useAuth();
   const { toast } = useToast();
   const { saveService, shareService, reportService, isSaving, isReporting } = useServiceActions();
@@ -122,8 +122,7 @@ const ServiceDetail = () => {
 
   // Handle reviews refresh
   const handleReviewSubmitted = () => {
-    // Simple refresh by reloading the component
-    window.location.reload();
+    refetchReviews();
   };
 
   // Handle review helpful button
@@ -155,8 +154,8 @@ const ServiceDetail = () => {
         description: "Your feedback has been recorded.",
       });
       
-      // Refresh the page to show updated count
-      setTimeout(() => window.location.reload(), 1000);
+      // Refresh reviews to show updated count
+      refetchReviews();
     } catch (error) {
       console.error('Error marking review as helpful:', error);
       toast({

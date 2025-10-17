@@ -16,37 +16,37 @@ export const useReviews = (serviceId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const { data, error } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('service_id', serviceId)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('service_id', serviceId)
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching reviews:', error);
-          setError(error.message);
-          return;
-        }
-
-        setReviews(data || []);
-      } catch (err) {
-        console.error('Error:', err);
-        setError('Failed to fetch reviews');
-      } finally {
-        setLoading(false);
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        setError(error.message);
+        return;
       }
-    };
 
+      setReviews(data || []);
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to fetch reviews');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (serviceId) {
       fetchReviews();
     }
   }, [serviceId]);
 
-  return { reviews, loading, error };
+  return { reviews, loading, error, refetch: fetchReviews };
 };
