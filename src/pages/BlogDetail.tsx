@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { z } from "zod";
+import DOMPurify from "dompurify";
 
 const commentSchema = z.object({
   author_name: z.string().min(2, "Name must be at least 2 characters").max(100),
@@ -309,7 +310,7 @@ const BlogDetail = () => {
             </div>
           </div>
 
-          <div className="prose prose-lg max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content }} />
+          <div className="prose prose-lg max-w-none mb-8" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} />
 
           <div className="flex items-center gap-4 mb-12">
             <Button
