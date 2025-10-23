@@ -36,12 +36,15 @@ const Orders = () => {
 
   const handleResendTickets = async (orderId: string, customerEmail: string) => {
     try {
-      // Fetch complete order details with tickets
+      // Fetch complete order details with tickets and ticket types
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .select(`
           *,
-          tickets(*)
+          tickets(
+            *,
+            ticket_types(name)
+          )
         `)
         .eq('id', orderId)
         .single();
@@ -49,12 +52,20 @@ const Orders = () => {
       if (orderError) throw orderError;
       if (!orderData) throw new Error('Order not found');
 
+      // Format tickets with ticket type names
+      const formattedTickets = orderData.tickets?.map((ticket: any) => ({
+        id: ticket.id,
+        ticket_number: ticket.ticket_number,
+        ticket_type_name: ticket.ticket_types?.name || 'General Admission',
+        qr_code_data: ticket.qr_code_data
+      })) || [];
+
       // Send order confirmation email with full details
       const { error } = await supabase.functions.invoke('send-order-confirmation', {
         body: { 
           orderDetails: {
             ...orderData,
-            tickets: orderData.tickets || []
+            tickets: formattedTickets
           }
         }
       });

@@ -253,6 +253,39 @@ serve(async (req: Request) => {
 
     console.log(`Successfully created ${tickets.length} tickets:`, tickets.map(t => t.ticket_number));
 
+    // Send order confirmation email
+    try {
+      const formattedTickets = tickets.map((ticket: any) => ({
+        id: ticket.id,
+        ticket_number: ticket.ticket_number,
+        ticket_type_name: ticketTypesData.find(tt => tt.id === ticket.ticket_type_id)?.name || 'General Admission',
+        qr_code_data: ticket.qr_code_data
+      }));
+
+      const emailResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-order-confirmation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+        },
+        body: JSON.stringify({
+          orderDetails: {
+            ...order,
+            tickets: formattedTickets
+          }
+        })
+      });
+
+      if (!emailResponse.ok) {
+        console.error('Failed to send order confirmation email:', await emailResponse.text());
+      } else {
+        console.log('Order confirmation email sent successfully');
+      }
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
     // Return success response
     return new Response(
       JSON.stringify({
