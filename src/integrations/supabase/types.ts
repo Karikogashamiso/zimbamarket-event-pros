@@ -153,7 +153,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           referrer: string | null
           service_id: string
           session_id: string | null
@@ -165,7 +165,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           referrer?: string | null
           service_id: string
           session_id?: string | null
@@ -177,7 +177,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           referrer?: string | null
           service_id?: string
           session_id?: string | null
@@ -1753,7 +1753,7 @@ export type Database = {
           event_data: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           service_id: string
           user_agent: string | null
           user_id: string | null
@@ -1763,7 +1763,7 @@ export type Database = {
           event_data?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           service_id: string
           user_agent?: string | null
           user_id?: string | null
@@ -1773,7 +1773,7 @@ export type Database = {
           event_data?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           service_id?: string
           user_agent?: string | null
           user_id?: string | null
@@ -2241,7 +2241,7 @@ export type Database = {
           created_at: string
           device_fingerprint: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           location_data: Json | null
           offline_validation: boolean | null
           signature_verification: boolean | null
@@ -2255,7 +2255,7 @@ export type Database = {
           created_at?: string
           device_fingerprint?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_data?: Json | null
           offline_validation?: boolean | null
           signature_verification?: boolean | null
@@ -2269,7 +2269,7 @@ export type Database = {
           created_at?: string
           device_fingerprint?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_data?: Json | null
           offline_validation?: boolean | null
           signature_verification?: boolean | null
@@ -2886,14 +2886,8 @@ export type Database = {
       }
     }
     Functions: {
-      calculate_risk_score: {
-        Args: { order_uuid: string }
-        Returns: number
-      }
-      cleanup_expired_csrf_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      calculate_risk_score: { Args: { order_uuid: string }; Returns: number }
+      cleanup_expired_csrf_tokens: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2905,10 +2899,7 @@ export type Database = {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
       }
-      refresh_business_metrics: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      refresh_business_metrics: { Args: never; Returns: undefined }
       user_owns_event: {
         Args: { event_id_param: string; user_id_param: string }
         Returns: boolean
