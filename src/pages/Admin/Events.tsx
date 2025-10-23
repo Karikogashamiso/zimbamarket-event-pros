@@ -91,12 +91,16 @@ const Events = () => {
       let organizerId = organizerData?.id;
 
       if (!organizerId) {
+        if (!user?.email) {
+          throw new Error('User email is required to create organizer');
+        }
+        
         const { data: newOrganizer, error: createError } = await supabase
           .from('organizers')
           .insert({
             user_id: user?.id,
             business_name: 'Admin Organization',
-            email: user?.email || '',
+            email: user.email,
             business_type: 'event_organizer' as any,
           })
           .select()
