@@ -525,8 +525,7 @@ const OrganizerDashboard = () => {
                     name="email" 
                     type="email" 
                     defaultValue={user?.email} 
-                    readOnly 
-                    disabled
+                    readOnly
                     className="bg-muted cursor-not-allowed"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
