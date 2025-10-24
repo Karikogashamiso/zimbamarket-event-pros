@@ -275,14 +275,22 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
               </DropdownMenu>
             ) : (
               <Link to="/auth?tab=login">
-                <Button variant={variant === "solid" ? "default" : "glass"} size="sm" className="transition-all duration-200">
+                <Button 
+                  variant={variant === "solid" || isScrolled ? "default" : "default"} 
+                  size="sm" 
+                  className="transition-all duration-200"
+                >
                   <User className="w-4 h-4 lg:mr-2" />
                   <span className="hidden lg:inline">Sign In</span>
                 </Button>
               </Link>
             )}
             <Link to="/list-business">
-              <Button variant={variant === "solid" ? "default" : "hero"} size="sm" className="transition-all duration-200 whitespace-nowrap">
+              <Button 
+                variant={variant === "solid" || isScrolled ? "default" : "hero"} 
+                size="sm" 
+                className="transition-all duration-200 whitespace-nowrap"
+              >
                 <span className="hidden lg:inline">List Business</span>
                 <span className="lg:hidden">List</span>
               </Button>
