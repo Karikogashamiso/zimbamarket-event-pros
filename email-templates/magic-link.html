@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your ZimEventPro Magic Link</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; max-width: 100% !important; }
+      .header { padding: 30px 20px !important; }
+      .content { padding: 30px 20px !important; }
+      .hero-icon { font-size: 48px !important; }
+      h1 { font-size: 24px !important; }
+      h2 { font-size: 20px !important; }
+      .cta-button { padding: 14px 28px !important; font-size: 15px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; padding: 30px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="container" style="width: 600px; max-width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+          
+          <!-- Modern Gradient Header -->
+          <tr>
+            <td class="header" style="background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%); padding: 50px 40px; text-align: center;">
+              <div class="hero-icon" style="font-size: 64px; margin-bottom: 20px;">✨</div>
+              <h1 style="color: white; margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -1px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                ZimEventPro
+              </h1>
+              <p style="color: rgba(255, 255, 255, 0.95); margin: 12px 0 0 0; font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">
+                Zimbabwe's Premier Event Platform
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Main Content -->
+          <tr>
+            <td class="content" style="padding: 50px 40px;">
+              
+              <!-- Greeting Card -->
+              <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 24px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #3b82f6;">
+                <h2 style="color: #1e3a8a; margin: 0 0 12px 0; font-size: 26px; font-weight: 700; line-height: 1.2;">
+                  🔑 Your Magic Link is Ready!
+                </h2>
+                <p style="color: #1e40af; font-size: 16px; line-height: 1.5; margin: 0; font-weight: 500;">
+                  Click below to log in instantly - no password needed!
+                </p>
+              </div>
+              
+              <!-- Main Message -->
+              <p style="color: #374151; font-size: 16px; line-height: 1.8; margin: 0 0 28px 0;">
+                We've generated a secure magic link for you. Simply click the button below to access your ZimEventPro account instantly.
+              </p>
+              
+              <!-- Premium CTA Button -->
+              <table role="presentation" style="width: 100%; margin: 35px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ .ConfirmationURL }}" 
+                       class="cta-button"
+                       style="background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); 
+                              color: white; 
+                              padding: 18px 48px; 
+                              text-decoration: none; 
+                              border-radius: 10px; 
+                              font-weight: 700; 
+                              font-size: 17px; 
+                              display: inline-block;
+                              box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.15);
+                              letter-spacing: 0.3px;">
+                      <span style="display: inline-block; margin-right: 8px;">🚀</span>
+                      Log In Now
+                      <span style="display: inline-block; margin-left: 6px;">→</span>
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Alternative Link -->
+              <div style="background: #f9fafb; padding: 20px; border-radius: 10px; margin: 30px 0; border: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280; font-weight: 600;">
+                  <span style="margin-right: 6px;">🔗</span> Button not working? Copy this link:
+                </p>
+                <p style="margin: 0;">
+                  <a href="{{ .ConfirmationURL }}" style="color: #6366f1; word-break: break-all; font-size: 13px; text-decoration: none; font-weight: 500; line-height: 1.6;">{{ .ConfirmationURL }}</a>
+                </p>
+              </div>
+              
+              <!-- Security Banner -->
+              <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 24px; border-radius: 10px; margin: 30px 0 0 0; border-left: 4px solid #f59e0b;">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="font-size: 24px; margin-right: 14px; line-height: 1;">🔒</div>
+                  <div>
+                    <p style="margin: 0 0 8px 0; font-size: 15px; color: #92400e; font-weight: 700;">Security Notice</p>
+                    <p style="margin: 0; font-size: 14px; color: #78716c; line-height: 1.6;">
+                      This link expires in 24 hours. If you didn't request this magic link, you can safely ignore this email.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Modern Footer -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); padding: 40px 40px 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <div style="margin-bottom: 24px;">
+                <h4 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 700;">
+                  ZimEventPro
+                </h4>
+                <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                  Making your perfect events happen, one booking at a time
+                </p>
+              </div>
+              
+              <div style="margin: 28px 0;">
+                <a href="{{ .SiteURL }}" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 600; margin: 0 12px;">🏠 Home</a>
+                <span style="color: #d1d5db; margin: 0 4px;">•</span>
+                <a href="{{ .SiteURL }}/help" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 600; margin: 0 12px;">💬 Help</a>
+                <span style="color: #d1d5db; margin: 0 4px;">•</span>
+                <a href="{{ .SiteURL }}/contact" style="color: #6366f1; text-decoration: none; font-size: 14px; font-weight: 600; margin: 0 12px;">📧 Contact</a>
+              </div>
+              
+              <div style="border-top: 1px solid #e5e7eb; margin: 24px 0 0 0; padding-top: 24px;">
+                <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.6;">
+                  © 2025 ZimEventPro. All rights reserved.
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
