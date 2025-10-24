@@ -299,20 +299,25 @@ const Auth = () => {
   // Handle auth state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // CRITICAL: Check URL synchronously - don't rely on state
+      // CRITICAL: Check URL and hash synchronously - don't rely on state
       const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const code = urlParams.get('code');
       const type = urlParams.get('type');
+      const hashType = hashParams.get('type');
       
-      // BLOCK ANY REDIRECT if we're in recovery mode (has code or type=recovery)
-      if (code || type === 'recovery') {
+      // BLOCK ANY REDIRECT if we're in recovery mode
+      if (code || type === 'recovery' || hashType === 'recovery') {
+        console.log('Recovery mode detected in auth state change, showing password update form');
         // Ensure password update form is shown
         setShowPasswordUpdate(true);
+        setShowForgotPassword(false);
+        setResetEmailSent(false);
         return; // Exit immediately - don't redirect
       }
       
       // Only redirect on normal sign-in (not recovery)
-      if (event === 'SIGNED_IN' && session && !showPasswordUpdate) {
+      if (event === 'SIGNED_IN' && session && !showPasswordUpdate && type !== 'recovery' && hashType !== 'recovery') {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
