@@ -28,7 +28,8 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, phoneNumber: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // CRITICAL: Redirect to /auth so the confirmation callback is properly handled
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { data, error } = await supabase.auth.signUp({
       email,
