@@ -24,8 +24,8 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     icon: <CreditCard className="h-5 w-5" />,
     processingTime: 'Instant',
     fees: '1.5% processing fee',
-    popular: true,
-    available: true
+    popular: false,
+    available: false
   },
   {
     id: 'ecocash',
@@ -34,6 +34,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     icon: <Smartphone className="h-5 w-5" />,
     processingTime: 'Instant',
     fees: 'No additional fees',
+    popular: true,
     available: false
   },
   {
