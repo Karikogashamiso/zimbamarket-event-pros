@@ -145,6 +145,34 @@ export const useSimpleCheckout = () => {
         return order;
       }
 
+      // Process payment through ContiPay
+      if (checkoutData.paymentMethod === 'contipay') {
+        console.log('Creating ContiPay payment...');
+        
+        const { data: contiPayResponse, error: contiPayError } = await supabase.functions.invoke('process-contipay-payment', {
+          body: {
+            orderId: order.id,
+            amount: checkoutData.totalAmount || 0,
+            currency: checkoutData.currency || 'USD',
+            customerInfo: checkoutData.customerInfo,
+            returnUrl: `${window.location.origin}/order-confirmation/${order.order_number}`,
+          }
+        });
+
+        if (contiPayError || !contiPayResponse?.success) {
+          console.error('ContiPay error:', contiPayError);
+          throw new Error(`ContiPay payment failed: ${contiPayError?.message || 'Please try again.'}`);
+        }
+
+        if (contiPayResponse.paymentUrl) {
+          console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
+          setTimeout(() => {
+            window.location.href = contiPayResponse.paymentUrl;
+          }, 100);
+          return order;
+        }
+      }
+
       // For non-card payments, go directly to confirmation
       navigate(`/order-confirmation/${order.order_number}`);
       return order;

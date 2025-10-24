@@ -18,13 +18,22 @@ interface PaymentMethod {
 
 const PAYMENT_METHODS: PaymentMethod[] = [
   {
+    id: 'contipay',
+    name: 'ContiPay',
+    description: 'Fast and secure payment gateway',
+    icon: <CreditCard className="h-5 w-5" />,
+    processingTime: 'Instant',
+    fees: '1.5% processing fee',
+    popular: true,
+    available: true
+  },
+  {
     id: 'ecocash',
     name: 'EcoCash',
     description: 'Pay with your EcoCash wallet - Most popular in Zimbabwe',
     icon: <Smartphone className="h-5 w-5" />,
     processingTime: 'Instant',
     fees: 'No additional fees',
-    popular: true,
     available: false
   },
   {
@@ -83,6 +92,8 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
 
   const calculateFees = (method: string, amount: number) => {
     switch (method) {
+      case 'contipay':
+        return amount * 0.015; // 1.5% fee
       case 'card':
         return amount * 0.029; // 2.9% fee
       default:
@@ -118,6 +129,7 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-lg ${
+                    method.id === 'contipay' ? 'bg-primary/10 text-primary' :
                     method.id === 'ecocash' ? 'bg-red-100 text-red-700' :
                     method.id === 'onemoney' ? 'bg-blue-100 text-blue-700' :
                     method.id === 'card' ? 'bg-purple-100 text-purple-700' :
