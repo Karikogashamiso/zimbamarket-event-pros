@@ -7,6 +7,8 @@ import InstallPrompt from "@/components/PWA/InstallPrompt";
 import NetworkStatus from "@/components/PWA/NetworkStatus";
 import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { measureWebVitals, monitorPerformanceBudget } from "@/utils/performance";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import {
   StatsSectionSkeleton,
   CategorySectionSkeleton,
@@ -33,6 +35,28 @@ const TrendingServices = lazy(() => import("@/components/TrendingServices"));
 const FloatingActionButton = lazy(() => import("@/components/FloatingActionButton"));
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for cancelled payment redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const orderNumber = urlParams.get('order');
+    
+    if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled. Your order is still pending.', {
+        description: orderNumber ? `Order: ${orderNumber}` : undefined,
+        action: orderNumber ? {
+          label: 'View Order',
+          onClick: () => navigate(`/order-confirmation/${orderNumber}`)
+        } : undefined
+      });
+      
+      // Clean up URL parameters
+      window.history.replaceState({}, '', '/');
+    }
+  }, [navigate]);
+
   useEffect(() => {
     // Monitor Core Web Vitals with cleanup
     const cleanup = measureWebVitals((metric) => {

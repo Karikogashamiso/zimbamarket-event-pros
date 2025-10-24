@@ -63,7 +63,7 @@ serve(async (req) => {
       mode: 'payment',
       customer_email: customerEmail,
       success_url: `${origin}/order-confirmation/${orderNumber}?payment=success`,
-      cancel_url: `${origin}/checkout?payment=cancelled`,
+      cancel_url: `${origin}/?payment=cancelled&order=${orderNumber}`,
       metadata: {
         orderId,
         orderNumber,
