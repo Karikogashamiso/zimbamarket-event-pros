@@ -137,8 +137,11 @@ export const useSimpleCheckout = () => {
 
         console.log('Redirecting to Stripe Checkout:', checkoutSession.url);
 
-        // Redirect to Stripe Checkout
-        window.location.href = checkoutSession.url;
+        // Redirect to Stripe Checkout with a small delay to ensure state is clean
+        setTimeout(() => {
+          window.location.href = checkoutSession.url;
+        }, 100);
+        
         return order;
       }
 
