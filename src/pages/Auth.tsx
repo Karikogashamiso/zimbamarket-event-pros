@@ -85,15 +85,16 @@ const Auth = () => {
     path: ["confirmPassword"],
   });
 
-  // Handle password recovery - both hash tokens and PKCE code flow
+  // Handle email confirmation and password recovery - both hash tokens and PKCE code flow
   useEffect(() => {
-    const handleRecovery = async () => {
+    const handleAuthCallback = async () => {
       // Check for PKCE code in search params first
       const searchParams = new URLSearchParams(window.location.search);
       const code = searchParams.get('code');
+      const type = searchParams.get('type');
       
       if (code) {
-        console.log('Found PKCE code, exchanging for session...');
+        console.log('Found PKCE code, type:', type, ', exchanging for session...');
         setIsVerifyingSession(true);
         try {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -101,51 +102,64 @@ const Auth = () => {
           if (error) {
             console.error('Error exchanging code:', error);
             toast({
-              title: "Session Error",
-              description: "Failed to establish session. Please request a new reset link.",
+              title: "Verification Error",
+              description: type === 'recovery' ? "Failed to establish session. Please request a new reset link." : "Email verification failed. Please try signing up again.",
               variant: "destructive",
             });
             setShowPasswordUpdate(false);
-            setShowForgotPassword(true);
+            setShowForgotPassword(type === 'recovery');
             setIsVerifyingSession(false);
           } else if (data.session) {
-            console.log('PKCE session established successfully');
-            // Store the recovery session
-            setRecoverySession(data.session);
+            console.log('PKCE session established successfully, type:', type);
             
-            // Wait a bit to ensure session is persisted
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Double-check session is available
-            const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-            
-            if (verifiedSession) {
-              setShowPasswordUpdate(true);
-              setShowForgotPassword(false);
-              setResetEmailSent(false);
-              setActiveTab('login');
-              setIsVerifyingSession(false);
+            // Handle based on callback type
+            if (type === 'recovery') {
+              // Store the recovery session
+              setRecoverySession(data.session);
+              
+              // Wait a bit to ensure session is persisted
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              // Double-check session is available
+              const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+              
+              if (verifiedSession) {
+                setShowPasswordUpdate(true);
+                setShowForgotPassword(false);
+                setResetEmailSent(false);
+                setActiveTab('login');
+                setIsVerifyingSession(false);
+              } else {
+                console.error('Session not persisted after exchange');
+                toast({
+                  title: "Session Error",
+                  description: "Failed to establish session. Please request a new reset link.",
+                  variant: "destructive",
+                });
+                setShowPasswordUpdate(false);
+                setShowForgotPassword(true);
+                setIsVerifyingSession(false);
+              }
             } else {
-              console.error('Session not persisted after exchange');
-              toast({
-                title: "Session Error",
-                description: "Failed to establish session. Please request a new reset link.",
-                variant: "destructive",
-              });
-              setShowPasswordUpdate(false);
-              setShowForgotPassword(true);
+              // Email confirmation (signup) - user is now verified
               setIsVerifyingSession(false);
+              toast({
+                title: "Email Verified!",
+                description: "Your email has been confirmed. Welcome to ZimEventPro!",
+              });
+              // Navigate to home page
+              navigate("/");
             }
           }
         } catch (error) {
-          console.error('PKCE recovery error:', error);
+          console.error('PKCE callback error:', error);
           toast({
-            title: "Recovery Failed",
-            description: "An error occurred. Please request a new reset link.",
+            title: type === 'recovery' ? "Recovery Failed" : "Verification Failed",
+            description: type === 'recovery' ? "An error occurred. Please request a new reset link." : "Email verification failed. Please try again.",
             variant: "destructive",
           });
           setShowPasswordUpdate(false);
-          setShowForgotPassword(true);
+          setShowForgotPassword(type === 'recovery');
           setIsVerifyingSession(false);
         }
         return;
@@ -153,10 +167,10 @@ const Auth = () => {
       
       // Fallback: Check for tokens in hash (legacy flow)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
+      const hashType = hashParams.get('type');
       
-      if (type === 'recovery') {
-        console.log('Found hash-based recovery');
+      if (hashType === 'recovery' || hashType === 'signup') {
+        console.log('Found hash-based auth callback, type:', hashType);
         setIsVerifyingSession(true);
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -169,59 +183,71 @@ const Auth = () => {
             });
             
             if (error) {
-              console.error('Error setting recovery session:', error);
+              console.error('Error setting session:', error);
               toast({
-                title: "Session Error",
-                description: "Failed to establish session. Please request a new reset link.",
+                title: hashType === 'recovery' ? "Session Error" : "Verification Failed",
+                description: hashType === 'recovery' ? "Failed to establish session. Please request a new reset link." : "Email verification failed. Please try signing up again.",
                 variant: "destructive",
               });
               setShowPasswordUpdate(false);
-              setShowForgotPassword(true);
+              setShowForgotPassword(hashType === 'recovery');
               setIsVerifyingSession(false);
             } else {
               console.log('Hash-based session established successfully');
-              // Store the recovery session
-              setRecoverySession(data.session);
               
-              // Wait to ensure session is persisted
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              // Verify session
-              const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-              
-              if (verifiedSession) {
-                setShowPasswordUpdate(true);
-                setShowForgotPassword(false);
-                setResetEmailSent(false);
-                setActiveTab('login');
-                setIsVerifyingSession(false);
+              if (hashType === 'recovery') {
+                // Store the recovery session
+                setRecoverySession(data.session);
+                
+                // Wait to ensure session is persisted
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Verify session
+                const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+                
+                if (verifiedSession) {
+                  setShowPasswordUpdate(true);
+                  setShowForgotPassword(false);
+                  setResetEmailSent(false);
+                  setActiveTab('login');
+                  setIsVerifyingSession(false);
+                } else {
+                  console.error('Session not persisted after setting');
+                  toast({
+                    title: "Session Error",
+                    description: "Failed to establish session. Please request a new reset link.",
+                    variant: "destructive",
+                  });
+                  setShowPasswordUpdate(false);
+                  setShowForgotPassword(true);
+                  setIsVerifyingSession(false);
+                }
               } else {
-                console.error('Session not persisted after setting');
-                toast({
-                  title: "Session Error",
-                  description: "Failed to establish session. Please request a new reset link.",
-                  variant: "destructive",
-                });
-                setShowPasswordUpdate(false);
-                setShowForgotPassword(true);
+                // Email confirmation (signup)
                 setIsVerifyingSession(false);
+                toast({
+                  title: "Email Verified!",
+                  description: "Your email has been confirmed. Welcome to ZimEventPro!",
+                });
+                // Navigate to home page
+                navigate("/");
               }
             }
           } catch (error) {
-            console.error('Hash recovery error:', error);
+            console.error('Hash auth callback error:', error);
             setShowPasswordUpdate(false);
-            setShowForgotPassword(true);
+            setShowForgotPassword(hashType === 'recovery');
             setIsVerifyingSession(false);
           }
         } else {
           console.error('Missing tokens in hash');
           toast({
-            title: "Invalid Reset Link",
-            description: "The reset link is invalid. Please request a new one.",
+            title: hashType === 'recovery' ? "Invalid Reset Link" : "Invalid Verification Link",
+            description: hashType === 'recovery' ? "The reset link is invalid. Please request a new one." : "The verification link is invalid. Please try signing up again.",
             variant: "destructive",
           });
           setShowPasswordUpdate(false);
-          setShowForgotPassword(true);
+          setShowForgotPassword(hashType === 'recovery');
           setIsVerifyingSession(false);
         }
       } else {
@@ -229,8 +255,8 @@ const Auth = () => {
       }
     };
     
-    handleRecovery();
-  }, [toast]);
+    handleAuthCallback();
+  }, [toast, navigate]);
 
   // Check URL parameters for tab and password reset
   useEffect(() => {
