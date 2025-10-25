@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,8 +14,29 @@ export const ScanTicket: React.FC = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
 
-  const handleValidate = async () => {
-    if (!qrData.trim()) {
+  // Check for ticket parameter in URL on mount
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ticketParam = params.get('ticket');
+    
+    if (ticketParam) {
+      try {
+        // Decode base64 data
+        const decodedData = atob(ticketParam);
+        setQrData(decodedData);
+        // Auto-validate when coming from QR scan
+        handleValidate(decodedData);
+      } catch (error) {
+        console.error('Failed to decode ticket data:', error);
+        toast.error('Invalid ticket data in URL');
+      }
+    }
+  }, []);
+
+  const handleValidate = async (dataToValidate?: string) => {
+    const dataToUse = dataToValidate || qrData;
+    
+    if (!dataToUse.trim()) {
       toast.error('Please paste QR code data');
       return;
     }
@@ -29,7 +50,7 @@ export const ScanTicket: React.FC = () => {
 
       const { data, error } = await supabase.functions.invoke('validate-ticket', {
         body: {
-          qrCodeData: qrData,
+          qrCodeData: dataToUse,
           deviceFingerprint: deviceFingerprint,
           validationType: 'manual',
         },
@@ -151,7 +172,7 @@ export const ScanTicket: React.FC = () => {
 
               <div className="flex gap-3">
                 <Button
-                  onClick={handleValidate}
+                  onClick={() => handleValidate()}
                   disabled={isValidating || !qrData.trim()}
                   className="flex-1"
                 >

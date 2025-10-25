@@ -92,8 +92,13 @@ export const useTicketGeneration = () => {
       signature: signature,
     });
 
-    // Generate QR code image
-    const qrUrl = await QRCode.toDataURL(qrData, {
+    // Create URL that can be scanned by phones
+    // Encode the data as base64 so it's URL-safe
+    const encodedData = btoa(qrData);
+    const scanUrl = `${window.location.origin}/scan-ticket?ticket=${encodedData}`;
+
+    // Generate QR code image with the URL
+    const qrUrl = await QRCode.toDataURL(scanUrl, {
       width: 256,
       margin: 2,
       color: {
