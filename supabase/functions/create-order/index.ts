@@ -93,7 +93,7 @@ serve(async (req: Request) => {
         .select(`
           id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active, event_id, trip_id,
           events (
-            id, title, event_date, venue:venues(name, address)
+            id, title, start_datetime, venue:venues(name, address)
           )
         `)
         .eq('id', item.ticket_type_id)
@@ -139,7 +139,7 @@ serve(async (req: Request) => {
           eventDetails = {
             id: ticketType.events.id,
             title: ticketType.events.title,
-            date: ticketType.events.event_date,
+            date: ticketType.events.start_datetime,
             venue: ticketType.events.venue?.name,
             location: ticketType.events.venue?.address,
           };
