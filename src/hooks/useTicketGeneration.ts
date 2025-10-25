@@ -95,7 +95,16 @@ export const useTicketGeneration = () => {
     // Create URL that can be scanned by phones
     // Encode the data as base64 so it's URL-safe
     const encodedData = btoa(qrData);
-    const scanUrl = `${window.location.origin}/scan-ticket?ticket=${encodedData}`;
+    
+    // Get the current origin, fallback to hardcoded if not available
+    const origin = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
+    
+    const scanUrl = `${origin}/scan-ticket?ticket=${encodedData}`;
+    
+    console.log('Generated QR URL:', scanUrl);
+    console.log('Encoded data length:', encodedData.length);
 
     // Generate QR code image with the URL
     const qrUrl = await QRCode.toDataURL(scanUrl, {

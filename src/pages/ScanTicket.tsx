@@ -13,23 +13,45 @@ export const ScanTicket: React.FC = () => {
   const [qrData, setQrData] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   // Check for ticket parameter in URL on mount
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ticketParam = params.get('ticket');
+    
+    console.log('URL Params:', window.location.search);
+    console.log('Ticket Parameter:', ticketParam);
     
     if (ticketParam) {
       try {
         // Decode base64 data
         const decodedData = atob(ticketParam);
+        console.log('Decoded Data:', decodedData);
+        
+        setDebugInfo(`Received ticket parameter, decoded ${decodedData.length} characters`);
         setQrData(decodedData);
-        // Auto-validate when coming from QR scan
-        handleValidate(decodedData);
+        
+        // Verify it's valid JSON
+        try {
+          const parsed = JSON.parse(decodedData);
+          console.log('Parsed JSON:', parsed);
+          setDebugInfo(prev => prev + '\nValid JSON detected');
+          
+          // Auto-validate when coming from QR scan
+          setTimeout(() => handleValidate(decodedData), 500);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          setDebugInfo(prev => prev + '\nError: Not valid JSON');
+          toast.error('Invalid ticket format - not valid JSON');
+        }
       } catch (error) {
         console.error('Failed to decode ticket data:', error);
-        toast.error('Invalid ticket data in URL');
+        setDebugInfo(`Decode error: ${error}`);
+        toast.error('Invalid ticket data in URL - failed to decode');
       }
+    } else {
+      setDebugInfo('No ticket parameter found in URL');
     }
   }, []);
 
@@ -138,6 +160,15 @@ export const ScanTicket: React.FC = () => {
               Paste QR code data below to validate tickets
             </p>
           </div>
+
+          {/* Debug Info */}
+          {debugInfo && (
+            <Card className="bg-muted">
+              <CardContent className="p-3">
+                <p className="text-xs font-mono whitespace-pre-wrap">{debugInfo}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Scanner Card */}
           <Card>
@@ -298,14 +329,16 @@ export const ScanTicket: React.FC = () => {
             <CardContent className="p-4">
               <h4 className="font-semibold text-blue-900 mb-2">How to use:</h4>
               <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                <li>Have the attendee show their ticket QR code</li>
-                <li>The QR code data is a JSON string - copy it</li>
-                <li>Paste the data in the text area above</li>
-                <li>Click "Validate Ticket" to verify</li>
-                <li>Check the validation result</li>
+                <li>Scan the QR code with your phone camera</li>
+                <li>The browser will open automatically with the ticket data</li>
+                <li>Validation happens automatically</li>
+                <li>Or manually paste QR code JSON data in the text area above</li>
               </ol>
               <p className="text-xs text-blue-600 mt-3">
                 <strong>Note:</strong> Each ticket can only be scanned once within a 5-minute window
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                <strong>Current URL:</strong> {window.location.href}
               </p>
             </CardContent>
           </Card>
