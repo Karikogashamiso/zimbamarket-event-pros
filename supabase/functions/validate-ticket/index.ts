@@ -46,11 +46,12 @@ async function validateSignature(ticketData: TicketData): Promise<{ valid: boole
     }
 
     // Regenerate the signature using the SAME logic as ticket creation
-    // IMPORTANT: Must match the generateDigitalSignature in create-order
-    const signatureInput = JSON.stringify(ticketData) + 'TICKET_SIGNING_SECRET';
+    // IMPORTANT: Must exclude the signature field itself (it didn't exist when signature was generated)
+    const { signature, ...dataWithoutSignature } = ticketData;
+    const signatureInput = JSON.stringify(dataWithoutSignature) + 'TICKET_SIGNING_SECRET';
     
     console.log('=== Signature Validation Debug ===');
-    console.log('Ticket Data for signature:', JSON.stringify(ticketData, null, 2));
+    console.log('Data for signature (without signature field):', JSON.stringify(dataWithoutSignature, null, 2));
     
     const encoder = new TextEncoder();
     const data = encoder.encode(signatureInput);
