@@ -282,11 +282,16 @@ export const OrderConfirmation: React.FC = () => {
       });
 
       if (error) throw error;
+      
+      // Check if the edge function returned an error in the response
+      if (data && !data.success) {
+        throw new Error(data.error || 'Failed to send invoice email');
+      }
 
       toast.success('Invoice email sent successfully!', { id: 'email-invoice' });
     } catch (error: any) {
       console.error('Error sending invoice email:', error);
-      toast.error('Failed to send invoice email. Please try again.', { id: 'email-invoice' });
+      toast.error(error.message || 'Failed to send invoice email. Please try again.', { id: 'email-invoice' });
     }
   };
 
