@@ -192,12 +192,55 @@ serve(async (req: Request) => {
 
     console.log('Order created:', order.id);
 
-    // Create tickets
+    // Helper function to generate secure hash
+    async function generateSecureHash(data: string): Promise<string> {
+      const encoder = new TextEncoder();
+      const dataBuffer = encoder.encode(data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Helper function to generate digital signature
+    async function generateDigitalSignature(ticketData: any): Promise<string> {
+      const signatureInput = JSON.stringify(ticketData) + 'TICKET_SIGNING_SECRET';
+      return await generateSecureHash(signatureInput);
+    }
+
+    // Create tickets with proper JSON QR codes
     const ticketsToCreate = [];
     for (const ticketTypeData of ticketTypesData) {
       for (let i = 0; i < ticketTypeData.quantity; i++) {
         const ticketNumber = `TKT-${order.id.substring(0, 8).toUpperCase()}-${Date.now()}-${i + 1}`;
-        const qrCodeData = `${order.id}:${ticketTypeData.id}:${ticketNumber}`;
+        
+        // Create secure QR payload (will be updated with ticket ID after insert)
+        const timestamp = Date.now();
+        const expiryTimestamp = timestamp + (365 * 24 * 60 * 60 * 1000); // 1 year expiry
+        
+        const qrPayload = {
+          ticketId: 'pending', // Will be updated after insert with actual UUID
+          ticketNumber: ticketNumber,
+          orderId: order.id,
+          eventId: ticketTypeData.event_id || 'general',
+          holderEmail: orderData.customer_email,
+          timestamp: timestamp,
+          expiry: expiryTimestamp,
+          version: '2.0',
+        };
+
+        // Generate security hash
+        const hashInput = Object.values(qrPayload).join(':');
+        const securityHash = await generateSecureHash(hashInput);
+        
+        // Generate digital signature
+        const signature = await generateDigitalSignature({ ...qrPayload, hash: securityHash });
+
+        // Final QR data with security features
+        const qrCodeData = JSON.stringify({
+          ...qrPayload,
+          hash: securityHash,
+          signature: signature,
+        });
         
         ticketsToCreate.push({
           order_id: order.id,
@@ -252,6 +295,45 @@ serve(async (req: Request) => {
     }
 
     console.log(`Successfully created ${tickets.length} tickets:`, tickets.map(t => t.ticket_number));
+
+    // Update tickets with actual ticket IDs in QR code
+    for (const ticket of tickets) {
+      try {
+        const qrData = JSON.parse(ticket.qr_code_data);
+        qrData.ticketId = ticket.id; // Update with actual UUID
+        
+        // Regenerate hash and signature with correct ticket ID
+        const hashInput = [
+          qrData.ticketId,
+          qrData.ticketNumber,
+          qrData.orderId,
+          qrData.eventId,
+          qrData.holderEmail,
+          qrData.timestamp,
+          qrData.expiry,
+          qrData.version
+        ].join(':');
+        
+        const securityHash = await generateSecureHash(hashInput);
+        const signature = await generateDigitalSignature({ ...qrData, hash: securityHash });
+        
+        qrData.hash = securityHash;
+        qrData.signature = signature;
+        
+        const updatedQrCodeData = JSON.stringify(qrData);
+        
+        // Update the ticket with corrected QR code
+        await supabaseAdmin
+          .from('tickets')
+          .update({ qr_code_data: updatedQrCodeData })
+          .eq('id', ticket.id);
+        
+        // Update local ticket object for email
+        ticket.qr_code_data = updatedQrCodeData;
+      } catch (error) {
+        console.error(`Failed to update QR code for ticket ${ticket.id}:`, error);
+      }
+    }
 
     // Send order confirmation email
     try {
