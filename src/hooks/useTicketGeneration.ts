@@ -57,10 +57,11 @@ export const useTicketGeneration = () => {
 
   const generateTicketNumber = (orderId: string, tierIndex: number, ticketIndex: number): string => {
     const orderPrefix = orderId.substring(0, 8).toUpperCase();
-    const timestamp = Date.now().toString().slice(-6);
+    // Use UUID segment for guaranteed uniqueness instead of timestamp
+    const uniqueId = crypto.randomUUID().split('-')[0].toUpperCase();
     const tierCode = String(tierIndex + 1).padStart(2, '0');
     const ticketCode = String(ticketIndex + 1).padStart(3, '0');
-    return `ZEP-${orderPrefix}-${timestamp}-${tierCode}${ticketCode}`;
+    return `ZEP-${orderPrefix}-${uniqueId}-${tierCode}${ticketCode}`;
   };
 
   const createSecureQRCode = async (ticketData: any): Promise<{ qrData: string; qrUrl: string; hash: string; signature: string }> => {
