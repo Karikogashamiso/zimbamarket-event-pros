@@ -183,16 +183,6 @@ export const ScanTicket: React.FC = () => {
           {/* Scanner Card */}
           <Card>
             <CardContent className="space-y-4 pt-6">
-              <div className="space-y-2">
-                <Textarea
-                  placeholder='Paste ticket data here or scan a QR code...'
-                  value={qrData}
-                  onChange={(e) => setQrData(e.target.value)}
-                  rows={6}
-                  className="font-mono text-xs"
-                />
-              </div>
-
               {parsedData && (
                 <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
                   <CardHeader className="pb-3">
