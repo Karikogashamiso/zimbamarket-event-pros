@@ -66,41 +66,6 @@ export const useSimpleCheckout = () => {
         }
       }
 
-      // Validate ticket types still exist and are active
-      console.log('Validating ticket types before order creation...');
-      const ticketTypeIds = checkoutData.ticketTiers.map(t => t.ticketTypeId);
-      
-      const { data: validTicketTypes, error: validationError } = await supabase
-        .from('ticket_types')
-        .select('id, name, is_active')
-        .in('id', ticketTypeIds);
-
-      if (validationError) {
-        console.error('Ticket validation error:', validationError);
-        toast({
-          title: "Validation Error",
-          description: "Unable to validate tickets. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if all ticket types exist and are active
-      const missingOrInactive = ticketTypeIds.filter(id => {
-        const ticketType = validTicketTypes?.find(tt => tt.id === id);
-        return !ticketType || !ticketType.is_active;
-      });
-
-      if (missingOrInactive.length > 0) {
-        console.error('Invalid ticket types:', missingOrInactive);
-        toast({
-          title: "Tickets Unavailable",
-          description: "Some ticket types are no longer available. Please refresh the page and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Prepare order items from ticket tiers
       const items = checkoutData.ticketTiers.map(tier => {
         console.log('Mapping tier:', tier);

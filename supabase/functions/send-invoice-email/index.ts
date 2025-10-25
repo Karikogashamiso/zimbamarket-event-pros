@@ -66,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${ticket.ticket_types?.name || "Ticket"}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">1</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(ticket.paid_price || ticket.original_price || 0, order.currency)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(ticket.price || 0, order.currency)}</td>
           </tr>
         `;
       });
@@ -184,19 +184,11 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // IMPORTANT: Update this to your verified Resend domain
-    // 1. Go to https://resend.com/domains and verify your domain
-    // 2. Create an API key at https://resend.com/api-keys
-    // 3. Update the 'from' email below to match your verified domain
-    // For testing, you can use 'onboarding@resend.dev' (limited to 1 email per day per recipient)
-    const fromEmail = "ZimEventPro <onboarding@resend.dev>";
-    
     const emailResponse = await resend.emails.send({
-      from: fromEmail,
+      from: "ZimEventPro <onboarding@resend.dev>",
       to: [emailTo],
       subject: `Invoice - Order ${order.order_number}`,
       html: emailHTML,
-      replyTo: "support@zimeventpro.com", // Update with your support email
     });
 
     console.log("Invoice email sent successfully:", emailResponse);

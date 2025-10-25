@@ -64,7 +64,7 @@ export const useTicketGeneration = () => {
   };
 
   const createSecureQRCode = async (ticketData: any): Promise<{ qrData: string; qrUrl: string; hash: string; signature: string }> => {
-    // Create secure QR payload with full event details
+    // Create secure QR payload
     const timestamp = Date.now();
     const expiryTimestamp = timestamp + (365 * 24 * 60 * 60 * 1000); // 1 year expiry
 
@@ -73,17 +73,9 @@ export const useTicketGeneration = () => {
       orderId: ticketData.orderId,
       eventId: ticketData.eventId || 'general',
       holderEmail: ticketData.holderEmail,
-      tierName: ticketData.tierName,
-      price: ticketData.price,
-      currency: ticketData.currency,
-      // Include full event details for display when scanned
-      eventTitle: ticketData.eventTitle,
-      eventDate: ticketData.eventDate,
-      eventVenue: ticketData.eventVenue,
-      eventLocation: ticketData.eventLocation,
       timestamp: timestamp,
       expiry: expiryTimestamp,
-      version: '2.1', // Updated version with event details
+      version: '2.0',
     };
 
     // Generate security hash
@@ -128,7 +120,7 @@ export const useTicketGeneration = () => {
           // Generate unique ticket number
           const ticketNumber = generateTicketNumber(options.orderId, tierIndex, totalTicketIndex);
 
-          // Prepare ticket data for QR generation with full event details
+          // Prepare ticket data for QR generation
           const ticketData = {
             ticketNumber,
             orderId: options.orderId,
@@ -137,11 +129,6 @@ export const useTicketGeneration = () => {
             tierName: tier.name,
             price: tier.price,
             currency: tier.currency,
-            // Add full event details for QR code display
-            eventTitle: options.eventInfo?.title || 'General Event',
-            eventDate: options.eventInfo?.date,
-            eventVenue: options.eventInfo?.venue,
-            eventLocation: options.eventInfo?.location,
           };
 
           // Generate secure QR code
