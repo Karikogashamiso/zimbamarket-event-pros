@@ -30,12 +30,19 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-async function validateSignature(ticketData: TicketData): Promise<boolean> {
+async function validateSignature(ticketData: TicketData): Promise<{ valid: boolean; details: any }> {
   try {
     // Check if signature exists
     if (!ticketData.signature || ticketData.signature.length < 10) {
       console.log('No signature or signature too short');
-      return false;
+      return { 
+        valid: false, 
+        details: { 
+          reason: 'Missing or invalid signature format',
+          hasSignature: !!ticketData.signature,
+          signatureLength: ticketData.signature?.length || 0
+        }
+      };
     }
 
     // Regenerate the signature using the same logic as ticket creation
@@ -46,6 +53,14 @@ async function validateSignature(ticketData: TicketData): Promise<boolean> {
       hash: ticketData.hash
     }) + 'TICKET_SIGNING_SECRET';
     
+    console.log('=== Signature Validation Debug ===');
+    console.log('Ticket Data:', {
+      ticketId: ticketData.ticketId,
+      eventId: ticketData.eventId,
+      timestamp: ticketData.timestamp,
+      hashLength: ticketData.hash?.length
+    });
+    
     const encoder = new TextEncoder();
     const data = encoder.encode(signatureInput);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -54,12 +69,33 @@ async function validateSignature(ticketData: TicketData): Promise<boolean> {
 
     // Compare signatures
     const isValid = expectedSignature === ticketData.signature;
-    console.log(`Signature validation for ticket ${ticketData.ticketId}: ${isValid}`);
     
-    return isValid;
+    console.log('Expected signature:', expectedSignature.substring(0, 20) + '...');
+    console.log('Received signature:', ticketData.signature.substring(0, 20) + '...');
+    console.log(`Signatures match: ${isValid}`);
+    
+    if (!isValid) {
+      return {
+        valid: false,
+        details: {
+          reason: 'Signature mismatch',
+          expectedPrefix: expectedSignature.substring(0, 10),
+          receivedPrefix: ticketData.signature.substring(0, 10),
+          ticketIdUsed: ticketData.ticketId
+        }
+      };
+    }
+    
+    return { valid: true, details: { reason: 'Valid signature' } };
   } catch (error) {
     console.error('Signature validation error:', error);
-    return false;
+    return { 
+      valid: false, 
+      details: { 
+        reason: 'Signature validation exception',
+        error: error.message 
+      }
+    };
   }
 }
 
@@ -206,20 +242,27 @@ const handler = async (req: Request): Promise<Response> => {
                     'unknown';
 
     // Step 1: Validate signature
-    const signatureValid = await validateSignature(ticketData);
-    if (!signatureValid) {
+    const signatureValidation = await validateSignature(ticketData);
+    if (!signatureValidation.valid) {
+      console.error('Signature validation failed:', signatureValidation.details);
+      
       await createFraudAlert(
         'invalid_signature', 
         'ticket', 
         ticketData.ticketId, 
         'high',
-        { qr_data: qrCodeData, device: deviceFingerprint }
+        { 
+          qr_data: qrCodeData, 
+          device: deviceFingerprint,
+          validationDetails: signatureValidation.details
+        }
       );
       
       return new Response(
         JSON.stringify({ 
           valid: false, 
-          reason: 'Invalid ticket signature' 
+          reason: `Invalid ticket signature: ${signatureValidation.details.reason}`,
+          debug: signatureValidation.details
         }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -302,7 +345,7 @@ const handler = async (req: Request): Promise<Response> => {
           device_fingerprint: deviceFingerprint,
           ip_address: clientIP,
           location_data: location || {},
-          signature_verification: signatureValid
+          signature_verification: signatureValidation.valid
         });
 
       return new Response(
@@ -339,12 +382,12 @@ const handler = async (req: Request): Promise<Response> => {
         validation_type: validationType,
         validation_result: 'valid',
         validator_user_id: validatorId,
-        device_fingerprint: deviceFingerprint,
-        ip_address: clientIP,
-        location_data: location || {},
-        signature_verification: signatureValid,
-        offline_validation: false
-      });
+          device_fingerprint: deviceFingerprint,
+          ip_address: clientIP,
+          location_data: location || {},
+          signature_verification: signatureValidation.valid,
+          offline_validation: false
+        });
 
     // Update ticket scan status
     await supabase
@@ -383,7 +426,7 @@ const handler = async (req: Request): Promise<Response> => {
           metadata: ticket.metadata
         },
         deviceRisk: deviceRisk,
-        signatureValid: signatureValid
+        signatureValid: signatureValidation.valid
       }),
       { 
         headers: { 
