@@ -135,8 +135,22 @@ export const ScanTicket: React.FC = () => {
 
   const parseQRData = (data: string) => {
     try {
+      // Try parsing as JSON first (new format)
       return JSON.parse(data);
     } catch {
+      // Try parsing old colon-separated format: ticketId:orderId:ticketNumber
+      if (data.includes(':')) {
+        const parts = data.split(':');
+        if (parts.length >= 3) {
+          return {
+            ticketId: parts[0],
+            orderId: parts[1],
+            ticketNumber: parts[2],
+            version: '1.0',
+            format: 'legacy'
+          };
+        }
+      }
       return null;
     }
   };
@@ -197,10 +211,23 @@ export const ScanTicket: React.FC = () => {
                   <p className="text-sm font-semibold mb-2">Parsed Data:</p>
                   <div className="space-y-1 text-xs">
                     <p><strong>Ticket ID:</strong> {parsedData.ticketId}</p>
-                    <p><strong>Event ID:</strong> {parsedData.eventId}</p>
-                    <p><strong>Timestamp:</strong> {new Date(parsedData.timestamp).toLocaleString()}</p>
+                    {parsedData.ticketNumber && (
+                      <p><strong>Ticket Number:</strong> {parsedData.ticketNumber}</p>
+                    )}
+                    {parsedData.orderId && (
+                      <p><strong>Order ID:</strong> {parsedData.orderId}</p>
+                    )}
+                    {parsedData.eventId && parsedData.eventId !== 'general' && (
+                      <p><strong>Event ID:</strong> {parsedData.eventId}</p>
+                    )}
+                    {parsedData.timestamp && (
+                      <p><strong>Timestamp:</strong> {new Date(parsedData.timestamp).toLocaleString()}</p>
+                    )}
                     {parsedData.expiry && (
                       <p><strong>Expires:</strong> {new Date(parsedData.expiry).toLocaleString()}</p>
+                    )}
+                    {parsedData.format === 'legacy' && (
+                      <Badge variant="outline" className="text-xs">Legacy Format</Badge>
                     )}
                   </div>
                 </div>

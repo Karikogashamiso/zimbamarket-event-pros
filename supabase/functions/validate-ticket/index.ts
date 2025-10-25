@@ -157,18 +157,46 @@ const handler = async (req: Request): Promise<Response> => {
       validatorId 
     }: ValidationRequest = await req.json();
 
-    // Parse QR code data
+    // Parse QR code data - support both new JSON format and legacy colon-separated format
+    console.log('Parsing QR code data...');
     let ticketData: TicketData;
+    
     try {
+      // Try parsing as JSON first (new format)
       ticketData = JSON.parse(qrCodeData);
-    } catch {
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          reason: 'Invalid QR code format' 
-        }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      console.log('Parsed as JSON format:', ticketData);
+    } catch (jsonError) {
+      // Try parsing legacy colon-separated format: ticketId:orderId:ticketNumber
+      console.log('JSON parse failed, trying legacy format...');
+      if (qrCodeData.includes(':')) {
+        const parts = qrCodeData.split(':');
+        if (parts.length >= 3) {
+          ticketData = {
+            ticketId: parts[0],
+            eventId: 'general',
+            timestamp: Date.now(),
+            hash: '',
+            signature: ''
+          };
+          console.log('Parsed as legacy format - ticket ID:', ticketData.ticketId);
+        } else {
+          return new Response(
+            JSON.stringify({ 
+              valid: false, 
+              reason: 'Invalid legacy QR code format' 
+            }),
+            { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          );
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ 
+            valid: false, 
+            reason: 'Invalid QR code format - not JSON or legacy format' 
+          }),
+          { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
     }
 
     // Get client IP for risk analysis
