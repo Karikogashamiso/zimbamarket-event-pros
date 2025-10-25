@@ -45,21 +45,12 @@ async function validateSignature(ticketData: TicketData): Promise<{ valid: boole
       };
     }
 
-    // Regenerate the signature using the same logic as ticket creation
-    const signatureInput = JSON.stringify({
-      ticketId: ticketData.ticketId,
-      eventId: ticketData.eventId,
-      timestamp: ticketData.timestamp,
-      hash: ticketData.hash
-    }) + 'TICKET_SIGNING_SECRET';
+    // Regenerate the signature using the SAME logic as ticket creation
+    // IMPORTANT: Must match the generateDigitalSignature in create-order
+    const signatureInput = JSON.stringify(ticketData) + 'TICKET_SIGNING_SECRET';
     
     console.log('=== Signature Validation Debug ===');
-    console.log('Ticket Data:', {
-      ticketId: ticketData.ticketId,
-      eventId: ticketData.eventId,
-      timestamp: ticketData.timestamp,
-      hashLength: ticketData.hash?.length
-    });
+    console.log('Ticket Data for signature:', JSON.stringify(ticketData, null, 2));
     
     const encoder = new TextEncoder();
     const data = encoder.encode(signatureInput);
