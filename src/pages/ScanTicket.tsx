@@ -166,71 +166,24 @@ export const ScanTicket: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Ticket Information */}
-          {parsedData && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Ticket className="w-5 h-5" />
-                  Ticket Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ticket Number</p>
-                    <p className="font-medium">{parsedData.ticketNumber || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ticket ID</p>
-                    <p className="font-mono text-xs">{parsedData.ticketId || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Order ID</p>
-                    <p className="font-mono text-xs">{parsedData.orderId || 'N/A'}</p>
-                  </div>
-                  {parsedData.eventName && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Event</p>
-                      <p className="font-medium">{parsedData.eventName}</p>
-                    </div>
-                  )}
-                  {parsedData.customerName && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Customer</p>
-                      <p className="font-medium">{parsedData.customerName}</p>
-                    </div>
-                  )}
-                  {parsedData.eventDate && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Event Date</p>
-                      <p className="font-medium">{new Date(parsedData.eventDate).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                  {parsedData.venue && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Venue</p>
-                      <p className="font-medium">{parsedData.venue}</p>
-                    </div>
-                  )}
-                  {parsedData.seatNumber && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Seat</p>
-                      <p className="font-medium">{parsedData.seatNumber}</p>
-                    </div>
-                  )}
-                </div>
 
-                {parsedData.format === 'legacy' && (
-                  <div className="pt-4 border-t">
-                    <Badge variant="outline" className="text-xs">
-                      Legacy Format
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          {/* Help Card */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">How to use:</h4>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Scan the QR code with your phone camera</li>
+                <li>The browser will open automatically with the ticket data</li>
+                <li>Validation happens automatically</li>
+              </ol>
+              <p className="text-xs text-blue-600 mt-3">
+                <strong>Note:</strong> Each ticket can only be scanned once within a 5-minute window
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                <strong>Current URL:</strong> {window.location.href}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
