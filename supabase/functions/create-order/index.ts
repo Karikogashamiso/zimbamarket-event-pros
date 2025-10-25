@@ -97,13 +97,24 @@ serve(async (req: Request) => {
           )
         `)
         .eq('id', item.ticket_type_id)
-        .single();
+        .maybeSingle();
 
-      if (ticketError || !ticketType) {
+      if (ticketError) {
         console.error('Ticket type fetch error:', ticketError);
         return new Response(
-          JSON.stringify({ error: `Invalid ticket type: ${item.ticket_type_id}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: `Database error fetching ticket type: ${ticketError.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!ticketType) {
+        console.error('Ticket type not found:', item.ticket_type_id);
+        return new Response(
+          JSON.stringify({ 
+            error: `Ticket type not found. The ticket may have been removed or is no longer available.`,
+            ticket_type_id: item.ticket_type_id 
+          }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
