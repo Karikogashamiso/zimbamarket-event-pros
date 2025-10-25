@@ -85,11 +85,17 @@ serve(async (req: Request) => {
     let totalAmount = 0;
     const ticketTypesData = [];
     let eventId = null;
+    let eventDetails = null;
 
     for (const item of orderData.items) {
       const { data: ticketType, error: ticketError } = await supabaseAdmin
         .from('ticket_types')
-        .select('id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active, event_id, trip_id')
+        .select(`
+          id, name, base_price, currency, early_bird_price, early_bird_end_datetime, max_per_order, is_active, event_id, trip_id,
+          events (
+            id, title, event_date, venue:venues(name, address)
+          )
+        `)
         .eq('id', item.ticket_type_id)
         .single();
 
@@ -115,9 +121,18 @@ serve(async (req: Request) => {
         );
       }
 
-      // Store event_id for ownership check
+      // Store event_id and event details
       if (ticketType.event_id) {
         eventId = ticketType.event_id;
+        if (ticketType.events) {
+          eventDetails = {
+            id: ticketType.events.id,
+            title: ticketType.events.title,
+            date: ticketType.events.event_date,
+            venue: ticketType.events.venue?.name,
+            location: ticketType.events.venue?.address,
+          };
+        }
       }
 
       // Determine price (early bird or regular)
@@ -192,12 +207,62 @@ serve(async (req: Request) => {
 
     console.log('Order created:', order.id);
 
-    // Create tickets
+    // Helper function to generate secure hash
+    const generateSecureHash = async (data: string): Promise<string> => {
+      const encoder = new TextEncoder();
+      const dataBuffer = encoder.encode(data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    // Helper function to generate digital signature
+    const generateDigitalSignature = async (ticketData: any): Promise<string> => {
+      const signatureInput = JSON.stringify(ticketData) + 'TICKET_SIGNING_SECRET';
+      return await generateSecureHash(signatureInput);
+    };
+
+    // Create tickets with proper QR codes
     const ticketsToCreate = [];
     for (const ticketTypeData of ticketTypesData) {
       for (let i = 0; i < ticketTypeData.quantity; i++) {
         const ticketNumber = `TKT-${order.id.substring(0, 8).toUpperCase()}-${Date.now()}-${i + 1}`;
-        const qrCodeData = `${order.id}:${ticketTypeData.id}:${ticketNumber}`;
+        
+        // Create secure QR payload with event details
+        const timestamp = Date.now();
+        const expiryTimestamp = timestamp + (365 * 24 * 60 * 60 * 1000); // 1 year expiry
+        
+        const qrPayload = {
+          ticketId: ticketNumber,
+          orderId: order.id,
+          eventId: eventDetails?.id || 'general',
+          holderEmail: orderData.customer_email,
+          tierName: ticketTypeData.name,
+          price: ticketTypeData.price_per_ticket,
+          currency: ticketTypeData.currency,
+          // Include full event details
+          eventTitle: eventDetails?.title || 'General Event',
+          eventDate: eventDetails?.date,
+          eventVenue: eventDetails?.venue,
+          eventLocation: eventDetails?.location,
+          timestamp: timestamp,
+          expiry: expiryTimestamp,
+          version: '2.1',
+        };
+
+        // Generate security hash
+        const hashInput = Object.values(qrPayload).join(':');
+        const securityHash = await generateSecureHash(hashInput);
+        
+        // Generate digital signature
+        const signature = await generateDigitalSignature({ ...qrPayload, hash: securityHash });
+
+        // Final QR data with security
+        const qrCodeData = JSON.stringify({
+          ...qrPayload,
+          hash: securityHash,
+          signature: signature,
+        });
         
         ticketsToCreate.push({
           order_id: order.id,
@@ -214,6 +279,15 @@ serve(async (req: Request) => {
           holder_email: orderData.customer_email,
           holder_phone: orderData.customer_phone,
           original_holder_email: orderData.customer_email,
+          metadata: {
+            tierName: ticketTypeData.name,
+            position: i + 1,
+            totalInTier: ticketTypeData.quantity,
+            securityHash: securityHash,
+            digitalSignature: signature,
+            generatedAt: new Date().toISOString(),
+            eventInfo: eventDetails,
+          },
         });
       }
     }
