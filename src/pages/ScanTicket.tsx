@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, XCircle, Scan, AlertTriangle, User, Calendar, MapPin, Ticket } from 'lucide-react';
+import { CheckCircle, XCircle, Scan, AlertTriangle, User, Calendar, MapPin, Ticket, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import MetaTags from '@/components/SEO/MetaTags';
@@ -301,6 +302,20 @@ export const ScanTicket: React.FC = () => {
                         This validation has been recorded in the system
                       </p>
                     </div>
+
+                    {validationResult.ticket?.id && (
+                      <Button 
+                        asChild 
+                        className="w-full"
+                        variant="default"
+                      >
+                        <Link to={`/ticket-detail/${validationResult.ticket.id}`}>
+                          <Ticket className="w-4 h-4 mr-2" />
+                          View Full Ticket Details
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <div className="space-y-3">
