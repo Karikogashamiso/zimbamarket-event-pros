@@ -182,10 +182,7 @@ export const ScanTicket: React.FC = () => {
 
           {/* Scanner Card */}
           <Card>
-            <CardHeader>
-              <CardTitle>Ticket Validation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               <div className="space-y-2">
                 <Textarea
                   placeholder='Paste ticket data here or scan a QR code...'
