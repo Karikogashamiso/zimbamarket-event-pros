@@ -306,7 +306,18 @@ serve(async (req: Request) => {
     // Update tickets with actual ticket IDs in QR code
     for (const ticket of tickets) {
       try {
-        const qrData = JSON.parse(ticket.qr_code_data);
+        // Extract base64 data from URL
+        const url = new URL(ticket.qr_code_data);
+        const base64Param = url.searchParams.get('ticket');
+        
+        if (!base64Param) {
+          console.error(`No ticket parameter in QR URL for ticket ${ticket.id}`);
+          continue;
+        }
+        
+        // Decode base64 and parse JSON
+        const decodedData = atob(base64Param);
+        const qrData = JSON.parse(decodedData);
         qrData.ticketId = ticket.id; // Update with actual UUID
         
         // Regenerate hash and signature with correct ticket ID
@@ -333,6 +344,8 @@ serve(async (req: Request) => {
         // Create scannable URL
         const appUrl = Deno.env.get('APP_URL') || 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
         const updatedQrCodeData = `${appUrl}/scan-ticket?ticket=${updatedBase64Data}`;
+        
+        console.log(`Updated ticket ${ticket.id} with actual ticket ID in QR code`);
         
         // Update the ticket with corrected QR code
         await supabaseAdmin
