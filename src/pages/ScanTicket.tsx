@@ -1,22 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, XCircle, Scan, AlertTriangle, User, Calendar, MapPin, Ticket } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, XCircle, Scan, AlertTriangle, User, Calendar, MapPin, Ticket, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import MetaTags from '@/components/SEO/MetaTags';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export const ScanTicket: React.FC = () => {
   const [qrData, setQrData] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const qrReaderRef = useRef<HTMLDivElement>(null);
+
+  const startScanner = async () => {
+    try {
+      setCameraError(null);
+      setIsScanning(true);
+      
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode('qr-reader');
+      }
+
+      await scannerRef.current.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        onScanSuccess,
+        onScanError
+      );
+    } catch (error: any) {
+      console.error('Scanner error:', error);
+      setCameraError(error.message || 'Failed to start camera');
+      setIsScanning(false);
+      toast.error('Failed to start camera. Please check permissions.');
+    }
+  };
+
+  const stopScanner = async () => {
+    if (scannerRef.current?.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current.clear();
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+    }
+    setIsScanning(false);
+  };
+
+  const onScanSuccess = async (decodedText: string) => {
+    await stopScanner();
+    
+    // Extract data from URL if it's a validate-ticket URL
+    let dataToValidate = decodedText;
+    if (decodedText.includes('validate-ticket?data=')) {
+      const url = new URL(decodedText);
+      const encodedData = url.searchParams.get('data');
+      if (encodedData) {
+        dataToValidate = atob(encodedData);
+      }
+    }
+    
+    setQrData(dataToValidate);
+    await validateTicket(dataToValidate);
+  };
+
+  const onScanError = (error: string) => {
+    // Ignore common scanning errors (no QR code in view)
+    if (!error.includes('NotFoundException')) {
+      console.warn('Scan error:', error);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopScanner();
+    };
+  }, []);
 
   const handleValidate = async () => {
     if (!qrData.trim()) {
       toast.error('Please paste QR code data');
+      return;
+    }
+    await validateTicket(qrData);
+  };
+
+  const validateTicket = async (data: string) => {
+    if (!data.trim()) {
+      toast.error('No QR code data to validate');
       return;
     }
 
@@ -27,11 +109,14 @@ export const ScanTicket: React.FC = () => {
       // Generate device fingerprint
       const deviceFingerprint = await generateDeviceFingerprint();
 
-      const { data, error } = await supabase.functions.invoke('validate-ticket', {
+      const parsedData = parseQRData(data);
+      const { data: result, error } = await supabase.functions.invoke('validate-ticket', {
         body: {
-          qrCodeData: qrData,
+          qrCodeData: data,
+          ticketData: parsedData,
           deviceFingerprint: deviceFingerprint,
-          validationType: 'manual',
+          validationType: 'scan',
+          ipAddress: '0.0.0.0', // Browser doesn't have access to real IP
         },
       });
 
@@ -39,12 +124,12 @@ export const ScanTicket: React.FC = () => {
         throw error;
       }
 
-      setValidationResult(data);
+      setValidationResult(result);
 
-      if (data.valid) {
+      if (result.valid) {
         toast.success('Ticket validated successfully!');
       } else {
-        toast.error(`Validation failed: ${data.reason}`);
+        toast.error(`Validation failed: ${result.reason}`);
       }
     } catch (error: any) {
       console.error('Validation error:', error);
@@ -114,7 +199,7 @@ export const ScanTicket: React.FC = () => {
             </div>
             <h1 className="text-3xl font-bold">Ticket Scanner</h1>
             <p className="text-muted-foreground">
-              Paste QR code data below to validate tickets
+              Scan tickets using your camera or paste QR code data
             </p>
           </div>
 
@@ -123,54 +208,105 @@ export const ScanTicket: React.FC = () => {
             <CardHeader>
               <CardTitle>Scan QR Code</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">QR Code Data</label>
-                <Textarea
-                  placeholder='Paste QR code JSON data here... Example: {"ticketId":"ZEP-12345678-...","orderId":"...","eventId":"...","timestamp":...}'
-                  value={qrData}
-                  onChange={(e) => setQrData(e.target.value)}
-                  rows={6}
-                  className="font-mono text-xs"
-                />
-              </div>
+            <CardContent>
+              <Tabs defaultValue="camera" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="camera">
+                    <Camera className="w-4 h-4 mr-2" />
+                    Camera
+                  </TabsTrigger>
+                  <TabsTrigger value="manual">
+                    <Scan className="w-4 h-4 mr-2" />
+                    Manual
+                  </TabsTrigger>
+                </TabsList>
 
-              {parsedData && (
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-semibold mb-2">Parsed Data:</p>
-                  <div className="space-y-1 text-xs">
-                    <p><strong>Ticket ID:</strong> {parsedData.ticketId}</p>
-                    <p><strong>Event ID:</strong> {parsedData.eventId}</p>
-                    <p><strong>Timestamp:</strong> {new Date(parsedData.timestamp).toLocaleString()}</p>
-                    {parsedData.expiry && (
-                      <p><strong>Expires:</strong> {new Date(parsedData.expiry).toLocaleString()}</p>
+                <TabsContent value="camera" className="space-y-4">
+                  <div className="space-y-4">
+                    <div 
+                      id="qr-reader" 
+                      ref={qrReaderRef}
+                      className="w-full rounded-lg overflow-hidden border-2 border-border"
+                      style={{ minHeight: isScanning ? '300px' : '0' }}
+                    />
+                    
+                    {cameraError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800">{cameraError}</p>
+                      </div>
                     )}
-                  </div>
-                </div>
-              )}
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleValidate}
-                  disabled={isValidating || !qrData.trim()}
-                  className="flex-1"
-                >
-                  {isValidating ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                      Validating...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Validate Ticket
-                    </>
+                    <div className="flex gap-3">
+                      {!isScanning ? (
+                        <Button onClick={startScanner} className="flex-1">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Start Camera
+                        </Button>
+                      ) : (
+                        <Button onClick={stopScanner} variant="destructive" className="flex-1">
+                          Stop Camera
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Tip:</strong> Point your camera at the QR code. It will scan automatically when detected.
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="manual" className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">QR Code Data</label>
+                    <Textarea
+                      placeholder='Paste QR code JSON data or URL here...'
+                      value={qrData}
+                      onChange={(e) => setQrData(e.target.value)}
+                      rows={6}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+
+                  {parsedData && (
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm font-semibold mb-2">Parsed Data:</p>
+                      <div className="space-y-1 text-xs">
+                        <p><strong>Ticket ID:</strong> {parsedData.ticketId}</p>
+                        <p><strong>Event ID:</strong> {parsedData.eventId}</p>
+                        <p><strong>Timestamp:</strong> {new Date(parsedData.timestamp).toLocaleString()}</p>
+                        {parsedData.expiry && (
+                          <p><strong>Expires:</strong> {new Date(parsedData.expiry).toLocaleString()}</p>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </Button>
-                <Button variant="outline" onClick={handleClear}>
-                  Clear
-                </Button>
-              </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleValidate}
+                      disabled={isValidating || !qrData.trim()}
+                      className="flex-1"
+                    >
+                      {isValidating ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                          Validating...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Validate Ticket
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="outline" onClick={handleClear}>
+                      Clear
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -275,16 +411,30 @@ export const ScanTicket: React.FC = () => {
           {/* Help Card */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">How to use:</h4>
-              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                <li>Have the attendee show their ticket QR code</li>
-                <li>The QR code data is a JSON string - copy it</li>
-                <li>Paste the data in the text area above</li>
-                <li>Click "Validate Ticket" to verify</li>
-                <li>Check the validation result</li>
-              </ol>
+              <h4 className="font-semibold text-blue-900 mb-3">How to use:</h4>
+              
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-blue-800 mb-1">Camera Method:</p>
+                  <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside ml-2">
+                    <li>Click "Start Camera" in the Camera tab</li>
+                    <li>Point your camera at the ticket QR code</li>
+                    <li>The ticket will be validated automatically</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <p className="font-medium text-blue-800 mb-1">Manual Method:</p>
+                  <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside ml-2">
+                    <li>Switch to the Manual tab</li>
+                    <li>Paste the QR code data or URL</li>
+                    <li>Click "Validate Ticket"</li>
+                  </ol>
+                </div>
+              </div>
+              
               <p className="text-xs text-blue-600 mt-3">
-                <strong>Note:</strong> Each ticket can only be scanned once within a 5-minute window
+                <strong>Note:</strong> Each ticket can only be scanned once within a 5-minute window to prevent fraud
               </p>
             </CardContent>
           </Card>
