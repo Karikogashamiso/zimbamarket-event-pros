@@ -28,27 +28,30 @@ export const ScanTicket: React.FC = () => {
       try {
         // Decode base64 data
         const decodedData = atob(ticketParam);
+        console.log('=== Scan Detection Debug ===');
         console.log('Decoded Data:', decodedData);
         
-        setDebugInfo(`Received ticket parameter, decoded ${decodedData.length} characters`);
+        setDebugInfo(`Received ticket parameter\nDecoded ${decodedData.length} characters`);
         setQrData(decodedData);
         
         // Verify it's valid JSON
         try {
           const parsed = JSON.parse(decodedData);
           console.log('Parsed JSON:', parsed);
-          setDebugInfo(prev => prev + '\nValid JSON detected');
+          console.log('Ticket ID:', parsed.ticketId);
+          console.log('Ticket Number:', parsed.ticketNumber);
+          setDebugInfo(prev => prev + '\n✅ Valid JSON detected\n' + JSON.stringify(parsed, null, 2));
           
           // Auto-validate when coming from QR scan
           setTimeout(() => handleValidate(decodedData), 500);
         } catch (parseError) {
           console.error('JSON parse error:', parseError);
-          setDebugInfo(prev => prev + '\nError: Not valid JSON');
+          setDebugInfo(prev => prev + '\n❌ Error: Not valid JSON');
           toast.error('Invalid ticket format - not valid JSON');
         }
       } catch (error) {
         console.error('Failed to decode ticket data:', error);
-        setDebugInfo(`Decode error: ${error}`);
+        setDebugInfo(`❌ Decode error: ${error}`);
         toast.error('Invalid ticket data in URL - failed to decode');
       }
     } else {
@@ -164,9 +167,10 @@ export const ScanTicket: React.FC = () => {
 
           {/* Debug Info */}
           {debugInfo && (
-            <Card className="bg-muted">
+            <Card className="bg-muted border-blue-500">
               <CardContent className="p-3">
-                <p className="text-xs font-mono whitespace-pre-wrap">{debugInfo}</p>
+                <p className="text-xs font-semibold mb-2">🔍 Debug Information:</p>
+                <pre className="text-xs font-mono whitespace-pre-wrap overflow-x-auto">{debugInfo}</pre>
               </CardContent>
             </Card>
           )}

@@ -69,7 +69,8 @@ export const useTicketGeneration = () => {
     const expiryTimestamp = timestamp + (365 * 24 * 60 * 60 * 1000); // 1 year expiry
 
     const qrPayload = {
-      ticketId: ticketData.ticketNumber,
+      ticketId: ticketData.ticketId, // Use UUID from database
+      ticketNumber: ticketData.ticketNumber,
       orderId: ticketData.orderId,
       eventId: ticketData.eventId || 'general',
       holderEmail: ticketData.holderEmail,
@@ -108,6 +109,7 @@ export const useTicketGeneration = () => {
     console.log('Encoded data length:', encodedData.length);
     console.log('URL length:', scanUrl.length);
     console.log('Raw ticket data:', JSON.stringify(ticketData));
+    console.log('QR Payload:', JSON.stringify(qrPayload));
     
     // Check if URL is too long (QR codes work best under 2000 characters)
     if (scanUrl.length > 2000) {
@@ -188,11 +190,10 @@ export const useTicketGeneration = () => {
           // Now generate QR code with the actual ticket UUID
           const ticketData = {
             ticketId: createdTicket.id, // Use database UUID for uniqueness
-            ticketNumber,
+            ticketNumber: ticketNumber, // Also include ticket number
             orderId: options.orderId,
             eventId: options.eventInfo?.id,
             holderEmail: options.customerInfo.email,
-            timestamp: Date.now(),
           };
 
           // Generate secure QR code with the ticket UUID
