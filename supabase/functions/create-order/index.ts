@@ -236,11 +236,18 @@ serve(async (req: Request) => {
         const signature = await generateDigitalSignature({ ...qrPayload, hash: securityHash });
 
         // Final QR data with security features
-        const qrCodeData = JSON.stringify({
+        const ticketDataJson = JSON.stringify({
           ...qrPayload,
           hash: securityHash,
           signature: signature,
         });
+        
+        // Encode as base64 for URL
+        const base64Data = btoa(ticketDataJson);
+        
+        // Create scannable URL that opens the app
+        const appUrl = Deno.env.get('APP_URL') || 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
+        const qrCodeData = `${appUrl}/scan-ticket?ticket=${base64Data}`;
         
         ticketsToCreate.push({
           order_id: order.id,
@@ -320,7 +327,12 @@ serve(async (req: Request) => {
         qrData.hash = securityHash;
         qrData.signature = signature;
         
-        const updatedQrCodeData = JSON.stringify(qrData);
+        const updatedTicketDataJson = JSON.stringify(qrData);
+        const updatedBase64Data = btoa(updatedTicketDataJson);
+        
+        // Create scannable URL
+        const appUrl = Deno.env.get('APP_URL') || 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
+        const updatedQrCodeData = `${appUrl}/scan-ticket?ticket=${updatedBase64Data}`;
         
         // Update the ticket with corrected QR code
         await supabaseAdmin
