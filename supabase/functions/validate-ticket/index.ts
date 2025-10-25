@@ -148,6 +148,204 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Handle GET requests (when QR code is scanned and opened in browser)
+  if (req.method === 'GET') {
+    try {
+      const url = new URL(req.url);
+      const encodedData = url.searchParams.get('data');
+      
+      if (!encodedData) {
+        return new Response('Missing ticket data', { status: 400 });
+      }
+
+      // Decode the ticket data
+      const ticketDataStr = atob(encodedData);
+      const ticketData = JSON.parse(ticketDataStr);
+
+      // Fetch ticket from database
+      const { data: ticket, error } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          ticket_types (
+            name,
+            events (
+              title, event_date, venue:venues(name, address)
+            )
+          )
+        `)
+        .eq('ticket_number', ticketData.ticketId)
+        .single();
+
+      if (error || !ticket) {
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Invalid Ticket</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error { color: #dc2626; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1 class="error">❌ Invalid Ticket</h1>
+                <p>This ticket could not be validated. Please contact support.</p>
+              </div>
+            </body>
+          </html>
+        `, { headers: { 'Content-Type': 'text/html', ...corsHeaders } });
+      }
+
+      // Return beautiful HTML display
+      const event = ticket.ticket_types?.events;
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Ticket: ${ticketData.eventTitle}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 20px;
+                min-height: 100vh;
+              }
+              .container { 
+                max-width: 500px; 
+                margin: 0 auto; 
+                background: white; 
+                border-radius: 20px; 
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+              }
+              .header { 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white; 
+                padding: 30px 20px; 
+                text-align: center;
+              }
+              .header h1 { font-size: 24px; margin-bottom: 5px; }
+              .header p { opacity: 0.9; font-size: 14px; }
+              .content { padding: 30px 20px; }
+              .ticket-info { margin-bottom: 25px; }
+              .info-row { 
+                display: flex; 
+                justify-content: space-between; 
+                padding: 12px 0; 
+                border-bottom: 1px solid #f0f0f0;
+              }
+              .info-label { 
+                color: #666; 
+                font-size: 13px; 
+                font-weight: 500;
+              }
+              .info-value { 
+                color: #111; 
+                font-weight: 600;
+                text-align: right;
+                max-width: 60%;
+              }
+              .status-badge { 
+                display: inline-block;
+                padding: 8px 16px; 
+                border-radius: 20px; 
+                font-size: 13px;
+                font-weight: 600;
+                margin-top: 20px;
+              }
+              .status-valid { background: #10b981; color: white; }
+              .status-used { background: #f59e0b; color: white; }
+              .footer { 
+                background: #f9fafb; 
+                padding: 20px; 
+                text-align: center; 
+                font-size: 12px;
+                color: #666;
+              }
+              .qr-section {
+                text-align: center;
+                padding: 20px;
+                background: #f9fafb;
+                border-radius: 10px;
+                margin: 20px 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎟️ ${ticketData.eventTitle || 'Event Ticket'}</h1>
+                <p>Ticket #${ticketData.ticketId}</p>
+              </div>
+              
+              <div class="content">
+                <div class="ticket-info">
+                  <div class="info-row">
+                    <span class="info-label">Event</span>
+                    <span class="info-value">${ticketData.eventTitle}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Date</span>
+                    <span class="info-value">${ticketData.eventDate ? new Date(ticketData.eventDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Venue</span>
+                    <span class="info-value">${ticketData.eventVenue || 'TBA'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Location</span>
+                    <span class="info-value">${ticketData.eventLocation || 'Zimbabwe'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Ticket Type</span>
+                    <span class="info-value">${ticketData.tierName}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Price</span>
+                    <span class="info-value">${ticketData.currency === 'USD' ? '$' : ticketData.currency}${ticketData.price}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Holder</span>
+                    <span class="info-value">${ticketData.holderEmail}</span>
+                  </div>
+                </div>
+
+                <div class="qr-section">
+                  <div class="status-badge ${ticket.scanned_at ? 'status-used' : 'status-valid'}">
+                    ${ticket.scanned_at ? '✓ Already Scanned' : '✓ Valid Ticket'}
+                  </div>
+                  ${ticket.scanned_at ? `<p style="margin-top: 10px; font-size: 13px; color: #666;">Scanned on ${new Date(ticket.scanned_at).toLocaleString()}</p>` : ''}
+                </div>
+              </div>
+
+              <div class="footer">
+                <p><strong>Security:</strong> This ticket is cryptographically signed</p>
+                <p style="margin-top: 5px;">Hash: ${ticketData.hash?.substring(0, 16)}...</p>
+                <p style="margin-top: 10px;">For support, contact: support@zepevents.co.zw</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `, { 
+        headers: { 
+          'Content-Type': 'text/html',
+          ...corsHeaders 
+        } 
+      });
+    } catch (error) {
+      console.error('GET request error:', error);
+      return new Response('Invalid ticket data', { status: 400 });
+    }
+  }
+
+  // Handle POST requests (API validation)
   try {
     const { 
       qrCodeData, 

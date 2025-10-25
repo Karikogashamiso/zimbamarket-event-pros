@@ -257,12 +257,15 @@ serve(async (req: Request) => {
         // Generate digital signature
         const signature = await generateDigitalSignature({ ...qrPayload, hash: securityHash });
 
-        // Final QR data with security
-        const qrCodeData = JSON.stringify({
+        // Create validation URL for QR code (user-friendly when scanned)
+        const validationData = btoa(JSON.stringify({
           ...qrPayload,
           hash: securityHash,
           signature: signature,
-        });
+        }));
+        
+        // QR code contains a URL that displays ticket details nicely
+        const qrCodeData = `https://pxpdjfkppgoaygdfmaqr.supabase.co/functions/v1/validate-ticket?data=${validationData}`;
         
         ticketsToCreate.push({
           order_id: order.id,

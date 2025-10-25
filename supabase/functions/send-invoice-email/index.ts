@@ -184,11 +184,19 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // IMPORTANT: Update this to your verified Resend domain
+    // 1. Go to https://resend.com/domains and verify your domain
+    // 2. Create an API key at https://resend.com/api-keys
+    // 3. Update the 'from' email below to match your verified domain
+    // For testing, you can use 'onboarding@resend.dev' (limited to 1 email per day per recipient)
+    const fromEmail = "ZimEventPro <onboarding@resend.dev>";
+    
     const emailResponse = await resend.emails.send({
-      from: "ZimEventPro <onboarding@resend.dev>",
+      from: fromEmail,
       to: [emailTo],
       subject: `Invoice - Order ${order.order_number}`,
       html: emailHTML,
+      replyTo: "support@zimeventpro.com", // Update with your support email
     });
 
     console.log("Invoice email sent successfully:", emailResponse);
