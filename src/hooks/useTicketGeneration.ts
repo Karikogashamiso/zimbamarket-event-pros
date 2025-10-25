@@ -103,21 +103,37 @@ export const useTicketGeneration = () => {
     
     const scanUrl = `${origin}/scan-ticket?ticket=${encodedData}`;
     
+    console.log('=== QR Code Generation Debug ===');
     console.log('Generated QR URL:', scanUrl);
     console.log('Encoded data length:', encodedData.length);
+    console.log('URL length:', scanUrl.length);
+    console.log('Raw ticket data:', JSON.stringify(ticketData));
+    
+    // Check if URL is too long (QR codes work best under 2000 characters)
+    if (scanUrl.length > 2000) {
+      console.warn('⚠️ QR code URL is very long, might cause scanning issues:', scanUrl.length);
+    }
 
-    // Generate QR code image with the URL
-    const qrUrl = await QRCode.toDataURL(scanUrl, {
-      width: 256,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      },
-      errorCorrectionLevel: 'H' // High error correction for better scanning
-    });
+    try {
+      // Generate QR code image with the URL
+      const qrUrl = await QRCode.toDataURL(scanUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'M' // Medium error correction (better for long URLs)
+      });
+      
+      console.log('✅ QR code generated successfully');
+      console.log('QR code image length:', qrUrl.length);
 
-    return { qrData, qrUrl, hash: securityHash, signature };
+      return { qrData, qrUrl, hash: securityHash, signature };
+    } catch (error) {
+      console.error('❌ QR code generation failed:', error);
+      throw new Error(`Failed to generate QR code: ${error.message}`);
+    }
   };
 
   const generateTickets = async (options: TicketGenerationOptions): Promise<GeneratedTicket[]> => {
