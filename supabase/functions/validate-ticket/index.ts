@@ -170,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
           ticket_types (
             name,
             events (
-              title, event_date, venue:venues(name, address)
+              title, start_datetime, venue:venues(name, address)
             )
           )
         `)
