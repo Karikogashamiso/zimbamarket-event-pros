@@ -66,7 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${ticket.ticket_types?.name || "Ticket"}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">1</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(ticket.price || 0, order.currency)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${formatCurrency(ticket.paid_price || ticket.original_price || 0, order.currency)}</td>
           </tr>
         `;
       });

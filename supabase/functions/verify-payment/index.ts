@@ -90,6 +90,27 @@ serve(async (req) => {
         .eq('id', order.id);
 
       if (updateError) {
+        console.error('Error updating order:', updateError);
+        throw updateError;
+      }
+
+      // Send invoice email automatically after successful payment
+      console.log('Sending invoice email for order:', order.order_number);
+      const { error: emailError } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          orderNumber: order.order_number,
+          recipientEmail: order.customer_email
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending invoice email:', emailError);
+        // Don't throw - email failure shouldn't fail the payment verification
+      } else {
+        console.log('Invoice email sent successfully');
+      }
+
+      if (updateError) {
         console.error('Failed to update order:', updateError);
         throw new Error('Failed to update order status');
       }
