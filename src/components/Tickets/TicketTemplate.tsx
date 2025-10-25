@@ -55,7 +55,28 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
 
   const generateQRCode = async () => {
     try {
-      const url = await QRCode.toDataURL(ticket.qrCodeData, {
+      let qrData = ticket.qrCodeData;
+      
+      // Check if qrCodeData is already a URL (new format)
+      if (!qrData.startsWith('http://') && !qrData.startsWith('https://')) {
+        // Old format: JSON string - convert to URL
+        try {
+          // Validate it's JSON
+          JSON.parse(qrData);
+          
+          // Convert to base64 and create URL
+          const base64Data = btoa(qrData);
+          const appUrl = 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
+          qrData = `${appUrl}/scan-ticket?ticket=${base64Data}`;
+        } catch {
+          // If not valid JSON, use as-is (legacy colon-separated format)
+          const base64Data = btoa(qrData);
+          const appUrl = 'https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com';
+          qrData = `${appUrl}/scan-ticket?ticket=${base64Data}`;
+        }
+      }
+      
+      const url = await QRCode.toDataURL(qrData, {
         width: 120,
         margin: 1,
         color: {
