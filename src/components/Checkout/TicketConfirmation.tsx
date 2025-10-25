@@ -110,38 +110,23 @@ export const TicketConfirmation: React.FC<TicketConfirmationProps> = ({ orderDet
         </CardContent>
       </Card>
 
-      {/* Action Buttons - Only show if no tickets to avoid duplication */}
-      {(!orderDetails.tickets || orderDetails.tickets.length === 0) && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Download Receipt
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Share Booking
-            </Button>
-          </div>
-
-          <div className="space-y-3">
-            <Button 
-              onClick={() => window.location.href = `/order-confirmation/${orderDetails.order_number}`}
-              variant="outline"
-              className="w-full"
-            >
-              View Full Order Details
-            </Button>
-            
-            <Button 
-              onClick={() => window.location.href = '/'}
-              className="w-full"
-            >
-              Return to Home
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        <Button 
+          onClick={() => window.location.href = `/order-confirmation/${orderDetails.order_number}`}
+          variant="outline"
+          className="w-full"
+        >
+          View Full Order Details
+        </Button>
+        
+        <Button 
+          onClick={() => window.location.href = '/'}
+          className="w-full"
+        >
+          Return to Home
+        </Button>
+      </div>
 
       {/* Help Section */}
       <Card className="bg-blue-50 border-blue-200 text-left">

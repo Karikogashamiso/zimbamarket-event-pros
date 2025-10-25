@@ -108,9 +108,25 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const firstTicket = tickets[0];
-                handleShare(firstTicket, 'email');
+              onClick={async () => {
+                try {
+                  const { supabase } = await import('@/integrations/supabase/client');
+                  toast.loading('Sending tickets via email...');
+                  
+                  const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+                    body: { 
+                      orderNumber: orderDetails.order_number,
+                      recipientEmail: orderDetails.customer_email
+                    }
+                  });
+
+                  if (error) throw error;
+                  
+                  toast.success('Tickets sent to your email!');
+                } catch (error: any) {
+                  console.error('Email error:', error);
+                  toast.error('Failed to send email: ' + error.message);
+                }
               }}
               className="flex items-center gap-2"
             >
