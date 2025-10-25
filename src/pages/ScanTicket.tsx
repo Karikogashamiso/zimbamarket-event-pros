@@ -248,6 +248,17 @@ export const ScanTicket: React.FC = () => {
               <CardContent className="space-y-4">
                 {validationResult.valid ? (
                   <>
+                    {/* QR Code Display */}
+                    {validationResult.ticket.qr_code_url && (
+                      <div className="flex justify-center p-4 bg-white rounded-lg border">
+                        <img 
+                          src={validationResult.ticket.qr_code_url} 
+                          alt="Ticket QR Code" 
+                          className="w-32 h-32"
+                        />
+                      </div>
+                    )}
+
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Ticket className="w-4 h-4 text-muted-foreground" />
@@ -263,6 +274,18 @@ export const ScanTicket: React.FC = () => {
                         </span>
                       </div>
 
+                      {validationResult.ticket.holder_email && (
+                        <div className="text-sm">
+                          <strong>Email:</strong> {validationResult.ticket.holder_email}
+                        </div>
+                      )}
+
+                      {validationResult.ticket.holder_phone && (
+                        <div className="text-sm">
+                          <strong>Phone:</strong> {validationResult.ticket.holder_phone}
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm">
@@ -270,12 +293,30 @@ export const ScanTicket: React.FC = () => {
                         </span>
                       </div>
 
+                      {validationResult.ticket.event_date && (
+                        <div className="text-sm">
+                          <strong>Date:</strong> {new Date(validationResult.ticket.event_date).toLocaleString()}
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm">
                           <strong>Seat/Type:</strong> {validationResult.ticket.seat}
                         </span>
                       </div>
+
+                      {validationResult.ticket.type && (
+                        <div className="text-sm">
+                          <strong>Ticket Type:</strong> {validationResult.ticket.type}
+                        </div>
+                      )}
+
+                      {validationResult.ticket.price && (
+                        <div className="text-sm">
+                          <strong>Price:</strong> {validationResult.ticket.currency} {validationResult.ticket.price}
+                        </div>
+                      )}
                     </div>
 
                     <Separator />

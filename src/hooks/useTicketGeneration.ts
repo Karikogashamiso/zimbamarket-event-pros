@@ -150,21 +150,7 @@ export const useTicketGeneration = () => {
           // Generate unique ticket number
           const ticketNumber = generateTicketNumber(options.orderId, tierIndex, totalTicketIndex);
 
-          // Prepare ticket data for QR generation
-          const ticketData = {
-            ticketNumber,
-            orderId: options.orderId,
-            eventId: options.eventInfo?.id,
-            holderEmail: options.customerInfo.email,
-            tierName: tier.name,
-            price: tier.price,
-            currency: tier.currency,
-          };
-
-          // Generate secure QR code
-          const { qrData, qrUrl, hash, signature } = await createSecureQRCode(ticketData);
-
-          // Prepare ticket record for database
+          // First, create ticket record with placeholder QR to get the UUID
           const ticketRecord = {
             order_id: options.orderId,
             ticket_type_id: tier.id,
@@ -173,7 +159,7 @@ export const useTicketGeneration = () => {
             paid_price: tier.price,
             currency: tier.currency as 'USD' | 'ZWL' | 'RTGS',
             ticket_status: 'valid' as 'valid' | 'used' | 'cancelled' | 'expired' | 'refunded',
-            qr_code_data: qrData,
+            qr_code_data: 'pending', // Placeholder, will be updated
             holder_first_name: options.customerInfo.firstName,
             holder_last_name: options.customerInfo.lastName,
             holder_email: options.customerInfo.email,
@@ -182,14 +168,12 @@ export const useTicketGeneration = () => {
               tierName: tier.name,
               position: ticketIndex + 1,
               totalInTier: tier.quantity,
-              securityHash: hash,
-              digitalSignature: signature,
               generatedAt: new Date().toISOString(),
               eventInfo: options.eventInfo,
             },
           };
 
-          // Insert ticket into database
+          // Insert ticket into database to get UUID
           const { data: createdTicket, error: ticketError } = await supabase
             .from('tickets')
             .insert([ticketRecord])
@@ -198,7 +182,39 @@ export const useTicketGeneration = () => {
 
           if (ticketError) {
             console.error('Error creating ticket:', ticketError);
-            throw new Error(`Failed to create ticket ${ticketNumber}: ${ticketError.message}`);
+            throw new Error(`Failed to create ticket: ${ticketError.message}`);
+          }
+
+          // Now generate QR code with the actual ticket UUID
+          const ticketData = {
+            ticketId: createdTicket.id, // Use database UUID for uniqueness
+            ticketNumber,
+            orderId: options.orderId,
+            eventId: options.eventInfo?.id,
+            holderEmail: options.customerInfo.email,
+            timestamp: Date.now(),
+          };
+
+          // Generate secure QR code with the ticket UUID
+          const { qrData, qrUrl, hash, signature } = await createSecureQRCode(ticketData);
+
+          // Update ticket with QR code data
+          const { error: updateError } = await supabase
+            .from('tickets')
+            .update({
+              qr_code_data: qrData,
+              qr_code_url: qrUrl,
+              metadata: {
+                ...ticketRecord.metadata,
+                securityHash: hash,
+                digitalSignature: signature,
+              },
+            })
+            .eq('id', createdTicket.id);
+
+          if (updateError) {
+            console.error('Error updating ticket with QR code:', updateError);
+            // Continue anyway - ticket is created, just QR update failed
           }
 
           // Add to generated tickets array

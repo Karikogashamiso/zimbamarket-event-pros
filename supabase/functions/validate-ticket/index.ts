@@ -196,23 +196,27 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Step 2: Get ticket from database
+    // Step 2: Get ticket from database using UUID
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
       .select(`
         *,
         ticket_types!inner(
           name,
-          events!inner(
+          events(
             title, start_datetime, end_datetime, is_cancelled
           ),
-          transport_trips!inner(
+          transport_trips(
             departure_datetime, arrival_datetime, is_cancelled
           )
+        ),
+        orders!inner(
+          order_number,
+          customer_email
         )
       `)
-      .eq('ticket_number', ticketData.ticketId)
-      .single();
+      .eq('id', ticketData.ticketId)
+      .maybeSingle();
 
     if (ticketError || !ticket) {
       await createFraudAlert(
@@ -324,6 +328,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Ticket ${ticketData.ticketId} validated successfully`);
 
+    // Return comprehensive ticket details
+    const eventDetails = ticket.ticket_types?.events;
+    const tripDetails = ticket.ticket_types?.transport_trips;
+    
     return new Response(
       JSON.stringify({ 
         valid: true,
@@ -331,9 +339,19 @@ const handler = async (req: Request): Promise<Response> => {
           id: ticket.id,
           number: ticket.ticket_number,
           holder_name: `${ticket.holder_first_name} ${ticket.holder_last_name}`,
-          event: ticket.ticket_types?.events?.title || ticket.ticket_types?.transport_trips?.departure_datetime,
+          holder_email: ticket.holder_email,
+          holder_phone: ticket.holder_phone,
+          event: eventDetails?.title || 'Transport Trip',
+          event_date: eventDetails?.start_datetime || tripDetails?.departure_datetime,
+          venue: eventDetails ? 'Event Venue' : 'Transport',
           seat: ticket.seat_id ? `Seat assigned` : 'General admission',
-          type: ticket.ticket_types?.name
+          type: ticket.ticket_types?.name,
+          status: ticket.ticket_status,
+          price: ticket.paid_price,
+          currency: ticket.currency,
+          qr_code_url: ticket.qr_code_url,
+          scanned_at: ticket.scanned_at,
+          metadata: ticket.metadata
         },
         deviceRisk: deviceRisk,
         signatureValid: signatureValid
