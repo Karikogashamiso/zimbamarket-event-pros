@@ -32,30 +32,31 @@ const supabase = createClient(
 
 async function validateSignature(ticketData: TicketData): Promise<boolean> {
   try {
-    // Get the current signing key
-    const { data: signingKey, error } = await supabase
-      .from('qr_signing_keys')
-      .select('public_key, algorithm')
-      .eq('is_active', true)
-      .single();
-
-    if (error || !signingKey) {
-      console.error('No active signing key found:', error);
-      return false;
-    }
-
-    // For demo purposes, we'll simulate signature validation
-    // In production, use Web Crypto API or similar
-    const dataToVerify = `${ticketData.ticketId}:${ticketData.eventId}:${ticketData.timestamp}`;
-    
-    // Simulate ECDSA signature verification
-    // This should use actual cryptographic verification in production
+    // Check if signature exists
     if (!ticketData.signature || ticketData.signature.length < 10) {
+      console.log('No signature or signature too short');
       return false;
     }
 
-    console.log(`Validating signature for ticket ${ticketData.ticketId}`);
-    return true; // Placeholder - implement actual signature verification
+    // Regenerate the signature using the same logic as ticket creation
+    const signatureInput = JSON.stringify({
+      ticketId: ticketData.ticketId,
+      eventId: ticketData.eventId,
+      timestamp: ticketData.timestamp,
+      hash: ticketData.hash
+    }) + 'TICKET_SIGNING_SECRET';
+    
+    const encoder = new TextEncoder();
+    const data = encoder.encode(signatureInput);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const expectedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Compare signatures
+    const isValid = expectedSignature === ticketData.signature;
+    console.log(`Signature validation for ticket ${ticketData.ticketId}: ${isValid}`);
+    
+    return isValid;
   } catch (error) {
     console.error('Signature validation error:', error);
     return false;
