@@ -179,26 +179,16 @@ export const ScanTicket: React.FC = () => {
             </p>
           </div>
 
-          {/* Debug Info */}
-          {debugInfo && (
-            <Card className="bg-muted border-blue-500">
-              <CardContent className="p-3">
-                <p className="text-xs font-semibold mb-2">🔍 Debug Information:</p>
-                <pre className="text-xs font-mono whitespace-pre-wrap overflow-x-auto">{debugInfo}</pre>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Scanner Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Scan QR Code</CardTitle>
+              <CardTitle>Ticket Validation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">QR Code Data</label>
                 <Textarea
-                  placeholder='Paste QR code JSON data here... Example: {"ticketId":"ZEP-12345678-...","orderId":"...","eventId":"...","timestamp":...}'
+                  placeholder='Paste ticket data here or scan a QR code...'
                   value={qrData}
                   onChange={(e) => setQrData(e.target.value)}
                   rows={6}

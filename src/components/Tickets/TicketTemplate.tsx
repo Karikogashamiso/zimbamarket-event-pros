@@ -77,7 +77,7 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
       }
       
       const url = await QRCode.toDataURL(qrData, {
-        width: 120,
+        width: 256,
         margin: 1,
         color: {
           dark: '#000000',
@@ -203,7 +203,7 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
                   <img 
                     src={qrCodeUrl} 
                     alt="Ticket QR Code"
-                    className="w-20 h-20"
+                    className="w-32 h-32"
                   />
                 </div>
               )}
