@@ -73,14 +73,19 @@ serve(async (req) => {
 
     // Check if payment was successful
     if (matchingSession.payment_status === 'paid') {
-      // Update order status to completed (not 'paid' - that's not a valid enum value)
+      // Try to find user by email to link the order
+      const { data: authUser } = await supabase.auth.admin.listUsers();
+      const matchingUser = authUser?.users?.find(u => u.email === order.customer_email);
+      
+      // Update order status to completed and link to user if found
       const { error: updateError } = await supabase
         .from('orders')
         .update({
           payment_status: 'completed',
           booking_status: 'confirmed',
           confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          user_id: matchingUser?.id || order.user_id // Link to user if email matches
         })
         .eq('id', order.id);
 
