@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle, XCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface AvailabilitySlot {
   id: string;
@@ -130,31 +131,38 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <Calendar className="w-4 h-4 mr-2" />
+        <Button variant="outline" className="w-full group hover:border-primary/50 transition-colors">
+          <Calendar className="w-4 h-4 mr-2 group-hover:text-primary transition-colors" />
           Check Availability
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Check Availability - {serviceName}</DialogTitle>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="space-y-3 pb-4 border-b">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Check Availability
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">{serviceName}</p>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-6 overflow-y-auto flex-1">
           {/* Date Selection */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Select Date</label>
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              Select Date
+            </label>
             <Input
               type="date"
               value={selectedDate}
               onChange={(e) => handleDateChange(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
+              className="h-12 text-base border-2 focus:border-primary transition-colors"
             />
           </div>
 
           {/* Availability Results */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">
               Available Times for {(() => {
                 try {
                   const date = new Date(selectedDate + 'T00:00:00');
@@ -172,55 +180,98 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
             </h3>
             
             {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Checking availability...</p>
+              <div className="text-center py-12">
+                <div className="relative mx-auto w-12 h-12">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                </div>
+                <p className="mt-4 text-muted-foreground font-medium">Checking availability...</p>
               </div>
             ) : availability.length > 0 ? (
               <div className="space-y-3">
-                {availability.map((slot) => {
+                {availability.map((slot, index) => {
                   const availabilityInfo = getAvailabilityStatus(slot);
                   const remainingCapacity = slot.max_capacity - slot.current_bookings;
                   const price = slot.price_override || basePrice;
+                  const isAvailable = availabilityInfo.status === 'available';
+                  const isFullyBooked = availabilityInfo.status === 'unavailable';
                   
                   return (
-                    <div key={slot.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-primary" />
-                          <span className="font-medium">{formatTime(slot.time_slot)}</span>
+                    <div 
+                      key={slot.id} 
+                      className={cn(
+                        "group relative flex items-center justify-between p-5 rounded-xl border-2 transition-all duration-300",
+                        "hover:shadow-lg animate-in fade-in slide-in-from-bottom-2",
+                        isFullyBooked 
+                          ? "bg-muted/30 border-muted opacity-60" 
+                          : "bg-card border-border hover:border-primary/50 hover:bg-accent/5"
+                      )}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="flex items-center gap-6 flex-1">
+                        <div className={cn(
+                          "flex items-center justify-center w-12 h-12 rounded-full transition-colors",
+                          isFullyBooked ? "bg-destructive/10" : "bg-primary/10 group-hover:bg-primary/20"
+                        )}>
+                          <Clock className={cn(
+                            "w-5 h-5 transition-colors",
+                            isFullyBooked ? "text-destructive" : "text-primary"
+                          )} />
                         </div>
                         
-                        <Badge variant={availabilityInfo.color as any}>
-                          {availabilityInfo.status === 'available' ? (
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                          ) : (
-                            <XCircle className="w-3 h-3 mr-1" />
-                          )}
-                          {availabilityInfo.text}
-                        </Badge>
-                        
-                        {slot.is_available && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Users className="w-3 h-3" />
-                            {remainingCapacity} spots left
+                        <div className="space-y-2">
+                          <span className="font-semibold text-lg text-foreground">
+                            {formatTime(slot.time_slot)}
+                          </span>
+                          
+                          <div className="flex items-center gap-3">
+                            <Badge 
+                              variant={isFullyBooked ? "destructive" : "default"}
+                              className={cn(
+                                "font-medium px-3 py-1 flex items-center gap-1.5",
+                                isAvailable && "bg-primary text-primary-foreground"
+                              )}
+                            >
+                              {isFullyBooked ? (
+                                <XCircle className="w-3.5 h-3.5" />
+                              ) : (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              )}
+                              {availabilityInfo.text}
+                            </Badge>
+                            
+                            {slot.is_available && (
+                              <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                                <Users className="w-4 h-4" />
+                                <span>{remainingCapacity} spots left</span>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                       
                       <div className="flex items-center gap-4">
                         {price && (
-                          <span className="font-semibold">
-                            ${price}
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-foreground">
+                              ${price}
+                            </div>
                             {slot.price_override && (
-                              <span className="text-xs text-muted-foreground ml-1">(Peak pricing)</span>
+                              <div className="flex items-center gap-1 text-xs text-primary font-medium mt-0.5">
+                                <Sparkles className="w-3 h-3" />
+                                Peak pricing
+                              </div>
                             )}
-                          </span>
+                          </div>
                         )}
                         
                         <Button
-                          size="sm"
-                          disabled={availabilityInfo.status !== 'available'}
+                          size="lg"
+                          disabled={!isAvailable}
+                          className={cn(
+                            "min-w-[120px] font-semibold transition-all duration-300",
+                            isAvailable && "hover:scale-105 shadow-md hover:shadow-xl"
+                          )}
                           onClick={async () => {
                             try {
                               const timeInfo = slot.time_slot ? `Requested time: ${formatTime(slot.time_slot)}` : 'Time to be confirmed';
@@ -237,7 +288,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                               if (error) throw error;
 
                               toast({
-                                title: "Booking Request Sent",
+                                title: "✅ Booking Request Sent",
                                 description: `Your request for ${new Date(selectedDate).toLocaleDateString()} ${slot.time_slot ? `at ${formatTime(slot.time_slot)}` : ''} has been submitted.`,
                               });
                               setIsOpen(false);
@@ -250,7 +301,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                             }
                           }}
                         >
-                          {availabilityInfo.status === 'available' ? 'Book Now' : 'Unavailable'}
+                          {isAvailable ? 'Book Now' : 'Unavailable'}
                         </Button>
                       </div>
                     </div>
@@ -258,9 +309,14 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                 })}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No availability information for this date.</p>
-                <p className="text-sm text-muted-foreground mt-2">Please contact the service provider directly.</p>
+              <div className="text-center py-12 space-y-4">
+                <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <Calendar className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">No availability information for this date</p>
+                  <p className="text-sm text-muted-foreground mt-1">Please contact the service provider directly</p>
+                </div>
               </div>
             )}
           </div>
