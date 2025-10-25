@@ -166,6 +166,211 @@ export const ScanTicket: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Scan className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold">Ticket Scanner</h1>
+            <p className="text-muted-foreground">
+              Paste QR code data below to validate tickets
+            </p>
+          </div>
+
+
+          {/* Scanner Card */}
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <div className="space-y-2">
+                <Textarea
+                  placeholder='Paste ticket data here or scan a QR code...'
+                  value={qrData}
+                  onChange={(e) => setQrData(e.target.value)}
+                  rows={6}
+                  className="font-mono text-xs"
+                />
+              </div>
+
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => handleValidate()}
+                  disabled={isValidating || !qrData.trim()}
+                  className="flex-1"
+                >
+                  {isValidating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      Validating...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Validate Ticket
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={handleClear}>
+                  Clear
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Validation Result */}
+          {validationResult && (
+            <Card className={validationResult.valid ? 'border-green-500 bg-green-50/50' : 'border-red-500 bg-red-50/50'}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {validationResult.valid ? (
+                    <>
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <span className="text-green-600">Valid Ticket</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-6 h-6 text-red-600" />
+                      <span className="text-red-600">Invalid Ticket</span>
+                    </>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {validationResult.valid ? (
+                  <>
+                    {/* QR Code Display */}
+                    {validationResult.ticket.qr_code_url && (
+                      <div className="flex justify-center p-4 bg-white rounded-lg border">
+                        <img 
+                          src={validationResult.ticket.qr_code_url} 
+                          alt="Ticket QR Code" 
+                          className="w-32 h-32"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Ticket className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          <strong>Ticket Number:</strong> {validationResult.ticket.number}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          <strong>Holder:</strong> {validationResult.ticket.holder_name}
+                        </span>
+                      </div>
+
+                      {validationResult.ticket.holder_email && (
+                        <div className="text-sm">
+                          <strong>Email:</strong> {validationResult.ticket.holder_email}
+                        </div>
+                      )}
+
+                      {validationResult.ticket.holder_phone && (
+                        <div className="text-sm">
+                          <strong>Phone:</strong> {validationResult.ticket.holder_phone}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          <strong>Event:</strong> {validationResult.ticket.event}
+                        </span>
+                      </div>
+
+                      {validationResult.ticket.event_date && (
+                        <div className="text-sm">
+                          <strong>Date:</strong> {new Date(validationResult.ticket.event_date).toLocaleString()}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          <strong>Seat/Type:</strong> {validationResult.ticket.seat}
+                        </span>
+                      </div>
+
+                      {validationResult.ticket.type && (
+                        <div className="text-sm">
+                          <strong>Ticket Type:</strong> {validationResult.ticket.type}
+                        </div>
+                      )}
+
+                      {validationResult.ticket.price && (
+                        <div className="text-sm">
+                          <strong>Price:</strong> {validationResult.ticket.currency} {validationResult.ticket.price}
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Signature Valid:</span>
+                      <Badge variant={validationResult.signatureValid ? "default" : "destructive"}>
+                        {validationResult.signatureValid ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
+
+                    {validationResult.deviceRisk > 50 && (
+                      <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                        <span className="text-sm text-yellow-800">
+                          Medium risk device detected (Score: {validationResult.deviceRisk})
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-green-100 rounded-lg border border-green-200">
+                      <p className="text-sm font-semibold text-green-800">✓ Ticket Entry Approved</p>
+                      <p className="text-xs text-green-700 mt-1">
+                        This validation has been recorded in the system
+                      </p>
+                    </div>
+
+                    {validationResult.ticket?.id && (
+                      <Button 
+                        asChild 
+                        className="w-full"
+                        variant="default"
+                      >
+                        <Link to={`/ticket-detail/${validationResult.ticket.id}`}>
+                          <Ticket className="w-4 h-4 mr-2" />
+                          View Full Ticket Details
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-red-100 rounded-lg border border-red-200">
+                      <p className="font-semibold text-red-800 mb-1">Validation Failed</p>
+                      <p className="text-sm text-red-700">{validationResult.reason}</p>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground">
+                      <p><strong>Possible reasons:</strong></p>
+                      <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Ticket has already been scanned</li>
+                        <li>Ticket has been cancelled or refunded</li>
+                        <li>Invalid or tampered QR code</li>
+                        <li>Ticket has expired</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Help Card */}
           <Card className="bg-blue-50 border-blue-200">
@@ -175,6 +380,7 @@ export const ScanTicket: React.FC = () => {
                 <li>Scan the QR code with your phone camera</li>
                 <li>The browser will open automatically with the ticket data</li>
                 <li>Validation happens automatically</li>
+                <li>Or manually paste QR code JSON data in the text area above</li>
               </ol>
               <p className="text-xs text-blue-600 mt-3">
                 <strong>Note:</strong> Each ticket can only be scanned once within a 5-minute window
