@@ -1023,6 +1023,8 @@ export type Database = {
           id: string
           metadata: Json | null
           order_number: string
+          payment_method: string | null
+          payment_provider_id: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           referral_code: string | null
           service_fee: number | null
@@ -1048,6 +1050,8 @@ export type Database = {
           id?: string
           metadata?: Json | null
           order_number: string
+          payment_method?: string | null
+          payment_provider_id?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           referral_code?: string | null
           service_fee?: number | null
@@ -1073,6 +1077,8 @@ export type Database = {
           id?: string
           metadata?: Json | null
           order_number?: string
+          payment_method?: string | null
+          payment_provider_id?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           referral_code?: string | null
           service_fee?: number | null
