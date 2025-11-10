@@ -47,10 +47,10 @@ serve(async (req) => {
 
     const paymentData: ContiPayPaymentRequest = await req.json();
 
-    // ContiPay API configuration (placeholder - update with actual values)
-    const CONTIPAY_API_URL = Deno.env.get('CONTIPAY_API_URL') || 'https://api.contipay.com/v1';
-    const CONTIPAY_API_KEY = Deno.env.get('CONTIPAY_API_KEY') || 'your_api_key_here';
-    const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID') || 'your_merchant_id_here';
+    // ContiPay API configuration
+    const CONTIPAY_API_URL = Deno.env.get('CONTIPAY_API_URL') || 'https://api2-test.contipay.co.zw';
+    const CONTIPAY_API_KEY = Deno.env.get('CONTIPAY_API_KEY');
+    const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID');
 
     console.log('Processing ContiPay payment for order:', paymentData.orderId);
 
