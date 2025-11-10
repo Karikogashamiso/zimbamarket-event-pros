@@ -25,7 +25,7 @@ const PAYMENT_METHODS: PaymentMethod[] = [
     processingTime: 'Instant',
     fees: '1.5% processing fee',
     popular: false,
-    available: false
+    available: true
   },
   {
     id: 'ecocash',
