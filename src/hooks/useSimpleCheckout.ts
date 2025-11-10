@@ -148,6 +148,12 @@ export const useSimpleCheckout = () => {
       // Process payment through ContiPay
       if (checkoutData.paymentMethod === 'contipay') {
         console.log('Creating ContiPay payment...');
+        console.log('ContiPay payment request:', {
+          orderId: order.id,
+          amount: checkoutData.totalAmount || 0,
+          currency: checkoutData.currency || 'USD',
+          returnUrl: `${window.location.origin}/order-confirmation/${order.order_number}`,
+        });
         
         const { data: contiPayResponse, error: contiPayError } = await supabase.functions.invoke('process-contipay-payment', {
           body: {
@@ -159,9 +165,26 @@ export const useSimpleCheckout = () => {
           }
         });
 
-        if (contiPayError || !contiPayResponse?.success) {
-          console.error('ContiPay error:', contiPayError);
+        console.log('ContiPay response received:', {
+          hasData: !!contiPayResponse,
+          hasError: !!contiPayError,
+          data: contiPayResponse,
+          error: contiPayError,
+          hasPaymentUrl: !!contiPayResponse?.paymentUrl,
+          hasSuccess: !!contiPayResponse?.success,
+        });
+
+        if (contiPayError) {
+          console.error('ContiPay API invocation error:', {
+            message: contiPayError.message,
+            details: contiPayError,
+          });
           throw new Error(`ContiPay payment failed: ${contiPayError?.message || 'Please try again.'}`);
+        }
+
+        if (!contiPayResponse?.success) {
+          console.error('ContiPay returned failure response:', contiPayResponse);
+          throw new Error(`ContiPay payment failed: ${contiPayResponse?.error || 'Please try again.'}`);
         }
 
         if (contiPayResponse.paymentUrl) {
@@ -171,6 +194,8 @@ export const useSimpleCheckout = () => {
           }, 100);
           return order;
         }
+
+        console.warn('ContiPay succeeded but no payment URL provided:', contiPayResponse);
       }
 
       // For non-card payments, go directly to confirmation
