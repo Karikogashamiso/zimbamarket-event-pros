@@ -36,20 +36,20 @@ serve(async (req) => {
     const paymentData: ContiPayPaymentRequest = await req.json();
 
     // ContiPay API configuration
-    // Note: ContiPay uses a pre-computed auth key, not username:password
-    const CONTIPAY_AUTH_KEY = Deno.env.get('CONTIPAY_API_KEY'); // Pre-computed Auth Key from ContiPay
-    const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID'); // Merchant ID (773)
+    const CONTIPAY_API_KEY = Deno.env.get('CONTIPAY_API_KEY');
+    const CONTIPAY_API_SECRET = Deno.env.get('CONTIPAY_SECRET_KEY');
+    const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID');
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
 
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
     console.log('Credentials status:', {
-      hasAuthKey: !!CONTIPAY_AUTH_KEY,
-      hasMerchantId: !!CONTIPAY_MERCHANT_ID,
-      authKeyLength: CONTIPAY_AUTH_KEY?.length || 0
+      hasApiKey: !!CONTIPAY_API_KEY,
+      hasApiSecret: !!CONTIPAY_API_SECRET,
+      hasMerchantId: !!CONTIPAY_MERCHANT_ID
     });
 
-    if (!CONTIPAY_AUTH_KEY) {
-      throw new Error('ContiPay API key not configured');
+    if (!CONTIPAY_API_KEY || !CONTIPAY_API_SECRET) {
+      throw new Error('ContiPay API credentials not configured');
     }
 
     if (!CONTIPAY_MERCHANT_ID) {
@@ -58,49 +58,37 @@ serve(async (req) => {
 
     // Determine API URL based on environment
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
-      ? 'https://api-v2.contipay.co.zw' 
-      : 'https://api-uat.contipay.net';
+      ? 'https://api.contipay.com' 
+      : 'https://api.contipay.com';
 
     // Convert phone to integer (remove any non-digits)
     const phoneNumber = parseInt(paymentData.customerInfo.phone.replace(/\D/g, ''));
 
     // Create payment request matching ContiPay API spec
     const paymentRequest = {
+      amount: paymentData.amount,
+      phone: phoneNumber.toString(),
+      currency: paymentData.currency,
+      callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      return_url: paymentData.returnUrl,
       reference: paymentData.orderNumber,
       description: `Order ${paymentData.orderNumber}`,
-      currencyCode: paymentData.currency,
-      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
-      amount: paymentData.amount,
-      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
-      successUrl: paymentData.returnUrl,
-      cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
-      customer: {
-        firstName: paymentData.customerInfo.firstName,
-        surname: paymentData.customerInfo.lastName,
-        email: paymentData.customerInfo.email,
-        cell: phoneNumber,
-      },
     };
 
-    console.log('Creating ContiPay redirect payment:', { 
-      url: `${CONTIPAY_API_URL}/acquire/payment`,
-      merchantId: CONTIPAY_MERCHANT_ID,
+    console.log('Creating ContiPay payment:', { 
+      url: `${CONTIPAY_API_URL}/payment/initiate`,
       payload: paymentRequest 
     });
 
-    // ContiPay uses a pre-computed auth key (not standard Basic Auth encoding)
-    // Format: Authorization: Basic {YOUR_AUTH_KEY}
-    console.log('Auth header format check:', {
-      authKeyLength: CONTIPAY_AUTH_KEY.length,
-      headerValue: `Basic ${CONTIPAY_AUTH_KEY.substring(0, 20)}...` // Log first 20 chars only
-    });
+    // Create Basic Auth header using standard btoa encoding
+    const credentials = btoa(`${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`);
 
-    // Make request to ContiPay API with their custom auth format (PUT method for redirect)
-    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
-      method: 'PUT',
+    // Make request to ContiPay API
+    const response = await fetch(`${CONTIPAY_API_URL}/payment/initiate`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${CONTIPAY_AUTH_KEY}`,
+        'Authorization': `Basic ${credentials}`,
       },
       body: JSON.stringify(paymentRequest),
     });
@@ -125,15 +113,8 @@ serve(async (req) => {
       throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
     }
 
-    // Check for error response
-    if (payment.status === 'Error' || payment.error) {
-      const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
-      console.error('ContiPay returned error:', payment);
-      throw new Error(`ContiPay API error: ${errorMessage}`);
-    }
-
     // Extract redirect URL
-    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
+    const redirectUrl = payment.redirect_url;
     if (!redirectUrl) {
       console.error('ContiPay response missing redirect URL:', payment);
       throw new Error('ContiPay did not return a payment redirect URL');
