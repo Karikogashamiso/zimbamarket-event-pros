@@ -44,8 +44,14 @@ serve(async (req) => {
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
     console.log('Credentials status:', {
       hasApiKey: !!CONTIPAY_API_KEY,
+      apiKeyLength: CONTIPAY_API_KEY?.length,
+      apiKeyPrefix: CONTIPAY_API_KEY?.substring(0, 4) + '...',
       hasApiSecret: !!CONTIPAY_API_SECRET,
-      hasMerchantId: !!CONTIPAY_MERCHANT_ID
+      secretLength: CONTIPAY_API_SECRET?.length,
+      secretPrefix: CONTIPAY_API_SECRET?.substring(0, 4) + '...',
+      hasMerchantId: !!CONTIPAY_MERCHANT_ID,
+      merchantId: CONTIPAY_MERCHANT_ID,
+      environment: CONTIPAY_ENVIRONMENT
     });
 
     if (!CONTIPAY_API_KEY || !CONTIPAY_API_SECRET) {
