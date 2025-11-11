@@ -93,12 +93,20 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // Make request to ContiPay API with PUT method using Token authentication
+    // Try Bearer token authentication (common alternative)
+    const authHeader = `Bearer ${CONTIPAY_API_KEY}`;
+    console.log('Authorization header format:', {
+      type: 'Bearer',
+      keyPrefix: CONTIPAY_API_KEY?.substring(0, 8) + '...',
+      headerPrefix: authHeader.substring(0, 15) + '...'
+    });
+
+    // Make request to ContiPay API with PUT method using Bearer authentication
     const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${CONTIPAY_API_KEY}`,
+        'Authorization': authHeader,
       },
       body: JSON.stringify(paymentRequest),
     });
