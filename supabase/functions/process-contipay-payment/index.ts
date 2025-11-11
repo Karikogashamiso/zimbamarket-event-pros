@@ -50,16 +50,16 @@ serve(async (req) => {
     }
 
     // Create payment redirect request following ContiPay SDK pattern
-    // CRITICAL: merchantCode is REQUIRED for all ContiPay requests
+    // Using snake_case field names as per common payment gateway conventions
     const contiPayRequest = {
-      merchantCode: CONTIPAY_MERCHANT_ID,
+      merchant_code: CONTIPAY_MERCHANT_ID,
       amount: paymentData.amount,
       currency: paymentData.currency,
       reference: paymentData.orderNumber,
       description: `Order ${paymentData.orderNumber}`,
-      returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
-      successUrl: paymentData.returnUrl,
-      cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+      return_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      success_url: paymentData.returnUrl,
+      cancel_url: `${paymentData.returnUrl}?status=cancelled`,
     };
 
     // Make request to ContiPay API
@@ -122,8 +122,8 @@ serve(async (req) => {
       throw new Error(`ContiPay API error: ${errorMessage}`);
     }
 
-    // Verify we got a redirect URL
-    const redirectUrl = contiPayResponse.redirectUrl || contiPayResponse.payment_url || contiPayResponse.checkout_url;
+    // Verify we got a redirect URL (check both snake_case and camelCase)
+    const redirectUrl = contiPayResponse.redirect_url || contiPayResponse.redirectUrl || contiPayResponse.payment_url || contiPayResponse.checkout_url;
     if (!redirectUrl) {
       console.error('ContiPay response missing redirect URL:', contiPayResponse);
       throw new Error('ContiPay did not return a payment redirect URL. Response: ' + JSON.stringify(contiPayResponse));
@@ -147,8 +147,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        paymentUrl: contiPayResponse.redirectUrl || contiPayResponse.payment_url || contiPayResponse.checkout_url,
-        paymentId: contiPayResponse.paymentId || contiPayResponse.payment_id || contiPayResponse.transaction_id,
+        paymentUrl: redirectUrl,
+        paymentId: contiPayResponse.payment_id || contiPayResponse.paymentId || contiPayResponse.transaction_id,
         reference: paymentData.orderNumber,
         message: 'ContiPay payment initiated successfully',
       }),
