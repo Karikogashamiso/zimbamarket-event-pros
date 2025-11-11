@@ -56,16 +56,23 @@ serve(async (req) => {
       ? 'https://api.contipay.co.zw' 
       : 'https://api2-test.contipay.co.zw';
 
-    // Create payment request matching ContiPay SDK flat structure
+    // Create payment request with flat structure (ContiPay might not support nested objects)
     const paymentRequest = {
       merchantCode: parseInt(CONTIPAY_MERCHANT_ID),
       amount: paymentData.amount,
       currency: paymentData.currency,
+      reference: paymentData.orderNumber,
+      description: `Order ${paymentData.orderNumber}`,
+      // Customer fields (flat structure)
+      firstName: paymentData.customerInfo.firstName,
+      lastName: paymentData.customerInfo.lastName,
+      email: paymentData.customerInfo.email,
       phone: paymentData.customerInfo.phone,
+      country: paymentData.customerInfo.country || 'ZW',
+      // URLs
       webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
-      reference: paymentData.orderNumber,
     };
 
     console.log('Creating ContiPay redirect payment:', { 
