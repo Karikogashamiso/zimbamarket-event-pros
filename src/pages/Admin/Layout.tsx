@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote, BookOpen, Video, MessageSquare, FolderTree } from "lucide-react";
+import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote, BookOpen, Video, MessageSquare, FolderTree, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,7 @@ const adminMenuItems = [
   { title: "Reports", url: "/admin/reports", icon: Flag },
   { title: "Contacts", url: "/admin/contacts", icon: Mail },
   { title: "Testimonials", url: "/admin/testimonials", icon: Quote },
+  { title: "Webhook Testing", url: "/admin/webhook-testing", icon: Webhook },
 ];
 
 function AdminSidebar() {

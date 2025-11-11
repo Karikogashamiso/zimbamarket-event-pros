@@ -49,6 +49,7 @@ import AdminBlogPosts from "./pages/Admin/BlogPosts";
 import AdminBlogComments from "./pages/Admin/BlogComments";
 import AdminVideoTutorials from "./pages/Admin/VideoTutorials";
 import AdminVideoComments from "./pages/Admin/VideoComments";
+import AdminWebhookTesting from "./pages/Admin/WebhookTesting";
 import LaunchPlan from "./pages/LaunchPlan";
 import UXOptimizationGuide from "./pages/UXOptimizationGuide";
 import { ScanTicket } from "./pages/ScanTicket";
@@ -138,6 +139,7 @@ const App = () => {
             <Route path="blog-comments" element={<AdminBlogComments />} />
             <Route path="video-tutorials" element={<AdminVideoTutorials />} />
             <Route path="video-comments" element={<AdminVideoComments />} />
+            <Route path="webhook-testing" element={<AdminWebhookTesting />} />
                   </Route>
                   
                   <Route path="/checkout" element={<Layout><CheckoutFlow /></Layout>} />

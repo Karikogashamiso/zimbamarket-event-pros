@@ -15,3 +15,4 @@ export { default as VideoComments } from "./VideoComments";
 export { default as HomeContent } from "./HomeContent";
 export { default as Tickets } from "./Tickets";
 export { default as Users } from "./Users";
+export { default as WebhookTesting } from "./WebhookTesting";
