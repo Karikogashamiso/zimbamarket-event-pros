@@ -46,13 +46,21 @@ serve(async (req) => {
       throw new Error('ContiPay credentials not configured');
     }
 
+    // Get merchant code from environment
+    const CONTIPAY_MERCHANT_CODE = Deno.env.get('CONTIPAY_MERCHANT_ID');
+    
+    if (!CONTIPAY_MERCHANT_CODE) {
+      throw new Error('ContiPay merchant code not configured');
+    }
+
     // Determine API URL based on environment
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
       ? 'https://api.contipay.co.zw' 
       : 'https://api2-test.contipay.co.zw';
 
-    // Create payment request following ContiPay SDK structure
+    // Create payment request with all required fields per ContiPay API docs
     const paymentRequest = {
+      merchantCode: CONTIPAY_MERCHANT_CODE,
       amount: paymentData.amount,
       currency: paymentData.currency,
       reference: paymentData.orderNumber,
@@ -60,6 +68,11 @@ serve(async (req) => {
       returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+      customerFirstName: paymentData.customerInfo.firstName,
+      customerLastName: paymentData.customerInfo.lastName,
+      customerEmail: paymentData.customerInfo.email,
+      customerPhone: paymentData.customerInfo.phone,
+      customerCountry: paymentData.customerInfo.country || 'Zimbabwe',
     };
 
     console.log('Creating ContiPay redirect payment:', { 
