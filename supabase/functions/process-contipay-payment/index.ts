@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { ContiPay } from "npm:@contipay/sdk@latest";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,17 +46,13 @@ serve(async (req) => {
       throw new Error('ContiPay credentials not configured');
     }
 
-    // Initialize ContiPay SDK
-    const contiPay = new ContiPay({
-      authKey: CONTIPAY_AUTH_KEY,
-      authSecret: CONTIPAY_AUTH_SECRET,
-      environment: CONTIPAY_ENVIRONMENT as 'test' | 'live',
-    });
+    // Determine API URL based on environment
+    const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
+      ? 'https://api.contipay.co.zw' 
+      : 'https://api2-test.contipay.co.zw';
 
-    console.log('Creating redirect payment with ContiPay SDK...');
-
-    // Create redirect payment using official SDK
-    const payment = await contiPay.payments.createRedirect({
+    // Create payment request following ContiPay SDK structure
+    const paymentRequest = {
       amount: paymentData.amount,
       currency: paymentData.currency,
       reference: paymentData.orderNumber,
@@ -65,11 +60,55 @@ serve(async (req) => {
       returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+    };
+
+    console.log('Creating ContiPay redirect payment:', { 
+      url: `${CONTIPAY_API_URL}/payments/redirect`,
+      payload: paymentRequest 
     });
 
-    console.log('ContiPay SDK Response:', payment);
+    // Make request to ContiPay API with authentication headers
+    const response = await fetch(`${CONTIPAY_API_URL}/payments/redirect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONTIPAY_AUTH_KEY}`,
+        'X-Auth-Key': CONTIPAY_AUTH_KEY,
+        'X-Auth-Secret': CONTIPAY_AUTH_SECRET,
+      },
+      body: JSON.stringify(paymentRequest),
+    });
 
-    if (!payment || !payment.redirectUrl) {
+    const responseText = await response.text();
+    console.log('ContiPay Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
+
+    if (!response.ok) {
+      throw new Error(`ContiPay API error: ${response.status} - ${responseText}`);
+    }
+
+    // Parse response
+    let payment;
+    try {
+      payment = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse ContiPay response:', parseError);
+      throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
+    }
+
+    // Check for error response
+    if (payment.status === 'Error' || payment.error) {
+      const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
+      console.error('ContiPay returned error:', payment);
+      throw new Error(`ContiPay API error: ${errorMessage}`);
+    }
+
+    // Extract redirect URL
+    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
+    if (!redirectUrl) {
       console.error('ContiPay response missing redirect URL:', payment);
       throw new Error('ContiPay did not return a payment redirect URL');
     }
@@ -79,7 +118,7 @@ serve(async (req) => {
       .from('orders')
       .update({
         payment_method: 'contipay',
-        payment_provider_id: payment.paymentId || payment.transactionId,
+        payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', paymentData.orderId);
@@ -92,8 +131,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        paymentUrl: payment.redirectUrl,
-        paymentId: payment.paymentId || payment.transactionId,
+        paymentUrl: redirectUrl,
+        paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
         reference: paymentData.orderNumber,
         message: 'ContiPay payment initiated successfully',
       }),
