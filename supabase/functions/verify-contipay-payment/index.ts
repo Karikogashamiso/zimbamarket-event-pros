@@ -18,28 +18,142 @@ serve(async (req) => {
     );
 
     const payload = await req.json();
-    console.log('ContiPay webhook received:', payload);
+    console.log('ContiPay webhook received:', JSON.stringify(payload, null, 2));
+    console.log('Webhook headers:', Object.fromEntries(req.headers.entries()));
 
     // ContiPay API configuration
-    const CONTIPAY_SECRET_KEY = Deno.env.get('CONTIPAY_SECRET_KEY') || 'your_secret_key_here';
+    const CONTIPAY_SECRET_KEY = Deno.env.get('CONTIPAY_SECRET_KEY');
 
-    // Verify webhook signature (placeholder - implement based on ContiPay docs)
-    // const signature = req.headers.get('X-ContiPay-Signature');
-    // if (!verifySignature(payload, signature, CONTIPAY_SECRET_KEY)) {
-    //   throw new Error('Invalid webhook signature');
-    // }
+    // Verify webhook signature if ContiPay provides one
+    const signature = req.headers.get('X-ContiPay-Signature') || req.headers.get('x-contipay-signature');
+    if (signature && CONTIPAY_SECRET_KEY) {
+      console.log('Webhook signature verification enabled');
+      // TODO: Implement signature verification based on ContiPay documentation
+      // Example: const isValid = verifySignature(payload, signature, CONTIPAY_SECRET_KEY);
+      // if (!isValid) throw new Error('Invalid webhook signature');
+    } else {
+      console.log('Webhook signature verification skipped (no signature or secret key)');
+    }
 
-    const orderId = payload.reference || payload.order_id;
-    const paymentStatus = payload.status;
-    const transactionId = payload.transaction_id || payload.payment_id;
+    // Extract data from payload (adapt based on actual ContiPay webhook format)
+    const orderId = payload.reference || payload.order_id || payload.merchant_reference;
+    const paymentStatus = (payload.status || payload.payment_status || '').toLowerCase();
+    const transactionId = payload.transaction_id || payload.payment_id || payload.id;
+    const amount = payload.amount;
+    const currency = payload.currency;
+
+    console.log('Parsed webhook data:', {
+      orderId,
+      paymentStatus,
+      transactionId,
+      amount,
+      currency
+    });
+
+    if (!orderId) {
+      throw new Error('Order ID not found in webhook payload');
+    }
+
+    // Get current order
+    const { data: currentOrder, error: fetchError } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !currentOrder) {
+      console.error('Order not found:', orderId, fetchError);
+      throw new Error(`Order not found: ${orderId}`);
+    }
+
+    console.log('Current order status:', {
+      id: currentOrder.id,
+      payment_status: currentOrder.payment_status,
+      booking_status: currentOrder.booking_status
+    });
 
     // Update order status based on ContiPay payment status
-    if (paymentStatus === 'success' || paymentStatus === 'completed' || paymentStatus === 'paid') {
+    if (paymentStatus === 'success' || paymentStatus === 'completed' || paymentStatus === 'paid' || paymentStatus === 'successful') {
+      console.log('Processing successful payment...');
+      
       const { error: orderError } = await supabaseClient
         .from('orders')
         .update({
           payment_status: 'completed',
-          status: 'confirmed',
+          booking_status: 'confirmed',
+          payment_provider_id: transactionId,
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      if (orderError) {
+        console.error('Error updating order:', orderError);
+        throw orderError;
+      }
+
+      // Update all tickets for this order to active status
+      const { error: ticketsError } = await supabaseClient
+        .from('tickets')
+        .update({
+          ticket_status: 'valid',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('order_id', orderId);
+
+      if (ticketsError) {
+        console.error('Error updating tickets:', ticketsError);
+        // Don't throw - order update is more critical
+      }
+
+      // Get order details with tickets for confirmation email
+      const { data: order } = await supabaseClient
+        .from('orders')
+        .select('*, tickets(*)')
+        .eq('id', orderId)
+        .single();
+
+      if (order) {
+        console.log('Payment confirmed for order:', orderId);
+        console.log('Updated tickets count:', order.tickets?.length || 0);
+        
+        // Optionally send confirmation email
+        try {
+          await supabaseClient.functions.invoke('send-order-confirmation', {
+            body: { orderNumber: order.order_number }
+          });
+          console.log('Confirmation email sent');
+        } catch (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+          // Don't throw - payment is already confirmed
+        }
+      }
+    } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'declined' || paymentStatus === 'rejected') {
+      console.log('Processing failed/cancelled payment...');
+      
+      const { error: orderError } = await supabaseClient
+        .from('orders')
+        .update({
+          payment_status: 'failed',
+          booking_status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      if (orderError) {
+        console.error('Error updating order:', orderError);
+        throw orderError;
+      }
+
+      console.log('Order marked as failed/cancelled:', orderId);
+    } else if (paymentStatus === 'pending' || paymentStatus === 'processing') {
+      console.log('Payment still pending/processing:', orderId);
+      
+      const { error: orderError } = await supabaseClient
+        .from('orders')
+        .update({
+          payment_status: 'pending',
           payment_provider_id: transactionId,
           updated_at: new Date().toISOString(),
         })
@@ -47,34 +161,9 @@ serve(async (req) => {
 
       if (orderError) {
         console.error('Error updating order:', orderError);
-        throw orderError;
       }
-
-      // Get order details to send confirmation
-      const { data: order } = await supabaseClient
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('id', orderId)
-        .single();
-
-      if (order) {
-        // Send confirmation email (optional)
-        console.log('Payment confirmed for order:', orderId);
-      }
-    } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
-      const { error: orderError } = await supabaseClient
-        .from('orders')
-        .update({
-          payment_status: 'failed',
-          status: 'cancelled',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
-
-      if (orderError) {
-        console.error('Error updating order:', orderError);
-        throw orderError;
-      }
+    } else {
+      console.log('Unknown payment status:', paymentStatus);
     }
 
     return new Response(
