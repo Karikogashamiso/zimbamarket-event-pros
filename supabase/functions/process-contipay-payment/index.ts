@@ -93,13 +93,15 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // ContiPay uses API Key + Secret Key concatenated with colon
+    // FIXED: Create proper Basic Authorization header with Base64 encoding
     const authString = `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`;
-    console.log('Testing auth format:', {
-      method: 'API_KEY:SECRET_KEY',
-      keyPrefix: CONTIPAY_API_KEY?.substring(0, 8) + '...',
-      secretPrefix: CONTIPAY_API_SECRET?.substring(0, 8) + '...',
-      authStringLength: authString.length
+    const base64Auth = btoa(authString);
+    const authHeader = `Basic ${base64Auth}`;
+
+    console.log('Authorization format:', {
+      method: 'Basic Auth (Base64 encoded)',
+      headerPrefix: 'Basic',
+      encodedLength: base64Auth.length
     });
 
     // Make request to ContiPay API with PUT method
@@ -107,7 +109,7 @@ serve(async (req) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authString,
+        'Authorization': authHeader,
       },
       body: JSON.stringify(paymentRequest),
     });
