@@ -42,6 +42,13 @@ serve(async (req) => {
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
 
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
+    console.log('Credentials status:', {
+      hasApiUser: !!CONTIPAY_API_USER,
+      hasApiPassword: !!CONTIPAY_API_PASSWORD,
+      hasMerchantId: !!CONTIPAY_MERCHANT_ID,
+      apiUserLength: CONTIPAY_API_USER?.length || 0,
+      apiPasswordLength: CONTIPAY_API_PASSWORD?.length || 0
+    });
 
     if (!CONTIPAY_API_USER || !CONTIPAY_API_PASSWORD) {
       throw new Error('ContiPay API credentials not configured');
