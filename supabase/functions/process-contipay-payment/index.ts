@@ -93,89 +93,128 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // FIXED: Create proper Basic Authorization header with Base64 encoding
-    const authString = `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`;
-    const base64Auth = btoa(authString);
-    const authHeader = `Basic ${base64Auth}`;
-
-    console.log('Authorization format:', {
-      method: 'Basic Auth (Base64 encoded)',
-      headerPrefix: 'Basic',
-      encodedLength: base64Auth.length
-    });
-
-    // Make request to ContiPay API with PUT method
-    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
-      body: JSON.stringify(paymentRequest),
-    });
-
-    const responseText = await response.text();
-    console.log('ContiPay Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      body: responseText,
-    });
-
-    if (!response.ok) {
-      throw new Error(`ContiPay API error: ${response.status} - ${responseText}`);
-    }
-
-    // Parse response
-    let payment;
-    try {
-      payment = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse ContiPay response:', parseError);
-      throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
-    }
-
-    // Check for error response
-    if (payment.status === 'Error' || payment.error) {
-      const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
-      console.error('ContiPay returned error:', payment);
-      throw new Error(`ContiPay API error: ${errorMessage}`);
-    }
-
-    // Extract redirect URL
-    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
-    if (!redirectUrl) {
-      console.error('ContiPay response missing redirect URL:', payment);
-      throw new Error('ContiPay did not return a payment redirect URL');
-    }
-
-    // Update order with ContiPay payment details
-    const { error: updateError } = await supabaseClient
-      .from('orders')
-      .update({
-        payment_method: 'contipay',
-        payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', paymentData.orderId);
-
-    if (updateError) {
-      console.error('Error updating order:', updateError);
-      throw updateError;
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        paymentUrl: redirectUrl,
-        paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
-        reference: paymentData.orderNumber,
-        message: 'ContiPay payment initiated successfully',
-      }),
+    // Try multiple authentication formats to identify the correct one
+    const authFormats = [
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        name: 'X-API-KEY and X-SECRET-KEY headers',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': CONTIPAY_API_KEY,
+          'X-SECRET-KEY': CONTIPAY_API_SECRET,
+        }
+      },
+      {
+        name: 'API-KEY and SECRET-KEY headers',
+        headers: {
+          'Content-Type': 'application/json',
+          'API-KEY': CONTIPAY_API_KEY,
+          'SECRET-KEY': CONTIPAY_API_SECRET,
+        }
+      },
+      {
+        name: 'Authorization: API_KEY:SECRET_KEY (no encoding)',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`,
+        }
+      },
+      {
+        name: 'Authorization: Bearer API_KEY',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CONTIPAY_API_KEY}`,
+        }
+      },
+      {
+        name: 'Authorization: Basic Base64(API_KEY:SECRET_KEY)',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`)}`,
+        }
       }
-    );
+    ];
+
+    let lastError = null;
+    let response = null;
+
+    // Try each authentication format
+    for (const format of authFormats) {
+      console.log(`Trying authentication: ${format.name}`);
+      
+      try {
+        response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
+          method: 'PUT',
+          headers: format.headers,
+          body: JSON.stringify(paymentRequest),
+        });
+
+        const responseText = await response.text();
+        console.log(`Response for ${format.name}:`, {
+          status: response.status,
+          body: responseText,
+        });
+
+        // Try to parse the response
+        let payment;
+        try {
+          payment = JSON.parse(responseText);
+        } catch {
+          console.log('Failed to parse response as JSON');
+          continue;
+        }
+
+        // Check if this format worked (no error status)
+        if (response.ok && payment.status !== 'Error' && !payment.error) {
+          console.log(`✓ SUCCESS with format: ${format.name}`);
+          
+          // Extract redirect URL
+          const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
+          if (!redirectUrl) {
+            console.error('ContiPay response missing redirect URL:', payment);
+            throw new Error('ContiPay did not return a payment redirect URL');
+          }
+
+          // Update order with ContiPay payment details
+          const { error: updateError } = await supabaseClient
+            .from('orders')
+            .update({
+              payment_method: 'contipay',
+              payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', paymentData.orderId);
+
+          if (updateError) {
+            console.error('Error updating order:', updateError);
+            throw updateError;
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              paymentUrl: redirectUrl,
+              paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+              reference: paymentData.orderNumber,
+              message: 'ContiPay payment initiated successfully',
+              authMethod: format.name,
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          );
+        } else {
+          lastError = payment.message || payment.error || 'Unknown error';
+          console.log(`✗ Failed with: ${lastError}`);
+        }
+      } catch (error) {
+        console.log(`✗ Exception with ${format.name}:`, error.message);
+        lastError = error.message;
+      }
+    }
+
+    // If we get here, all formats failed
+    throw new Error(`All authentication formats failed. Last error: ${lastError}. Please contact ContiPay support to verify your UAT credentials and authentication method.`);
   } catch (error) {
     console.error('Error processing ContiPay payment:', error);
     return new Response(
