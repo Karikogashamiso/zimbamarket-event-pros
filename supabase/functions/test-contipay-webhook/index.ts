@@ -11,17 +11,20 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, status = 'success', amount, currency = 'USD' } = await req.json();
+    const { orderId, orderNumber, status = 'success', amount, currency = 'USD' } = await req.json();
     
-    console.log('Testing ContiPay webhook with:', { orderId, status, amount, currency });
+    // Accept either orderId or orderNumber for backward compatibility
+    const orderRef = orderNumber || orderId;
+    
+    console.log('Testing ContiPay webhook with:', { orderNumber: orderRef, status, amount, currency });
 
-    if (!orderId) {
-      throw new Error('orderId is required');
+    if (!orderRef) {
+      throw new Error('orderNumber is required');
     }
 
     // Construct mock ContiPay webhook payload
     const mockPayload = {
-      reference: orderId,
+      reference: orderRef,
       status: status,
       payment_status: status,
       transaction_id: `TEST_TXN_${Date.now()}`,
@@ -29,8 +32,8 @@ serve(async (req) => {
       id: `TEST_ID_${Date.now()}`,
       amount: amount || 100,
       currency: currency,
-      merchant_reference: orderId,
-      order_id: orderId,
+      merchant_reference: orderRef,
+      order_id: orderRef,
       timestamp: new Date().toISOString(),
       // Mock additional fields that ContiPay might send
       payment_method: 'test_card',
@@ -69,7 +72,7 @@ serve(async (req) => {
         payload: mockPayload,
         webhookResponse: webhookResult,
         instructions: {
-          usage: 'POST with { "orderId": "your-order-id", "status": "success|failed|pending|cancelled" }',
+          usage: 'POST with { "orderNumber": "ORD-xxx", "status": "success|failed|pending|cancelled" }',
           availableStatuses: ['success', 'completed', 'paid', 'successful', 'failed', 'cancelled', 'declined', 'rejected', 'pending', 'processing']
         }
       }),
@@ -85,9 +88,9 @@ serve(async (req) => {
         success: false, 
         error: error.message,
         instructions: {
-          usage: 'POST with { "orderId": "your-order-id", "status": "success|failed|pending|cancelled" }',
+          usage: 'POST with { "orderNumber": "ORD-xxx", "status": "success|failed|pending|cancelled" }',
           example: {
-            orderId: '51edc85d-4f4e-4892-ab6b-b4036b992da5',
+            orderNumber: 'ORD-1762845779087-I4F0PR6GK',
             status: 'success',
             amount: 1150,
             currency: 'USD'

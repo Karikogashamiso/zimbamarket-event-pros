@@ -33,7 +33,7 @@ const WebhookTesting = () => {
 
     try {
       const payload = {
-        orderId: orderId.trim(),
+        orderNumber: orderId.trim(),
         status,
         ...(amount && { amount: parseFloat(amount) }),
         currency,
