@@ -42,17 +42,6 @@ serve(async (req) => {
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
 
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
-    console.log('Credentials status:', {
-      hasApiKey: !!CONTIPAY_API_KEY,
-      apiKeyLength: CONTIPAY_API_KEY?.length,
-      apiKeyPrefix: CONTIPAY_API_KEY?.substring(0, 4) + '...',
-      hasApiSecret: !!CONTIPAY_API_SECRET,
-      secretLength: CONTIPAY_API_SECRET?.length,
-      secretPrefix: CONTIPAY_API_SECRET?.substring(0, 4) + '...',
-      hasMerchantId: !!CONTIPAY_MERCHANT_ID,
-      merchantId: CONTIPAY_MERCHANT_ID,
-      environment: CONTIPAY_ENVIRONMENT
-    });
 
     if (!CONTIPAY_API_KEY || !CONTIPAY_API_SECRET) {
       throw new Error('ContiPay API credentials not configured');
@@ -67,24 +56,31 @@ serve(async (req) => {
       ? 'https://api-v2.contipay.co.zw' 
       : 'https://api-uat.contipay.net';
 
-    // Convert phone to integer (remove any non-digits)
-    const phoneNumber = parseInt(paymentData.customerInfo.phone.replace(/\D/g, ''));
+    // Format phone number with country code if not already present
+    let phoneNumber = paymentData.customerInfo.phone.replace(/\D/g, '');
+    if (!phoneNumber.startsWith('263') && phoneNumber.length === 9) {
+      phoneNumber = '263' + phoneNumber; // Add Zimbabwe country code
+    }
+    const formattedPhone = '+' + phoneNumber;
 
-    // Create payment request matching ContiPay API spec
+    // Create payment request matching ContiPay API spec exactly
     const paymentRequest = {
-      reference: paymentData.orderNumber,
-      description: `Order ${paymentData.orderNumber}`,
-      currencyCode: paymentData.currency,
-      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
-      amount: paymentData.amount,
       webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      description: `Order ${paymentData.orderNumber}`,
+      amount: paymentData.amount,
+      reference: paymentData.orderNumber,
+      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
+      currencyCode: paymentData.currency,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
       customer: {
-        firstName: paymentData.customerInfo.firstName,
+        nationalId: "", // Optional field
         surname: paymentData.customerInfo.lastName,
+        firstName: paymentData.customerInfo.firstName,
+        middleName: "", // Optional field
         email: paymentData.customerInfo.email,
-        cell: phoneNumber,
+        cell: formattedPhone,
+        countryCode: paymentData.customerInfo.country || "ZW",
       },
     };
 
@@ -93,128 +89,90 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // Try multiple authentication formats to identify the correct one
-    const authFormats = [
-      {
-        name: 'X-API-KEY and X-SECRET-KEY headers',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': CONTIPAY_API_KEY,
-          'X-SECRET-KEY': CONTIPAY_API_SECRET,
-        }
+    // FIXED: Create proper Basic Authorization header with Base64 encoding
+    const authString = `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`;
+    const base64Auth = btoa(authString);
+    const authHeader = `Basic ${base64Auth}`;
+
+    console.log('Authorization format:', {
+      method: 'Basic Auth (Base64 encoded)',
+      headerPrefix: 'Basic',
+      encodedLength: base64Auth.length
+    });
+
+    // Make request to ContiPay API with PUT method
+    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
       },
-      {
-        name: 'API-KEY and SECRET-KEY headers',
-        headers: {
-          'Content-Type': 'application/json',
-          'API-KEY': CONTIPAY_API_KEY,
-          'SECRET-KEY': CONTIPAY_API_SECRET,
-        }
-      },
-      {
-        name: 'Authorization: API_KEY:SECRET_KEY (no encoding)',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`,
-        }
-      },
-      {
-        name: 'Authorization: Bearer API_KEY',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${CONTIPAY_API_KEY}`,
-        }
-      },
-      {
-        name: 'Authorization: Basic Base64(API_KEY:SECRET_KEY)',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(`${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`)}`,
-        }
-      }
-    ];
+      body: JSON.stringify(paymentRequest),
+    });
 
-    let lastError = null;
-    let response = null;
+    const responseText = await response.text();
+    console.log('ContiPay Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
 
-    // Try each authentication format
-    for (const format of authFormats) {
-      console.log(`Trying authentication: ${format.name}`);
-      
-      try {
-        response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
-          method: 'PUT',
-          headers: format.headers,
-          body: JSON.stringify(paymentRequest),
-        });
-
-        const responseText = await response.text();
-        console.log(`Response for ${format.name}:`, {
-          status: response.status,
-          body: responseText,
-        });
-
-        // Try to parse the response
-        let payment;
-        try {
-          payment = JSON.parse(responseText);
-        } catch {
-          console.log('Failed to parse response as JSON');
-          continue;
-        }
-
-        // Check if this format worked (no error status)
-        if (response.ok && payment.status !== 'Error' && !payment.error) {
-          console.log(`✓ SUCCESS with format: ${format.name}`);
-          
-          // Extract redirect URL
-          const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
-          if (!redirectUrl) {
-            console.error('ContiPay response missing redirect URL:', payment);
-            throw new Error('ContiPay did not return a payment redirect URL');
-          }
-
-          // Update order with ContiPay payment details
-          const { error: updateError } = await supabaseClient
-            .from('orders')
-            .update({
-              payment_method: 'contipay',
-              payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', paymentData.orderId);
-
-          if (updateError) {
-            console.error('Error updating order:', updateError);
-            throw updateError;
-          }
-
-          return new Response(
-            JSON.stringify({
-              success: true,
-              paymentUrl: redirectUrl,
-              paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
-              reference: paymentData.orderNumber,
-              message: 'ContiPay payment initiated successfully',
-              authMethod: format.name,
-            }),
-            {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            }
-          );
-        } else {
-          lastError = payment.message || payment.error || 'Unknown error';
-          console.log(`✗ Failed with: ${lastError}`);
-        }
-      } catch (error) {
-        console.log(`✗ Exception with ${format.name}:`, error.message);
-        lastError = error.message;
-      }
+    if (!response.ok) {
+      throw new Error(`ContiPay API error: ${response.status} - ${responseText}`);
     }
 
-    // If we get here, all formats failed
-    throw new Error(`All authentication formats failed. Last error: ${lastError}. Please contact ContiPay support to verify your UAT credentials and authentication method.`);
+    // Parse response
+    let payment;
+    try {
+      payment = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse ContiPay response:', parseError);
+      throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
+    }
+
+    // Check for error response
+    if (payment.status === 'Error' || payment.error) {
+      const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
+      console.error('ContiPay returned error:', payment);
+      throw new Error(`ContiPay API error: ${errorMessage}`);
+    }
+
+    // Extract redirect URL
+    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
+    if (!redirectUrl) {
+      console.error('ContiPay response missing redirect URL:', payment);
+      throw new Error('ContiPay did not return a payment redirect URL');
+    }
+
+    // Update order with ContiPay payment details
+    const { error: updateError } = await supabaseClient
+      .from('orders')
+      .update({
+        payment_method: 'contipay',
+        payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', paymentData.orderId);
+
+    if (updateError) {
+      console.error('Error updating order:', updateError);
+      throw updateError;
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        paymentUrl: redirectUrl,
+        paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+        reference: paymentData.orderNumber,
+        message: 'ContiPay payment initiated successfully',
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error('Error processing ContiPay payment:', error);
     return new Response(
