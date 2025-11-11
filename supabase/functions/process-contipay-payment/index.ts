@@ -90,8 +90,15 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // Create Basic Auth header
-    const basicAuth = btoa(`${CONTIPAY_API_USER}:${CONTIPAY_API_PASSWORD}`);
+    // Create Basic Auth header: base64(API_KEY:API_SECRET)
+    const authString = `${CONTIPAY_API_USER}:${CONTIPAY_API_PASSWORD}`;
+    const basicAuth = btoa(authString);
+    
+    console.log('Auth header format check:', {
+      authStringLength: authString.length,
+      base64Length: basicAuth.length,
+      headerValue: `Basic ${basicAuth.substring(0, 20)}...` // Log first 20 chars only
+    });
 
     // Make request to ContiPay API with Basic Authentication (PUT method for redirect)
     const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
