@@ -36,34 +36,57 @@ serve(async (req) => {
     }
 
     // Extract data from payload (adapt based on actual ContiPay webhook format)
-    const orderNumber = payload.reference || payload.order_id || payload.merchant_reference;
+    const orderRef = payload.reference || payload.order_id || payload.merchant_reference;
     const paymentStatus = (payload.status || payload.payment_status || '').toLowerCase();
     const transactionId = payload.transaction_id || payload.payment_id || payload.id;
     const amount = payload.amount;
     const currency = payload.currency;
 
     console.log('Parsed webhook data:', {
-      orderNumber,
+      orderRef,
       paymentStatus,
       transactionId,
       amount,
       currency
     });
 
-    if (!orderNumber) {
-      throw new Error('Order number not found in webhook payload');
+    if (!orderRef) {
+      throw new Error('Order reference not found in webhook payload');
     }
 
-    // Get current order by order_number (not UUID id)
-    const { data: currentOrder, error: fetchError } = await supabaseClient
+    // Try to find order by order_number first, then by UUID id
+    let currentOrder;
+    let fetchError;
+    
+    // First try as order_number (ORD-xxx format)
+    const { data: orderByNumber, error: errorByNumber } = await supabaseClient
       .from('orders')
       .select('*')
-      .eq('order_number', orderNumber)
-      .single();
+      .eq('order_number', orderRef)
+      .maybeSingle();
+    
+    if (orderByNumber) {
+      currentOrder = orderByNumber;
+    } else {
+      // Try as UUID if it looks like one
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(orderRef)) {
+        const { data: orderById, error: errorById } = await supabaseClient
+          .from('orders')
+          .select('*')
+          .eq('id', orderRef)
+          .maybeSingle();
+        
+        currentOrder = orderById;
+        fetchError = errorById;
+      } else {
+        fetchError = errorByNumber;
+      }
+    }
 
-    if (fetchError || !currentOrder) {
-      console.error('Order not found:', orderNumber, fetchError);
-      throw new Error(`Order not found: ${orderNumber}`);
+    if (!currentOrder) {
+      console.error('Order not found:', orderRef, fetchError);
+      throw new Error(`Order not found: ${orderRef}`);
     }
 
     console.log('Current order status:', {
