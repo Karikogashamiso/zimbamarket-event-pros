@@ -36,38 +36,39 @@ serve(async (req) => {
     }
 
     // Extract data from payload (adapt based on actual ContiPay webhook format)
-    const orderId = payload.reference || payload.order_id || payload.merchant_reference;
+    const orderNumber = payload.reference || payload.order_id || payload.merchant_reference;
     const paymentStatus = (payload.status || payload.payment_status || '').toLowerCase();
     const transactionId = payload.transaction_id || payload.payment_id || payload.id;
     const amount = payload.amount;
     const currency = payload.currency;
 
     console.log('Parsed webhook data:', {
-      orderId,
+      orderNumber,
       paymentStatus,
       transactionId,
       amount,
       currency
     });
 
-    if (!orderId) {
-      throw new Error('Order ID not found in webhook payload');
+    if (!orderNumber) {
+      throw new Error('Order number not found in webhook payload');
     }
 
-    // Get current order
+    // Get current order by order_number (not UUID id)
     const { data: currentOrder, error: fetchError } = await supabaseClient
       .from('orders')
       .select('*')
-      .eq('id', orderId)
+      .eq('order_number', orderNumber)
       .single();
 
     if (fetchError || !currentOrder) {
-      console.error('Order not found:', orderId, fetchError);
-      throw new Error(`Order not found: ${orderId}`);
+      console.error('Order not found:', orderNumber, fetchError);
+      throw new Error(`Order not found: ${orderNumber}`);
     }
 
     console.log('Current order status:', {
       id: currentOrder.id,
+      order_number: currentOrder.order_number,
       payment_status: currentOrder.payment_status,
       booking_status: currentOrder.booking_status
     });
@@ -85,7 +86,7 @@ serve(async (req) => {
           confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', currentOrder.id);
 
       if (orderError) {
         console.error('Error updating order:', orderError);
@@ -99,7 +100,7 @@ serve(async (req) => {
           ticket_status: 'valid',
           updated_at: new Date().toISOString(),
         })
-        .eq('order_id', orderId);
+        .eq('order_id', currentOrder.id);
 
       if (ticketsError) {
         console.error('Error updating tickets:', ticketsError);
@@ -110,11 +111,11 @@ serve(async (req) => {
       const { data: order } = await supabaseClient
         .from('orders')
         .select('*, tickets(*)')
-        .eq('id', orderId)
+        .eq('id', currentOrder.id)
         .single();
 
       if (order) {
-        console.log('Payment confirmed for order:', orderId);
+        console.log('Payment confirmed for order:', currentOrder.id);
         console.log('Updated tickets count:', order.tickets?.length || 0);
         
         // Optionally send confirmation email
@@ -139,16 +140,16 @@ serve(async (req) => {
           cancelled_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', currentOrder.id);
 
       if (orderError) {
         console.error('Error updating order:', orderError);
         throw orderError;
       }
 
-      console.log('Order marked as failed/cancelled:', orderId);
+      console.log('Order marked as failed/cancelled:', currentOrder.id);
     } else if (paymentStatus === 'pending' || paymentStatus === 'processing') {
-      console.log('Payment still pending/processing:', orderId);
+      console.log('Payment still pending/processing:', currentOrder.id);
       
       const { error: orderError } = await supabaseClient
         .from('orders')
@@ -157,7 +158,7 @@ serve(async (req) => {
           payment_provider_id: transactionId,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', orderId);
+        .eq('id', currentOrder.id);
 
       if (orderError) {
         console.error('Error updating order:', orderError);
