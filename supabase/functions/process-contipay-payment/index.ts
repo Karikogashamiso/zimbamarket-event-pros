@@ -36,22 +36,20 @@ serve(async (req) => {
     const paymentData: ContiPayPaymentRequest = await req.json();
 
     // ContiPay API configuration
-    const CONTIPAY_API_USER = Deno.env.get('CONTIPAY_API_KEY'); // API User
-    const CONTIPAY_API_PASSWORD = Deno.env.get('CONTIPAY_SECRET_KEY'); // API Password
+    // Note: ContiPay uses a pre-computed auth key, not username:password
+    const CONTIPAY_AUTH_KEY = Deno.env.get('CONTIPAY_API_KEY'); // Pre-computed Auth Key from ContiPay
     const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID'); // Merchant ID (773)
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
 
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
     console.log('Credentials status:', {
-      hasApiUser: !!CONTIPAY_API_USER,
-      hasApiPassword: !!CONTIPAY_API_PASSWORD,
+      hasAuthKey: !!CONTIPAY_AUTH_KEY,
       hasMerchantId: !!CONTIPAY_MERCHANT_ID,
-      apiUserLength: CONTIPAY_API_USER?.length || 0,
-      apiPasswordLength: CONTIPAY_API_PASSWORD?.length || 0
+      authKeyLength: CONTIPAY_AUTH_KEY?.length || 0
     });
 
-    if (!CONTIPAY_API_USER || !CONTIPAY_API_PASSWORD) {
-      throw new Error('ContiPay API credentials not configured');
+    if (!CONTIPAY_AUTH_KEY) {
+      throw new Error('ContiPay API key not configured');
     }
 
     if (!CONTIPAY_MERCHANT_ID) {
@@ -90,22 +88,19 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // Create Basic Auth header: base64(API_KEY:API_SECRET)
-    const authString = `${CONTIPAY_API_USER}:${CONTIPAY_API_PASSWORD}`;
-    const basicAuth = btoa(authString);
-    
+    // ContiPay uses a pre-computed auth key (not standard Basic Auth encoding)
+    // Format: Authorization: Basic {YOUR_AUTH_KEY}
     console.log('Auth header format check:', {
-      authStringLength: authString.length,
-      base64Length: basicAuth.length,
-      headerValue: `Basic ${basicAuth.substring(0, 20)}...` // Log first 20 chars only
+      authKeyLength: CONTIPAY_AUTH_KEY.length,
+      headerValue: `Basic ${CONTIPAY_AUTH_KEY.substring(0, 20)}...` // Log first 20 chars only
     });
 
-    // Make request to ContiPay API with Basic Authentication (PUT method for redirect)
+    // Make request to ContiPay API with their custom auth format (PUT method for redirect)
     const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${basicAuth}`,
+        'Authorization': `Basic ${CONTIPAY_AUTH_KEY}`,
       },
       body: JSON.stringify(paymentRequest),
     });
