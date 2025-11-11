@@ -58,8 +58,8 @@ serve(async (req) => {
 
     // Determine API URL based on environment
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
-      ? 'https://api.contipay.com' 
-      : 'https://api.contipay.com';
+      ? 'https://api-v2.contipay.co.zw' 
+      : 'https://api-uat.contipay.net';
 
     // Convert phone to integer (remove any non-digits)
     const phoneNumber = parseInt(paymentData.customerInfo.phone.replace(/\D/g, ''));
