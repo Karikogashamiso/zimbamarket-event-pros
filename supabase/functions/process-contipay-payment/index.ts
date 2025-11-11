@@ -16,6 +16,7 @@ interface ContiPayPaymentRequest {
     lastName: string;
     email: string;
     phone: string;
+    country?: string;
   };
   returnUrl: string;
 }
@@ -50,7 +51,7 @@ serve(async (req) => {
     }
 
     // Create payment redirect request following ContiPay SDK pattern
-    // Using camelCase based on ContiPay library conventions
+    // Include customer information as required by ContiPay API
     const contiPayRequest = {
       merchantCode: CONTIPAY_MERCHANT_ID,
       amount: paymentData.amount,
@@ -60,6 +61,12 @@ serve(async (req) => {
       returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+      // Customer information required for redirect payments
+      customerFirstName: paymentData.customerInfo.firstName,
+      customerLastName: paymentData.customerInfo.lastName,
+      customerEmail: paymentData.customerInfo.email,
+      customerPhone: paymentData.customerInfo.phone,
+      customerCountry: paymentData.customerInfo.country || 'ZW',
     };
 
     // Make request to ContiPay API
