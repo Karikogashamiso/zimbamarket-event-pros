@@ -118,6 +118,48 @@ export const OrderConfirmation: React.FC = () => {
     fetchOrderDetails();
   }, [orderNumber]);
 
+  // Real-time subscription for order status updates (ContiPay webhook updates)
+  useEffect(() => {
+    if (!orderDetails?.id) return;
+
+    console.log('Setting up real-time subscription for order:', orderDetails.id);
+
+    const channel = supabase
+      .channel(`order-${orderDetails.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderDetails.id}`
+        },
+        (payload) => {
+          console.log('Order updated via webhook:', payload.new);
+          const updatedOrder = payload.new;
+
+          // Show toast notification when payment status changes
+          if (updatedOrder.payment_status === 'completed' && orderDetails.payment_status !== 'completed') {
+            toast.success('Payment confirmed! Your order has been processed.');
+          } else if (updatedOrder.payment_status === 'failed' && orderDetails.payment_status !== 'failed') {
+            toast.error('Payment failed. Please try again or contact support.');
+          }
+
+          // Update order details
+          setOrderDetails((prev: any) => ({
+            ...prev,
+            ...updatedOrder
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [orderDetails?.id, orderDetails?.payment_status]);
+
   const formatCurrency = (amount: number, currency = 'USD') => {
     const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
     return `${symbol}${amount.toFixed(2)}`;
@@ -365,13 +407,37 @@ export const OrderConfirmation: React.FC = () => {
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Success Icon */}
           <div className="text-center">
-            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="h-12 w-12 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-green-600 mb-2">Booking Confirmed!</h2>
-            <p className="text-muted-foreground">
-              Your booking has been successfully processed
-            </p>
+            {orderDetails.payment_status === 'pending' ? (
+              <>
+                <div className="mx-auto w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+                </div>
+                <h2 className="text-2xl font-bold text-yellow-600 mb-2">Payment Processing...</h2>
+                <p className="text-muted-foreground">
+                  Please wait while we confirm your payment. This page will update automatically.
+                </p>
+              </>
+            ) : orderDetails.payment_status === 'completed' ? (
+              <>
+                <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-green-600 mb-2">Booking Confirmed!</h2>
+                <p className="text-muted-foreground">
+                  Your booking has been successfully processed
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                  <div className="text-red-600 text-2xl">!</div>
+                </div>
+                <h2 className="text-2xl font-bold text-red-600 mb-2">Payment {orderDetails.payment_status}</h2>
+                <p className="text-muted-foreground">
+                  Please contact support if you need assistance
+                </p>
+              </>
+            )}
           </div>
 
           {/* Order Details Card */}
@@ -396,7 +462,15 @@ export const OrderConfirmation: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Payment Status</p>
-                  <Badge className="bg-green-100 text-green-800">
+                  <Badge 
+                    className={
+                      orderDetails.payment_status === 'completed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : orderDetails.payment_status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }
+                  >
                     <CheckCircle className="w-3 h-3 mr-1" />
                     {orderDetails.payment_status}
                   </Badge>
