@@ -56,24 +56,16 @@ serve(async (req) => {
       ? 'https://api.contipay.co.zw' 
       : 'https://api2-test.contipay.co.zw';
 
-    // Create payment request matching ContiPay PHP SDK structure
+    // Create payment request matching ContiPay SDK flat structure
     const paymentRequest = {
-      merchantCode: CONTIPAY_MERCHANT_ID,
+      merchantCode: parseInt(CONTIPAY_MERCHANT_ID),
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      phone: paymentData.customerInfo.phone,
       webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
-      customer: {
-        firstName: paymentData.customerInfo.firstName,
-        lastName: paymentData.customerInfo.lastName,
-        phone: paymentData.customerInfo.phone,
-        country: paymentData.customerInfo.country || 'ZW',
-        email: paymentData.customerInfo.email,
-      },
-      transaction: {
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        reference: paymentData.orderNumber,
-      },
+      reference: paymentData.orderNumber,
     };
 
     console.log('Creating ContiPay redirect payment:', { 
