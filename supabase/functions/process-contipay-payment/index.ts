@@ -93,15 +93,12 @@ serve(async (req) => {
       payload: paymentRequest 
     });
 
-    // Create Basic Auth header using standard btoa encoding
-    const credentials = btoa(`${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`);
-
-    // Make request to ContiPay API with PUT method
+    // Make request to ContiPay API with PUT method using Token authentication
     const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${credentials}`,
+        'Authorization': `Token ${CONTIPAY_API_KEY}`,
       },
       body: JSON.stringify(paymentRequest),
     });
