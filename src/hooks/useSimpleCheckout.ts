@@ -148,14 +148,12 @@ export const useSimpleCheckout = () => {
       // Process payment through ContiPay
       if (checkoutData.paymentMethod === 'contipay') {
         console.log('Creating ContiPay payment...');
-        console.log('ContiPay payment request:', {
-          orderId: order.id,
-          orderNumber: order.order_number,
-          amount: checkoutData.totalAmount || 0,
-          currency: checkoutData.currency || 'USD',
-          returnUrl: `${window.location.origin}/order-confirmation/${order.order_number}`,
-        });
         
+        toast({
+          title: "Redirecting to Payment",
+          description: "Please wait while we redirect you to ContiPay...",
+        });
+
         const { data: contiPayResponse, error: contiPayError } = await supabase.functions.invoke('process-contipay-payment', {
           body: {
             orderId: order.id,
@@ -167,37 +165,33 @@ export const useSimpleCheckout = () => {
           }
         });
 
-        console.log('ContiPay response received:', {
-          hasData: !!contiPayResponse,
-          hasError: !!contiPayError,
-          data: contiPayResponse,
-          error: contiPayError,
-          hasPaymentUrl: !!contiPayResponse?.paymentUrl,
-          hasSuccess: !!contiPayResponse?.success,
-        });
+        console.log('ContiPay response:', contiPayResponse);
 
         if (contiPayError) {
-          console.error('ContiPay API invocation error:', {
-            message: contiPayError.message,
-            details: contiPayError,
-          });
+          console.error('ContiPay error:', contiPayError);
           throw new Error(`ContiPay payment failed: ${contiPayError?.message || 'Please try again.'}`);
         }
 
         if (!contiPayResponse?.success) {
-          console.error('ContiPay returned failure response:', contiPayResponse);
           throw new Error(`ContiPay payment failed: ${contiPayResponse?.error || 'Please try again.'}`);
         }
 
-        if (contiPayResponse.paymentUrl) {
-          console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
-          setTimeout(() => {
-            window.location.href = contiPayResponse.paymentUrl;
-          }, 100);
-          return order;
+        if (!contiPayResponse.paymentUrl) {
+          throw new Error('ContiPay did not return a payment URL. Please try again.');
         }
 
-        console.warn('ContiPay succeeded but no payment URL provided:', contiPayResponse);
+        console.log('Redirecting to ContiPay payment page:', contiPayResponse.paymentUrl);
+        
+        // Show success message before redirect
+        toast({
+          title: "Payment Page Ready",
+          description: "Redirecting you to complete payment...",
+        });
+
+        // Redirect to ContiPay payment page
+        window.location.href = contiPayResponse.paymentUrl;
+        
+        return order;
       }
 
       // For non-card payments, go directly to confirmation
