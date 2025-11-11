@@ -45,6 +45,7 @@ serve(async (req) => {
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
 
     // Create payment redirect request following ContiPay SDK pattern
+    // Note: customerInfo is NOT included in redirect payments per SDK docs
     const contiPayRequest = {
       amount: paymentData.amount,
       currency: paymentData.currency,
@@ -53,12 +54,6 @@ serve(async (req) => {
       returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
-      customerInfo: {
-        firstName: paymentData.customerInfo.firstName,
-        lastName: paymentData.customerInfo.lastName,
-        email: paymentData.customerInfo.email,
-        phone: paymentData.customerInfo.phone,
-      }
     };
 
     // Make request to ContiPay API
