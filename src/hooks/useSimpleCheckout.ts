@@ -150,6 +150,7 @@ export const useSimpleCheckout = () => {
         console.log('Creating ContiPay payment...');
         console.log('ContiPay payment request:', {
           orderId: order.id,
+          orderNumber: order.order_number,
           amount: checkoutData.totalAmount || 0,
           currency: checkoutData.currency || 'USD',
           returnUrl: `${window.location.origin}/order-confirmation/${order.order_number}`,
@@ -158,6 +159,7 @@ export const useSimpleCheckout = () => {
         const { data: contiPayResponse, error: contiPayError } = await supabase.functions.invoke('process-contipay-payment', {
           body: {
             orderId: order.id,
+            orderNumber: order.order_number,
             amount: checkoutData.totalAmount || 0,
             currency: checkoutData.currency || 'USD',
             customerInfo: checkoutData.customerInfo,

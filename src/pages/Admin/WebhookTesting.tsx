@@ -107,16 +107,16 @@ const WebhookTesting = () => {
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="orderId">Order ID *</Label>
+                <Label htmlFor="orderId">Order Number *</Label>
                 <Input
                   id="orderId"
-                  placeholder="e.g., 51edc85d-4f4e-4892-ab6b-b4036b992da5"
+                  placeholder="e.g., ORD-1762845779087-I4F0PR6GK"
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
-                  The UUID of the order you want to test
+                  The order number (not UUID) from the orders table
                 </p>
               </div>
 
@@ -222,8 +222,8 @@ const WebhookTesting = () => {
               <h4 className="font-semibold mb-2">How to use:</h4>
               <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                 <li>Create a test order through the checkout flow</li>
-                <li>Copy the order ID from the database or order confirmation page</li>
-                <li>Paste it into the "Order ID" field above</li>
+                <li>Copy the order number (e.g., ORD-xxx) from the order confirmation or database</li>
+                <li>Paste it into the "Order Number" field above</li>
                 <li>Select the payment status you want to simulate</li>
                 <li>Click "Send Test Webhook" to trigger the webhook handler</li>
               </ol>

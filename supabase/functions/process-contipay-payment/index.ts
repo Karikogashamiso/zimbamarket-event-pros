@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface ContiPayPaymentRequest {
   orderId: string;
+  orderNumber: string;
   amount: number;
   currency: string;
   customerInfo: {
@@ -38,7 +39,7 @@ serve(async (req) => {
     const CONTIPAY_API_KEY = Deno.env.get('CONTIPAY_API_KEY');
     const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID');
 
-    console.log('Processing ContiPay payment for order:', paymentData.orderId);
+    console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
     
     // Log environment configuration (without exposing full secrets)
     console.log('ContiPay Configuration Check:', {
@@ -55,7 +56,7 @@ serve(async (req) => {
       merchant_id: CONTIPAY_MERCHANT_ID,
       amount: paymentData.amount,
       currency: paymentData.currency,
-      reference: paymentData.orderId,
+      reference: paymentData.orderNumber,
       customer: {
         first_name: paymentData.customerInfo.firstName,
         last_name: paymentData.customerInfo.lastName,
