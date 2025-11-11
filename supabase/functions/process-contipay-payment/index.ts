@@ -50,16 +50,16 @@ serve(async (req) => {
     }
 
     // Create payment redirect request following ContiPay SDK pattern
-    // Using snake_case field names as per common payment gateway conventions
+    // Using camelCase based on ContiPay library conventions
     const contiPayRequest = {
-      merchant_code: CONTIPAY_MERCHANT_ID,
+      merchantCode: CONTIPAY_MERCHANT_ID,
       amount: paymentData.amount,
       currency: paymentData.currency,
       reference: paymentData.orderNumber,
       description: `Order ${paymentData.orderNumber}`,
-      return_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
-      success_url: paymentData.returnUrl,
-      cancel_url: `${paymentData.returnUrl}?status=cancelled`,
+      returnUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      successUrl: paymentData.returnUrl,
+      cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
     };
 
     // Make request to ContiPay API
