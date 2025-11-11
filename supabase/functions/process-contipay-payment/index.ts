@@ -53,30 +53,32 @@ serve(async (req) => {
 
     // Determine API URL based on environment
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
-      ? 'https://api.contipay.co.zw' 
-      : 'https://api2-test.contipay.co.zw';
+      ? 'https://api-v2.contipay.co.zw' 
+      : 'https://api-uat.contipay.net';
 
-    // Create payment request with flat structure (ContiPay might not support nested objects)
+    // Convert phone to integer (remove any non-digits)
+    const phoneNumber = parseInt(paymentData.customerInfo.phone.replace(/\D/g, ''));
+
+    // Create payment request matching ContiPay API spec
     const paymentRequest = {
-      merchantCode: parseInt(CONTIPAY_MERCHANT_ID),
-      amount: paymentData.amount,
-      currency: paymentData.currency,
       reference: paymentData.orderNumber,
       description: `Order ${paymentData.orderNumber}`,
-      // Customer fields (flat structure)
-      firstName: paymentData.customerInfo.firstName,
-      lastName: paymentData.customerInfo.lastName,
-      email: paymentData.customerInfo.email,
-      phone: paymentData.customerInfo.phone,
-      country: paymentData.customerInfo.country || 'ZW',
-      // URLs
+      currencyCode: paymentData.currency,
+      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
+      amount: paymentData.amount,
       webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+      customer: {
+        firstName: paymentData.customerInfo.firstName,
+        surname: paymentData.customerInfo.lastName,
+        email: paymentData.customerInfo.email,
+        cell: phoneNumber,
+      },
     };
 
     console.log('Creating ContiPay redirect payment:', { 
-      url: `${CONTIPAY_API_URL}/payments/redirect`,
+      url: `${CONTIPAY_API_URL}/acquire/payment`,
       merchantId: CONTIPAY_MERCHANT_ID,
       payload: paymentRequest 
     });
@@ -84,9 +86,9 @@ serve(async (req) => {
     // Create Basic Auth header
     const basicAuth = btoa(`${CONTIPAY_API_USER}:${CONTIPAY_API_PASSWORD}`);
 
-    // Make request to ContiPay API with Basic Authentication
-    const response = await fetch(`${CONTIPAY_API_URL}/payments/redirect`, {
-      method: 'POST',
+    // Make request to ContiPay API with Basic Authentication (PUT method for redirect)
+    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${basicAuth}`,
