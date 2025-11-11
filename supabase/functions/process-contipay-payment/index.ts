@@ -66,26 +66,33 @@ serve(async (req) => {
 
     // Create payment request matching ContiPay API spec
     const paymentRequest = {
-      amount: paymentData.amount,
-      phone: phoneNumber.toString(),
-      currency: paymentData.currency,
-      callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
-      return_url: paymentData.returnUrl,
       reference: paymentData.orderNumber,
       description: `Order ${paymentData.orderNumber}`,
+      currencyCode: paymentData.currency,
+      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
+      amount: paymentData.amount,
+      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      successUrl: paymentData.returnUrl,
+      cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
+      customer: {
+        firstName: paymentData.customerInfo.firstName,
+        surname: paymentData.customerInfo.lastName,
+        email: paymentData.customerInfo.email,
+        cell: phoneNumber,
+      },
     };
 
     console.log('Creating ContiPay payment:', { 
-      url: `${CONTIPAY_API_URL}/payment/initiate`,
+      url: `${CONTIPAY_API_URL}/acquire/payment`,
       payload: paymentRequest 
     });
 
     // Create Basic Auth header using standard btoa encoding
     const credentials = btoa(`${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`);
 
-    // Make request to ContiPay API
-    const response = await fetch(`${CONTIPAY_API_URL}/payment/initiate`, {
-      method: 'POST',
+    // Make request to ContiPay API with PUT method
+    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${credentials}`,
@@ -113,8 +120,15 @@ serve(async (req) => {
       throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
     }
 
+    // Check for error response
+    if (payment.status === 'Error' || payment.error) {
+      const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
+      console.error('ContiPay returned error:', payment);
+      throw new Error(`ContiPay API error: ${errorMessage}`);
+    }
+
     // Extract redirect URL
-    const redirectUrl = payment.redirect_url;
+    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
     if (!redirectUrl) {
       console.error('ContiPay response missing redirect URL:', payment);
       throw new Error('ContiPay did not return a payment redirect URL');
