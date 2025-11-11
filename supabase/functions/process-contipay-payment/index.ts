@@ -109,6 +109,25 @@ serve(async (req) => {
       throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
     }
 
+    // Check for ContiPay error response (they return 200 OK even for errors)
+    if (contiPayResponse.status === 'Error' || contiPayResponse.statusCode) {
+      const errorMessage = contiPayResponse.message || 'Unknown ContiPay error';
+      console.error('ContiPay API returned error:', {
+        status: contiPayResponse.status,
+        statusCode: contiPayResponse.statusCode,
+        message: errorMessage,
+        mode: contiPayResponse.mode,
+      });
+      throw new Error(`ContiPay API error: ${errorMessage}`);
+    }
+
+    // Verify we got a redirect URL
+    const redirectUrl = contiPayResponse.redirectUrl || contiPayResponse.payment_url || contiPayResponse.checkout_url;
+    if (!redirectUrl) {
+      console.error('ContiPay response missing redirect URL:', contiPayResponse);
+      throw new Error('ContiPay did not return a payment redirect URL. Response: ' + JSON.stringify(contiPayResponse));
+    }
+
     // Update order with ContiPay payment details
     const { error: updateError } = await supabaseClient
       .from('orders')
