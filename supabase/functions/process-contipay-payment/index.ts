@@ -37,6 +37,7 @@ serve(async (req) => {
     // ContiPay API configuration
     const CONTIPAY_AUTH_KEY = Deno.env.get('CONTIPAY_API_KEY');
     const CONTIPAY_AUTH_SECRET = Deno.env.get('CONTIPAY_SECRET_KEY');
+    const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID');
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
       ? 'https://api.contipay.co.zw' 
@@ -44,9 +45,14 @@ serve(async (req) => {
 
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
 
+    if (!CONTIPAY_MERCHANT_ID) {
+      throw new Error('CONTIPAY_MERCHANT_ID is not configured');
+    }
+
     // Create payment redirect request following ContiPay SDK pattern
-    // Note: customerInfo is NOT included in redirect payments per SDK docs
+    // CRITICAL: merchantCode is REQUIRED for all ContiPay requests
     const contiPayRequest = {
+      merchantCode: CONTIPAY_MERCHANT_ID,
       amount: paymentData.amount,
       currency: paymentData.currency,
       reference: paymentData.orderNumber,
