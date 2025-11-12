@@ -170,6 +170,7 @@ const Venues = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Location</TableHead>
@@ -180,13 +181,26 @@ const Venues = () => {
               <TableBody>
                 {venues.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No venues found. Create your first venue to get started.
                     </TableCell>
                   </TableRow>
                 ) : (
                   venues.map((venue) => (
                     <TableRow key={venue.id}>
+                      <TableCell>
+                        {venue.image_url ? (
+                          <img 
+                            src={venue.image_url} 
+                            alt={venue.name}
+                            className="w-16 h-16 object-cover rounded-md"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                            <span className="text-xs text-muted-foreground">No image</span>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{venue.name}</TableCell>
                       <TableCell>{venue.venue_type}</TableCell>
                       <TableCell>{venue.city}</TableCell>
