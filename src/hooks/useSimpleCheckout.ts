@@ -165,22 +165,52 @@ export const useSimpleCheckout = () => {
           }
         });
 
-        console.log('ContiPay response:', contiPayResponse);
+        console.log('ContiPay raw response:', { contiPayResponse, contiPayError });
 
+        // Handle function invocation error (network/server issues)
         if (contiPayError) {
-          console.error('ContiPay error:', contiPayError);
-          throw new Error(`ContiPay payment failed: ${contiPayError?.message || 'Please try again.'}`);
+          console.error('ContiPay function error:', contiPayError);
+          
+          const errorMessage = contiPayError?.message || 'Payment service unavailable';
+          
+          toast({
+            title: "ContiPay Payment Failed",
+            description: "The payment gateway is currently unavailable. Your order has been created but payment is pending. Please contact support with order number: " + order.order_number,
+            variant: "destructive",
+          });
+          
+          throw new Error(`ContiPay connection failed: ${errorMessage}`);
         }
 
+        // Handle ContiPay API error response
         if (!contiPayResponse?.success) {
-          throw new Error(`ContiPay payment failed: ${contiPayResponse?.error || 'Please try again.'}`);
+          const errorDetail = contiPayResponse?.error || 'Payment processing failed';
+          console.error('ContiPay API error:', errorDetail);
+          
+          // Show user-friendly error message
+          toast({
+            title: "Payment Gateway Error",
+            description: `ContiPay is experiencing issues. Your order #${order.order_number} has been created but payment is pending. Please try again later or contact support.`,
+            variant: "destructive",
+          });
+          
+          throw new Error(`ContiPay error: ${errorDetail}`);
         }
 
+        // Validate payment URL exists
         if (!contiPayResponse.paymentUrl) {
-          throw new Error('ContiPay did not return a payment URL. Please try again.');
+          console.error('ContiPay missing payment URL:', contiPayResponse);
+          
+          toast({
+            title: "Payment Setup Failed",
+            description: `Unable to generate payment link. Order #${order.order_number} created. Please contact support to complete payment.`,
+            variant: "destructive",
+          });
+          
+          throw new Error('ContiPay did not return a payment URL');
         }
 
-        console.log('Redirecting to ContiPay payment page:', contiPayResponse.paymentUrl);
+        console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
         
         // Show success message before redirect
         toast({
@@ -189,7 +219,9 @@ export const useSimpleCheckout = () => {
         });
 
         // Redirect to ContiPay payment page
-        window.location.href = contiPayResponse.paymentUrl;
+        setTimeout(() => {
+          window.location.href = contiPayResponse.paymentUrl;
+        }, 500);
         
         return order;
       }

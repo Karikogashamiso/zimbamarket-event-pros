@@ -331,8 +331,40 @@ serve(async (req) => {
     // Check for error response
     if (payment.status === 'Error' || payment.error) {
       const errorMessage = payment.message || payment.error || 'Unknown ContiPay error';
-      console.error('ContiPay returned error:', payment);
-      throw new Error(`ContiPay API error: ${errorMessage}`);
+      const statusCode = payment.statusCode || 'unknown';
+      
+      console.error('ContiPay API rejected request:', {
+        status: payment.status,
+        statusCode: statusCode,
+        message: errorMessage,
+        fullResponse: payment,
+      });
+      
+      // Provide more specific error messages based on error type
+      let userMessage = errorMessage;
+      if (errorMessage.toLowerCase().includes('authorization') || 
+          errorMessage.toLowerCase().includes('token incorrect')) {
+        userMessage = 'Payment gateway configuration error. Please contact support.';
+      } else if (errorMessage.toLowerCase().includes('merchant')) {
+        userMessage = 'Merchant account issue. Please contact support.';
+      } else if (errorMessage.toLowerCase().includes('invalid')) {
+        userMessage = 'Invalid payment request. Please check your details and try again.';
+      }
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: userMessage,
+          details: {
+            statusCode: statusCode,
+            reference: paymentData.orderNumber,
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     // Extract redirect URL with multiple fallback field names
@@ -399,16 +431,33 @@ serve(async (req) => {
     console.error('Error processing ContiPay payment:', {
       message: error.message,
       stack: error.stack,
+      name: error.name,
     });
+
+    // Provide user-friendly error messages
+    let userMessage = 'Payment processing failed. Please try again later.';
+    let statusCode = 400;
+    
+    if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+      userMessage = 'Payment gateway timeout. Please check your connection and try again.';
+      statusCode = 504;
+    } else if (error.message?.includes('Network') || error.message?.includes('fetch')) {
+      userMessage = 'Cannot connect to payment gateway. Please try again later.';
+      statusCode = 503;
+    } else if (error.message?.includes('configuration') || error.message?.includes('not configured')) {
+      userMessage = 'Payment service configuration error. Please contact support.';
+      statusCode = 500;
+    }
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'An unexpected error occurred',
+        error: userMessage,
+        technical_details: error.message, // For debugging, not shown to user
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: statusCode,
       }
     );
   }
