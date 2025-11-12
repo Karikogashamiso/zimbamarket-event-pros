@@ -21,6 +21,118 @@ interface ContiPayPaymentRequest {
   returnUrl: string;
 }
 
+// Rate limiting store (in-memory for this instance)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+
+// Utility: Check rate limit
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
+// Utility: Validate email format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Utility: Validate and format phone number
+function formatPhoneNumber(phone: string, countryCode: string = 'ZW'): string {
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Handle Zimbabwe numbers specifically
+  if (countryCode === 'ZW') {
+    if (cleaned.startsWith('263')) {
+      return '+' + cleaned;
+    }
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      return '+263' + cleaned.substring(1);
+    }
+    if (cleaned.length === 9) {
+      return '+263' + cleaned;
+    }
+  }
+  
+  // For other countries, ensure it has a + prefix
+  if (!cleaned.startsWith('+')) {
+    return '+' + cleaned;
+  }
+  
+  return cleaned;
+}
+
+// Utility: Fetch with timeout and retry logic
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = 3,
+  timeout: number = 30000
+): Promise<Response> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      const isAbortError = error.name === 'AbortError';
+      
+      console.warn(`Attempt ${attempt}/${retries} failed:`, {
+        error: error.message,
+        isTimeout: isAbortError,
+      });
+
+      if (isLastAttempt) {
+        throw new Error(
+          isAbortError 
+            ? `Request timeout after ${timeout}ms` 
+            : `Network error after ${retries} attempts: ${error.message}`
+        );
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const backoffDelay = Math.pow(2, attempt - 1) * 1000;
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+    }
+  }
+
+  throw new Error('Fetch failed after all retries');
+}
+
+// Utility: Verify webhook function exists
+async function verifyWebhookExists(webhookUrl: string): Promise<boolean> {
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.status !== 404;
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,97 +140,174 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-
+    // Input validation
     const paymentData: ContiPayPaymentRequest = await req.json();
 
-    // ContiPay API configuration
+    // Rate limiting (using order ID as identifier)
+    if (!checkRateLimit(paymentData.orderId)) {
+      console.warn('Rate limit exceeded for order:', paymentData.orderId);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Too many requests. Please try again later.',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429,
+        }
+      );
+    }
+
+    // Validate required fields
+    if (!paymentData.orderId || !paymentData.orderNumber) {
+      throw new Error('Order ID and order number are required');
+    }
+
+    if (!paymentData.amount || paymentData.amount <= 0) {
+      throw new Error('Invalid amount. Amount must be greater than 0');
+    }
+
+    if (!paymentData.currency || paymentData.currency.length !== 3) {
+      throw new Error('Invalid currency code. Must be a 3-letter ISO code');
+    }
+
+    if (!isValidEmail(paymentData.customerInfo.email)) {
+      throw new Error('Invalid email address');
+    }
+
+    if (!paymentData.returnUrl || !paymentData.returnUrl.startsWith('http')) {
+      throw new Error('Invalid return URL');
+    }
+
+    // Load and validate environment variables
     const CONTIPAY_API_KEY = Deno.env.get('CONTIPAY_API_KEY');
     const CONTIPAY_API_SECRET = Deno.env.get('CONTIPAY_SECRET_KEY');
     const CONTIPAY_MERCHANT_ID = Deno.env.get('CONTIPAY_MERCHANT_ID');
     const CONTIPAY_ENVIRONMENT = Deno.env.get('CONTIPAY_ENVIRONMENT') || 'test';
 
+    console.log('Environment configuration:', {
+      environment: CONTIPAY_ENVIRONMENT,
+      hasApiKey: !!CONTIPAY_API_KEY,
+      hasApiSecret: !!CONTIPAY_API_SECRET,
+      hasMerchantId: !!CONTIPAY_MERCHANT_ID,
+      apiKeyLength: CONTIPAY_API_KEY?.length || 0,
+      apiSecretLength: CONTIPAY_API_SECRET?.length || 0,
+    });
+
+    if (!CONTIPAY_API_KEY || CONTIPAY_API_KEY.trim() === '') {
+      throw new Error('CONTIPAY_API_KEY is not configured or is empty');
+    }
+
+    if (!CONTIPAY_API_SECRET || CONTIPAY_API_SECRET.trim() === '') {
+      throw new Error('CONTIPAY_SECRET_KEY is not configured or is empty');
+    }
+
+    if (!CONTIPAY_MERCHANT_ID || CONTIPAY_MERCHANT_ID.trim() === '') {
+      throw new Error('CONTIPAY_MERCHANT_ID is not configured or is empty');
+    }
+
+    // Validate merchant ID is a valid number
+    const merchantIdNum = parseInt(CONTIPAY_MERCHANT_ID);
+    if (isNaN(merchantIdNum)) {
+      throw new Error('CONTIPAY_MERCHANT_ID must be a valid number');
+    }
+
     console.log('Processing ContiPay payment for order:', paymentData.orderNumber);
-
-    if (!CONTIPAY_API_KEY || !CONTIPAY_API_SECRET) {
-      throw new Error('ContiPay API credentials not configured');
-    }
-
-    if (!CONTIPAY_MERCHANT_ID) {
-      throw new Error('ContiPay merchant ID not configured');
-    }
 
     // Determine API URL based on environment
     const CONTIPAY_API_URL = CONTIPAY_ENVIRONMENT === 'live' 
       ? 'https://api-v2.contipay.co.zw' 
       : 'https://api-uat.contipay.net';
 
-    // Format phone number with country code if not already present
-    let phoneNumber = paymentData.customerInfo.phone.replace(/\D/g, '');
-    if (!phoneNumber.startsWith('263') && phoneNumber.length === 9) {
-      phoneNumber = '263' + phoneNumber; // Add Zimbabwe country code
-    }
-    const formattedPhone = '+' + phoneNumber;
+    console.log('Using ContiPay API:', CONTIPAY_API_URL);
 
-    // Create payment request matching ContiPay API spec exactly
+    // Format phone number with validation
+    const formattedPhone = formatPhoneNumber(
+      paymentData.customerInfo.phone,
+      paymentData.customerInfo.country || 'ZW'
+    );
+
+    console.log('Phone number formatted:', {
+      original: paymentData.customerInfo.phone,
+      formatted: formattedPhone,
+    });
+
+    // Verify webhook URL
+    const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`;
+    console.log('Webhook URL:', webhookUrl);
+    
+    const webhookExists = await verifyWebhookExists(webhookUrl);
+    if (!webhookExists) {
+      console.warn('Warning: Webhook endpoint may not exist:', webhookUrl);
+    }
+
+    // Create payment request matching ContiPay API spec
     const paymentRequest = {
-      webhookUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`,
+      webhookUrl,
       description: `Order ${paymentData.orderNumber}`,
       amount: paymentData.amount,
       reference: paymentData.orderNumber,
-      merchantId: parseInt(CONTIPAY_MERCHANT_ID),
-      currencyCode: paymentData.currency,
+      merchantId: merchantIdNum,
+      currencyCode: paymentData.currency.toUpperCase(),
       successUrl: paymentData.returnUrl,
       cancelUrl: `${paymentData.returnUrl}?status=cancelled`,
       customer: {
-        nationalId: "", // Optional field
+        nationalId: "",
         surname: paymentData.customerInfo.lastName,
         firstName: paymentData.customerInfo.firstName,
-        middleName: "", // Optional field
+        middleName: "",
         email: paymentData.customerInfo.email,
         cell: formattedPhone,
         countryCode: paymentData.customerInfo.country || "ZW",
       },
     };
 
-    console.log('Creating ContiPay payment:', { 
+    console.log('Payment request prepared:', { 
       url: `${CONTIPAY_API_URL}/acquire/payment`,
-      payload: paymentRequest 
+      amount: paymentRequest.amount,
+      currency: paymentRequest.currencyCode,
+      reference: paymentRequest.reference,
     });
 
-    // FIXED: Create proper Basic Authorization header with Base64 encoding
+    // Create Basic Authorization header
     const authString = `${CONTIPAY_API_KEY}:${CONTIPAY_API_SECRET}`;
     const base64Auth = btoa(authString);
     const authHeader = `Basic ${base64Auth}`;
 
-    console.log('Authorization format:', {
-      method: 'Basic Auth (Base64 encoded)',
-      headerPrefix: 'Basic',
-      encodedLength: base64Auth.length
+    console.log('Authentication configured:', {
+      method: 'Basic Auth',
+      encodedLength: base64Auth.length,
     });
 
-    // Make request to ContiPay API with PUT method
-    const response = await fetch(`${CONTIPAY_API_URL}/acquire/payment`, {
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
+    // Make request to ContiPay API with retry logic and timeout
+    const response = await fetchWithRetry(
+      `${CONTIPAY_API_URL}/acquire/payment`,
+      {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify(paymentRequest),
       },
-      body: JSON.stringify(paymentRequest),
-    });
+      3, // retries
+      30000 // 30 second timeout
+    );
 
     const responseText = await response.text();
     console.log('ContiPay Response:', {
       status: response.status,
       statusText: response.statusText,
-      body: responseText,
+      bodyLength: responseText.length,
     });
 
     if (!response.ok) {
+      console.error('ContiPay API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
       throw new Error(`ContiPay API error: ${response.status} - ${responseText}`);
     }
 
@@ -126,9 +315,17 @@ serve(async (req) => {
     let payment;
     try {
       payment = JSON.parse(responseText);
+      console.log('Parsed payment response:', {
+        hasPaymentId: !!(payment.paymentId || payment.payment_id),
+        hasRedirectUrl: !!(payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url),
+        status: payment.status,
+      });
     } catch (parseError) {
-      console.error('Failed to parse ContiPay response:', parseError);
-      throw new Error(`Invalid JSON response from ContiPay: ${responseText}`);
+      console.error('Failed to parse ContiPay response:', {
+        error: parseError.message,
+        responseText: responseText.substring(0, 500),
+      });
+      throw new Error(`Invalid JSON response from ContiPay: ${responseText.substring(0, 200)}`);
     }
 
     // Check for error response
@@ -138,33 +335,58 @@ serve(async (req) => {
       throw new Error(`ContiPay API error: ${errorMessage}`);
     }
 
-    // Extract redirect URL
-    const redirectUrl = payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url;
+    // Extract redirect URL with multiple fallback field names
+    const redirectUrl = 
+      payment.redirectUrl || 
+      payment.redirect_url || 
+      payment.paymentUrl || 
+      payment.payment_url ||
+      payment.checkoutUrl ||
+      payment.checkout_url;
+
     if (!redirectUrl) {
       console.error('ContiPay response missing redirect URL:', payment);
-      throw new Error('ContiPay did not return a payment redirect URL');
+      throw new Error('ContiPay did not return a payment redirect URL. Please contact support.');
+    }
+
+    // Extract payment ID with multiple fallback field names
+    const paymentId = 
+      payment.paymentId || 
+      payment.payment_id || 
+      payment.transactionId || 
+      payment.transaction_id ||
+      payment.id;
+
+    if (!paymentId) {
+      console.warn('ContiPay response missing payment ID:', payment);
     }
 
     // Update order with ContiPay payment details
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
     const { error: updateError } = await supabaseClient
       .from('orders')
       .update({
         payment_method: 'contipay',
-        payment_provider_id: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+        payment_provider_id: paymentId,
         updated_at: new Date().toISOString(),
       })
       .eq('id', paymentData.orderId);
 
     if (updateError) {
       console.error('Error updating order:', updateError);
-      throw updateError;
+      // Don't throw - payment was created successfully
+      // Log error but continue to return success
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         paymentUrl: redirectUrl,
-        paymentId: payment.paymentId || payment.payment_id || payment.transactionId || payment.transaction_id,
+        paymentId: paymentId,
         reference: paymentData.orderNumber,
         message: 'ContiPay payment initiated successfully',
       }),
@@ -174,11 +396,15 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing ContiPay payment:', error);
+    console.error('Error processing ContiPay payment:', {
+      message: error.message,
+      stack: error.stack,
+    });
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error.message || 'An unexpected error occurred',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
