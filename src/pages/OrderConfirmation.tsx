@@ -28,20 +28,76 @@ export const OrderConfirmation: React.FC = () => {
       }
 
       try {
-        console.log('Fetching order details for:', orderNumber);
+        console.log('🔍 Fetching order details for:', orderNumber);
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🔗 URL Params:', Object.fromEntries(new URLSearchParams(window.location.search)));
         
-        // Check if returning from Stripe payment
+        // Check URL parameters - ContiPay may add status/token parameters
         const urlParams = new URLSearchParams(window.location.search);
         const paymentStatus = urlParams.get('payment');
+        const contiPayStatus = urlParams.get('status');
+        const contiPayToken = urlParams.get('token');
+        
+        console.log('💳 Payment indicators:', { paymentStatus, contiPayStatus, contiPayToken });
         
         let order = null;
+        let retryCount = 0;
+        const maxRetries = 3;
 
+        // For ContiPay returns, wait a moment for webhook to process
+        if (contiPayToken) {
+          console.log('⏳ ContiPay return detected, waiting for webhook...');
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+        }
+
+        // Retry logic for order fetching
+        while (retryCount < maxRetries && !order) {
+          if (retryCount > 0) {
+            console.log(`🔄 Retry attempt ${retryCount}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Wait between retries
+          }
+
+          const { data: fetchedOrder, error: orderError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('order_number', orderNumber)
+            .maybeSingle();
+
+          if (orderError) {
+            console.error('❌ Error fetching order:', orderError);
+            retryCount++;
+            continue;
+          }
+          
+          if (fetchedOrder) {
+            console.log('✅ Order found:', {
+              order_number: fetchedOrder.order_number,
+              payment_status: fetchedOrder.payment_status,
+              booking_status: fetchedOrder.booking_status,
+              attempt: retryCount + 1
+            });
+            order = fetchedOrder;
+            break;
+          } else {
+            console.log(`⚠️ Order not found on attempt ${retryCount + 1}`);
+            retryCount++;
+          }
+        }
+
+        // If still no order after retries, show error
+        if (!order) {
+          console.error('❌ Order not found after all retries');
+          setError('Order not found. The payment may still be processing. Please check your email or refresh the page.');
+          setLoading(false);
+          return;
+        }
+
+        // Handle Stripe payment verification
         if (paymentStatus === 'success' && !verificationAttempted) {
-          console.log('Payment successful, verifying with Stripe...');
+          console.log('💳 Stripe payment detected, verifying...');
           setVerificationAttempted(true);
           
           try {
-            // Verify payment and update order status
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
               body: { orderNumber }
             });
@@ -50,43 +106,18 @@ export const OrderConfirmation: React.FC = () => {
               console.error('Payment verification error:', verifyError);
               toast.error('Failed to verify payment. Please contact support.');
             } else if (verifyData?.success && verifyData?.order) {
-              console.log('Payment verified and order updated');
+              console.log('✅ Stripe payment verified');
               toast.success('Payment confirmed! Your order has been processed.');
-              
-              // Use the order data from verification response to avoid RLS issues
-              order = verifyData.order;
+              order = { ...order, ...verifyData.order };
             }
           } catch (verifyErr) {
             console.error('Verification request failed:', verifyErr);
           }
-          
-          // Clear the payment parameter from URL to prevent re-verification
-          window.history.replaceState({}, '', `/order-confirmation/${orderNumber}`);
         }
         
-        // Only fetch from DB if we don't already have order data from verification
-        if (!order) {
-          const { data: fetchedOrder, error: orderError } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('order_number', orderNumber)
-            .maybeSingle();
-
-          if (orderError) {
-            console.error('Error fetching order:', orderError);
-            setError('Unable to load order. Please check your email for confirmation.');
-            setLoading(false);
-            return;
-          }
-          
-          if (!fetchedOrder) {
-            console.error('Order not found');
-            setError('Order not found. Please check your email for confirmation.');
-            setLoading(false);
-            return;
-          }
-          
-          order = fetchedOrder;
+        // Clean up URL parameters
+        if (contiPayToken || paymentStatus) {
+          window.history.replaceState({}, '', `/order-confirmation/${orderNumber}`);
         }
 
         console.log('🔔 WEBHOOK RESPONSE DATA:', {
