@@ -133,26 +133,10 @@ export const OrderConfirmation: React.FC = () => {
           metadata: order.metadata
         });
 
-        // Fetch tickets for this order
-        const { data: tickets, error: ticketsError } = await supabase
-          .from('tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description,
-              event_id
-            )
-          `)
-          .eq('order_id', order.id);
-
-        if (ticketsError) {
-          console.warn('Failed to fetch tickets:', ticketsError);
-        }
-
+        // Tickets are already included in the order from edge function
         const enrichedOrder = {
           ...order,
-          tickets: tickets?.map(ticket => ({
+          tickets: order.tickets?.map((ticket: any) => ({
             ...ticket,
             ticket_type_name: ticket.ticket_types?.name || 'General Admission'
           })) || []

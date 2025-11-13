@@ -36,12 +36,19 @@ serve(async (req) => {
       }
     );
 
-    // Fetch order with tickets
+    // Fetch order with tickets and ticket type information
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .select(`
         *,
-        tickets (*)
+        tickets (
+          *,
+          ticket_types (
+            name,
+            description,
+            event_id
+          )
+        )
       `)
       .eq('order_number', orderNumber)
       .maybeSingle();
