@@ -89,7 +89,8 @@ export const OrderConfirmation: React.FC = () => {
             *,
             ticket_types (
               name,
-              description
+              description,
+              event_id
             )
           `)
           .eq('order_id', order.id);
@@ -477,12 +478,31 @@ export const OrderConfirmation: React.FC = () => {
             ) : (
               <>
                 <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                  <div className="text-red-600 text-2xl">!</div>
+                  <div className="text-red-600 text-2xl">✕</div>
                 </div>
-                <h2 className="text-2xl font-bold text-red-600 mb-2">Payment {orderDetails.payment_status}</h2>
-                <p className="text-muted-foreground">
-                  Please contact support if you need assistance
+                <h2 className="text-2xl font-bold text-red-600 mb-2">Payment {orderDetails.payment_status === 'failed' ? 'Failed' : orderDetails.payment_status}</h2>
+                <p className="text-muted-foreground mb-4">
+                  {orderDetails.payment_status === 'failed' 
+                    ? 'Your payment could not be processed. Please try again or use a different payment method.'
+                    : 'Please contact support if you need assistance'}
                 </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    onClick={() => navigate(`/checkout?eventId=${orderDetails.tickets?.[0]?.ticket_type?.event_id}`)}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Try Again
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/')}
+                    className="flex items-center gap-2"
+                  >
+                    <Home className="h-4 w-4" />
+                    Return Home
+                  </Button>
+                </div>
               </>
             )}
           </div>
