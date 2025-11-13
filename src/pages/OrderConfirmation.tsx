@@ -223,13 +223,13 @@ export const OrderConfirmation: React.FC = () => {
       console.log(`🔄 Polling attempt ${pollCount}/${maxPolls} for order: ${orderDetails.order_number}`);
       
       try {
-        const { data: updatedOrder, error } = await supabase
-          .from('orders')
-          .select('payment_status, booking_status, payment_provider_id, updated_at')
-          .eq('id', orderDetails.id)
-          .single();
+        // Use edge function to bypass RLS
+        const { data, error } = await supabase.functions.invoke('fetch-order-by-number', {
+          body: { orderNumber: orderDetails.order_number }
+        });
 
-        if (!error && updatedOrder) {
+        if (!error && data?.order) {
+          const updatedOrder = data.order;
           console.log('📊 Current DB status:', {
             payment_status: updatedOrder.payment_status,
             booking_status: updatedOrder.booking_status,
