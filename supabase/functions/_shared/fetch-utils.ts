@@ -1,12 +1,13 @@
-// Utility: Fetch with timeout and retry logic
+// Utility: Fetch with timeout and retry logic (max 3 total attempts)
 export async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  retries: number = 3,
+  maxAttempts: number = 3,
   timeout: number = 30000
 ): Promise<Response> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      console.log(`Payment request attempt ${attempt}/${maxAttempts}`);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -16,26 +17,29 @@ export async function fetchWithRetry(
       });
 
       clearTimeout(timeoutId);
+      console.log(`Payment request attempt ${attempt} succeeded`);
       return response;
     } catch (error: any) {
-      const isLastAttempt = attempt === retries;
+      const isLastAttempt = attempt === maxAttempts;
       const isAbortError = error.name === 'AbortError';
       
-      console.warn(`Attempt ${attempt}/${retries} failed:`, {
+      console.warn(`Payment attempt ${attempt}/${maxAttempts} failed:`, {
         error: error.message,
         isTimeout: isAbortError,
       });
 
       if (isLastAttempt) {
+        console.error(`All ${maxAttempts} payment attempts failed, giving up`);
         throw new Error(
           isAbortError 
             ? `Request timeout after ${timeout}ms` 
-            : `Network error after ${retries} attempts: ${error.message}`
+            : `Network error after ${maxAttempts} attempts: ${error.message}`
         );
       }
 
-      // Exponential backoff: 1s, 2s, 4s
-      const backoffDelay = Math.pow(2, attempt - 1) * 1000;
+      // Quick retry: 1s, 2s delays only
+      const backoffDelay = attempt * 1000;
+      console.log(`Retrying in ${backoffDelay}ms...`);
       await new Promise(resolve => setTimeout(resolve, backoffDelay));
     }
   }
