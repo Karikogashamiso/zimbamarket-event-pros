@@ -17,48 +17,40 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Handle GET requests (ContiPay verification ping)
-    if (req.method === 'GET') {
-      console.log('GET request received - webhook verification');
-      return new Response(
-        JSON.stringify({ success: true, message: 'Webhook endpoint active' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    // Parse request body safely
-    const contentType = req.headers.get('content-type') || '';
-    let payload: any = {};
-    
-    if (contentType.includes('application/json')) {
-      const text = await req.text();
-      if (text && text.trim()) {
-        try {
-          payload = JSON.parse(text);
-        } catch (parseError) {
-          console.error('Failed to parse JSON:', parseError, 'Body:', text);
-          throw new Error('Invalid JSON payload');
-        }
-      }
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const formData = await req.formData();
-      payload = Object.fromEntries(formData.entries());
-    } else {
-      const text = await req.text();
-      console.log('Unknown content type:', contentType, 'Body:', text);
-      // Try to parse as JSON anyway
-      if (text && text.trim()) {
-        try {
-          payload = JSON.parse(text);
-        } catch {
-          // If not JSON, treat as empty payload
-          console.warn('Could not parse body as JSON, using empty payload');
-        }
-      }
-    }
-    
-    console.log('ContiPay webhook received:', JSON.stringify(payload, null, 2));
+    console.log('Webhook request method:', req.method);
     console.log('Webhook headers:', Object.fromEntries(req.headers.entries()));
+
+    // Parse query parameters (ContiPay sends data here)
+    const url = new URL(req.url);
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    console.log('Query parameters:', JSON.stringify(queryParams, null, 2));
+
+    let payload: any = {};
+
+    // ContiPay sends data as query parameters, not in body
+    if (Object.keys(queryParams).length > 0) {
+      payload = queryParams;
+      console.log('Using query parameters as payload');
+    } else {
+      // Try to parse body as fallback
+      const contentType = req.headers.get('content-type') || '';
+      
+      if (contentType.includes('application/json')) {
+        const text = await req.text();
+        if (text && text.trim()) {
+          try {
+            payload = JSON.parse(text);
+          } catch (parseError) {
+            console.error('Failed to parse JSON:', parseError);
+          }
+        }
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const formData = await req.formData();
+        payload = Object.fromEntries(formData.entries());
+      }
+    }
+    
+    console.log('Final payload:', JSON.stringify(payload, null, 2));
 
     // ContiPay API configuration
     const CONTIPAY_SECRET_KEY = Deno.env.get('CONTIPAY_SECRET_KEY');
@@ -74,12 +66,12 @@ serve(async (req) => {
       console.log('Webhook signature verification skipped (no signature or secret key)');
     }
 
-    // Extract data from payload (adapt based on actual ContiPay webhook format)
-    const orderRef = payload.reference || payload.order_id || payload.merchant_reference;
-    const paymentStatus = (payload.status || payload.payment_status || '').toLowerCase();
-    const transactionId = payload.transaction_id || payload.payment_id || payload.id;
-    const amount = payload.amount;
-    const currency = payload.currency;
+    // Extract data from payload (ContiPay uses different field names)
+    const orderRef = payload.reference || payload.merchantReference || payload.order_id || payload.merchant_reference;
+    const paymentStatus = (payload.status || payload.payment_status || payload.transactionStatus || '').toLowerCase();
+    const transactionId = payload.transID || payload.transactionId || payload.transaction_id || payload.payment_id || payload.id;
+    const amount = payload.amount || payload.transactionAmount;
+    const currency = payload.currency || payload.currencyCode;
 
     console.log('Parsed webhook data:', {
       orderRef,
@@ -136,6 +128,7 @@ serve(async (req) => {
     });
 
     // Update order status based on ContiPay payment status
+    // ContiPay statuses: PENDING, COMPLETED, FAILED, CANCELLED
     if (paymentStatus === 'success' || paymentStatus === 'completed' || paymentStatus === 'paid' || paymentStatus === 'successful') {
       console.log('Processing successful payment...');
       
