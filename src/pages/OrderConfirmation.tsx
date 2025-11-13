@@ -190,46 +190,52 @@ export const OrderConfirmation: React.FC = () => {
     };
   }, [orderDetails?.id, orderDetails?.payment_status]);
 
-  // Polling backup for pending payments - max 3 attempts
+  // Polling backup for pending payments - max 24 attempts (2 minutes)
   useEffect(() => {
     if (!orderDetails?.id || orderDetails?.payment_status !== 'pending') {
-      console.log('Polling not started:', { 
+      console.log('⏸️ Polling not started:', { 
         hasId: !!orderDetails?.id, 
         status: orderDetails?.payment_status 
       });
       return;
     }
 
-    console.log('Starting payment status polling for pending order (max 3 attempts)');
+    console.log('⏰ Starting payment status polling (max 24 attempts, 2 minutes total)');
+    console.log('🔍 Reason: Webhook may not have been called by ContiPay yet');
     let pollCount = 0;
-    const maxPolls = 3;
+    const maxPolls = 24; // 2 minutes total (24 * 5 seconds)
     
     const pollInterval = setInterval(async () => {
       pollCount++;
-      console.log(`🔄 Polling payment status... (attempt ${pollCount}/${maxPolls})`);
+      console.log(`🔄 Polling attempt ${pollCount}/${maxPolls} for order: ${orderDetails.order_number}`);
       
       try {
         const { data: updatedOrder, error } = await supabase
           .from('orders')
-          .select('payment_status, booking_status')
+          .select('payment_status, booking_status, payment_provider_id, updated_at')
           .eq('id', orderDetails.id)
           .single();
 
         if (!error && updatedOrder) {
-          console.log('📊 Polled status:', {
+          console.log('📊 Current DB status:', {
             payment_status: updatedOrder.payment_status,
             booking_status: updatedOrder.booking_status,
+            payment_provider_id: updatedOrder.payment_provider_id,
+            updated_at: updatedOrder.updated_at,
             previous_status: orderDetails.payment_status,
           });
           
           if (updatedOrder.payment_status !== orderDetails.payment_status) {
-            console.log('🔄 Payment status changed via polling:', updatedOrder.payment_status);
+            console.log('✨ Payment status CHANGED via polling:', {
+              from: orderDetails.payment_status,
+              to: updatedOrder.payment_status
+            });
             
             if (updatedOrder.payment_status === 'completed') {
-              console.log('✅ Payment COMPLETED via polling');
+              console.log('✅ PAYMENT COMPLETED');
               toast.success('Payment confirmed! Your order has been processed.');
             } else if (updatedOrder.payment_status === 'failed') {
-              console.log('❌ Payment FAILED via polling');
+              console.log('❌ PAYMENT FAILED');
               toast.error('Payment failed. Please try again or contact support.');
             }
             
@@ -238,26 +244,32 @@ export const OrderConfirmation: React.FC = () => {
               ...updatedOrder
             }));
             
-            // Stop polling once status changes
             clearInterval(pollInterval);
+            console.log('✅ Polling stopped - status updated');
+            return;
           }
         }
       } catch (err) {
-        console.error('❌ Error polling payment status:', err);
+        console.error('❌ Polling error:', err);
       }
       
-      // Stop polling after 3 attempts
+      // Stop polling after max attempts
       if (pollCount >= maxPolls) {
         clearInterval(pollInterval);
-        console.log('⏹️ Payment polling stopped after 3 attempts');
+        console.log('⏹️ Polling timeout - 2 minutes elapsed');
+        console.log('⚠️ Payment status still pending - webhook may have failed');
+        console.log('💡 User should refresh page or contact support');
+        toast.warning('Payment verification taking longer than expected. Please refresh the page or check your email.', {
+          duration: 8000,
+        });
       }
     }, 5000); // Poll every 5 seconds
 
     return () => {
-      console.log('Stopping payment polling');
+      console.log('🛑 Polling cleanup');
       clearInterval(pollInterval);
     };
-  }, [orderDetails?.id, orderDetails?.payment_status]);
+  }, [orderDetails?.id, orderDetails?.payment_status, orderDetails?.order_number]);
 
   const formatCurrency = (amount: number, currency = 'USD') => {
     const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
