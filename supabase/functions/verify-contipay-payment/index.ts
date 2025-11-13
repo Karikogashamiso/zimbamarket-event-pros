@@ -20,14 +20,17 @@ serve(async (req) => {
     // Parse the JSON body from ContiPay webhook
     const payload = await req.json();
     
-    console.log('ContiPay webhook received:', JSON.stringify(payload, null, 2));
+    console.log('🔔 ContiPay Webhook Received:', {
+      timestamp: new Date().toISOString(),
+      payload: JSON.stringify(payload, null, 2),
+    });
 
     // Verify webhook signature if provided
     const webhookSignature = req.headers.get('x-contipay-signature');
-    console.log('Webhook signature verification skipped (no signature or secret key)');
+    console.log('🔐 Webhook signature verification skipped (no signature or secret key)');
 
     // Log headers for debugging
-    console.log('Webhook headers:', Object.fromEntries(req.headers.entries()));
+    console.log('📋 Webhook headers:', Object.fromEntries(req.headers.entries()));
 
     // Extract data from webhook payload (ContiPay field names)
     const orderRef = payload.merchantRef;
@@ -36,7 +39,13 @@ serve(async (req) => {
     const amount = payload.amount;
     const currency = payload.currencyCode;
     
-    console.log('Parsed webhook data:', { orderRef, paymentStatus, transactionId, amount, currency });
+    console.log('📦 Parsed webhook data:', { 
+      orderRef, 
+      paymentStatus: paymentStatus.toUpperCase(), 
+      transactionId, 
+      amount, 
+      currency 
+    });
 
     if (!orderRef) {
       throw new Error('Order reference not found in webhook payload');
@@ -54,15 +63,16 @@ serve(async (req) => {
       throw new Error(`Order not found: ${orderRef}`);
     }
 
-    console.log('Current order:', {
+    console.log('🔍 Current order:', {
       id: currentOrder.id,
       order_number: currentOrder.order_number,
-      payment_status: currentOrder.payment_status,
+      current_payment_status: currentOrder.payment_status,
+      incoming_payment_status: paymentStatus.toUpperCase(),
     });
 
     // Update order based on status
     if (paymentStatus === 'completed' || paymentStatus === 'success' || paymentStatus === 'paid') {
-      console.log('Processing successful payment...');
+      console.log('✅ Processing SUCCESSFUL payment...');
       
       await supabaseClient
         .from('orders')
@@ -84,19 +94,19 @@ serve(async (req) => {
         })
         .eq('order_id', currentOrder.id);
 
-      console.log('Payment confirmed for order:', currentOrder.id);
+      console.log('✅ Payment confirmed for order:', currentOrder.id);
 
       // Send confirmation email
       try {
         await supabaseClient.functions.invoke('send-order-confirmation', {
           body: { orderNumber: currentOrder.order_number }
         });
-        console.log('Confirmation email sent');
+        console.log('📧 Confirmation email sent');
       } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
+        console.error('❌ Error sending confirmation email:', emailError);
       }
     } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'declined') {
-      console.log('Processing failed/cancelled/declined payment...');
+      console.log('❌ Processing FAILED/CANCELLED/DECLINED payment...');
       
       await supabaseClient
         .from('orders')
@@ -108,9 +118,9 @@ serve(async (req) => {
         })
         .eq('id', currentOrder.id);
 
-      console.log('Order marked as failed/cancelled/declined:', currentOrder.id);
+      console.log('❌ Order marked as failed/cancelled/declined:', currentOrder.id);
     } else if (paymentStatus === 'pending') {
-      console.log('Payment still pending:', currentOrder.id);
+      console.log('⏳ Payment still PENDING:', currentOrder.id);
       
       await supabaseClient
         .from('orders')
@@ -120,7 +130,11 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentOrder.id);
+    } else {
+      console.log('⚠️ Unknown payment status received:', paymentStatus);
     }
+
+    console.log('✅ Webhook processing completed successfully');
 
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook processed' }),

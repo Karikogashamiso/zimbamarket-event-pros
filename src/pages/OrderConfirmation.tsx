@@ -144,14 +144,18 @@ export const OrderConfirmation: React.FC = () => {
           filter: `id=eq.${orderDetails.id}`
         },
         (payload) => {
-          console.log('Order updated via webhook:', payload.new);
+          console.log('🔔 Webhook Update Received:', payload.new);
           const updatedOrder = payload.new;
 
           // Show toast notification when payment status changes
           if (updatedOrder.payment_status === 'completed' && orderDetails.payment_status !== 'completed') {
+            console.log('✅ Payment Status: COMPLETED');
             toast.success('Payment confirmed! Your order has been processed.');
           } else if (updatedOrder.payment_status === 'failed' && orderDetails.payment_status !== 'failed') {
+            console.log('❌ Payment Status: FAILED');
             toast.error('Payment failed. Please try again or contact support.');
+          } else if (updatedOrder.payment_status === 'pending') {
+            console.log('⏳ Payment Status: PENDING');
           }
 
           // Update order details
@@ -187,7 +191,7 @@ export const OrderConfirmation: React.FC = () => {
     
     const pollInterval = setInterval(async () => {
       pollCount++;
-      console.log(`Polling payment status... (attempt ${pollCount}/${maxPolls})`);
+      console.log(`🔄 Polling payment status... (attempt ${pollCount}/${maxPolls})`);
       
       try {
         const { data: updatedOrder, error } = await supabase
@@ -197,13 +201,20 @@ export const OrderConfirmation: React.FC = () => {
           .single();
 
         if (!error && updatedOrder) {
-          console.log('Polled status:', updatedOrder.payment_status);
+          console.log('📊 Polled status:', {
+            payment_status: updatedOrder.payment_status,
+            booking_status: updatedOrder.booking_status,
+            previous_status: orderDetails.payment_status,
+          });
+          
           if (updatedOrder.payment_status !== orderDetails.payment_status) {
-            console.log('Payment status changed via polling:', updatedOrder.payment_status);
+            console.log('🔄 Payment status changed via polling:', updatedOrder.payment_status);
             
             if (updatedOrder.payment_status === 'completed') {
+              console.log('✅ Payment COMPLETED via polling');
               toast.success('Payment confirmed! Your order has been processed.');
             } else if (updatedOrder.payment_status === 'failed') {
+              console.log('❌ Payment FAILED via polling');
               toast.error('Payment failed. Please try again or contact support.');
             }
             
@@ -217,13 +228,13 @@ export const OrderConfirmation: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Error polling payment status:', err);
+        console.error('❌ Error polling payment status:', err);
       }
       
       // Stop polling after 3 attempts
       if (pollCount >= maxPolls) {
         clearInterval(pollInterval);
-        console.log('Payment polling stopped after 3 attempts');
+        console.log('⏹️ Payment polling stopped after 3 attempts');
       }
     }, 5000); // Poll every 5 seconds
 

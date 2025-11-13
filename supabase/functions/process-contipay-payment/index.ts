@@ -193,6 +193,12 @@ serve(async (req) => {
       );
 
       responseText = await response.text();
+      console.log('ContiPay API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        bodyLength: responseText.length,
+        rawBody: responseText,
+      });
     } catch (fetchError) {
       // After 3 failed retries, return pending status - webhook will update later
       console.error('ContiPay request failed after 3 retries:', fetchError.message);
@@ -229,11 +235,13 @@ serve(async (req) => {
     let payment;
     try {
       payment = JSON.parse(responseText);
-      console.log('Parsed payment response:', {
-        hasPaymentId: !!(payment.paymentId || payment.payment_id),
-        hasRedirectUrl: !!(payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url),
-        status: payment.status,
-      });
+    console.log('Parsed payment response:', {
+      hasPaymentId: !!(payment.paymentId || payment.payment_id),
+      hasRedirectUrl: !!(payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url),
+      status: payment.status,
+      statusCode: payment.statusCode,
+      fullResponse: payment,
+    });
     } catch (parseError) {
       console.error('Failed to parse ContiPay response:', {
         error: parseError.message,
