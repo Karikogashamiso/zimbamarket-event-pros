@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit } from "../_shared/rate-limiter.ts";
+import { isValidEmail, formatPhoneNumber, getAlpha2CountryCode } from "../_shared/contipay-utils.ts";
+import { fetchWithRetry } from "../_shared/fetch-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,118 +22,6 @@ interface ContiPayPaymentRequest {
     country?: string;
   };
   returnUrl: string;
-}
-
-// Rate limiting store (in-memory for this instance)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 10;
-
-// Utility: Check rate limit
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now();
-  const record = rateLimitStore.get(identifier);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-
-  record.count++;
-  return true;
-}
-
-// Utility: Validate email format
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Utility: Validate and format phone number
-function formatPhoneNumber(phone: string, countryCode: string = 'ZW'): string {
-  let cleaned = phone.replace(/\D/g, '');
-  
-  // Handle Zimbabwe numbers specifically
-  if (countryCode === 'ZW') {
-    if (cleaned.startsWith('263')) {
-      return '+' + cleaned;
-    }
-    if (cleaned.startsWith('0') && cleaned.length === 10) {
-      return '+263' + cleaned.substring(1);
-    }
-    if (cleaned.length === 9) {
-      return '+263' + cleaned;
-    }
-  }
-  
-  // For other countries, ensure it has a + prefix
-  if (!cleaned.startsWith('+')) {
-    return '+' + cleaned;
-  }
-  
-  return cleaned;
-}
-
-// Utility: Fetch with timeout and retry logic
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  retries: number = 3,
-  timeout: number = 30000
-): Promise<Response> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      const isLastAttempt = attempt === retries;
-      const isAbortError = error.name === 'AbortError';
-      
-      console.warn(`Attempt ${attempt}/${retries} failed:`, {
-        error: error.message,
-        isTimeout: isAbortError,
-      });
-
-      if (isLastAttempt) {
-        throw new Error(
-          isAbortError 
-            ? `Request timeout after ${timeout}ms` 
-            : `Network error after ${retries} attempts: ${error.message}`
-        );
-      }
-
-      // Exponential backoff: 1s, 2s, 4s
-      const backoffDelay = Math.pow(2, attempt - 1) * 1000;
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
-    }
-  }
-
-  throw new Error('Fetch failed after all retries');
-}
-
-// Utility: Verify webhook function exists
-async function verifyWebhookExists(webhookUrl: string): Promise<boolean> {
-  try {
-    const response = await fetch(webhookUrl, {
-      method: 'HEAD',
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.status !== 404;
-  } catch {
-    return false;
-  }
 }
 
 serve(async (req) => {
@@ -236,40 +127,9 @@ serve(async (req) => {
     const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/verify-contipay-payment`;
     console.log('Webhook URL:', webhookUrl);
     
-    const webhookExists = await verifyWebhookExists(webhookUrl);
-    if (!webhookExists) {
-      console.warn('Warning: Webhook endpoint may not exist:', webhookUrl);
-    }
-
     // Create payment request matching ContiPay API spec
-    // ContiPay uses ISO 3166-1 alpha-2 country codes (2 letters)
-    const countryCodeMap: { [key: string]: string } = {
-      // Full country names to ISO alpha-2
-      'Zimbabwe': 'ZW',
-      'South Africa': 'ZA',
-      'United States': 'US',
-      'United Kingdom': 'GB',
-      'Botswana': 'BW',
-      'Mozambique': 'MZ',
-      'Zambia': 'ZM',
-      'Malawi': 'MW',
-      'Namibia': 'NA',
-      'Kenya': 'KE',
-      'Tanzania': 'TZ',
-      'Uganda': 'UG',
-      // Alpha-3 to Alpha-2 (in case they're sent)
-      'ZWE': 'ZW',
-      'ZAF': 'ZA',
-      'USA': 'US',
-      'GBR': 'GB',
-      'BWA': 'BW',
-      'MOZ': 'MZ',
-      'ZMB': 'ZM',
-      'MWI': 'MW',
-    };
-    
     const customerCountry = paymentData.customerInfo.country || 'ZW';
-    const alpha2CountryCode = countryCodeMap[customerCountry] || customerCountry.substring(0, 2).toUpperCase();
+    const alpha2CountryCode = getAlpha2CountryCode(customerCountry);
     
     console.log('Country code mapping:', {
       original: customerCountry,
