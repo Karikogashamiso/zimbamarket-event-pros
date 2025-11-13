@@ -95,8 +95,8 @@ serve(async (req) => {
       } catch (emailError) {
         console.error('Error sending confirmation email:', emailError);
       }
-    } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
-      console.log('Processing failed/cancelled payment...');
+    } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'declined') {
+      console.log('Processing failed/cancelled/declined payment...');
       
       await supabaseClient
         .from('orders')
@@ -108,7 +108,7 @@ serve(async (req) => {
         })
         .eq('id', currentOrder.id);
 
-      console.log('Order marked as failed/cancelled:', currentOrder.id);
+      console.log('Order marked as failed/cancelled/declined:', currentOrder.id);
     } else if (paymentStatus === 'pending') {
       console.log('Payment still pending:', currentOrder.id);
       
