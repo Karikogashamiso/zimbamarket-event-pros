@@ -124,6 +124,7 @@ export const OrderConfirmation: React.FC = () => {
     if (!orderDetails?.id) return;
 
     console.log('Setting up real-time subscription for order:', orderDetails.id);
+    console.log('Current payment status:', orderDetails.payment_status);
 
     const channel = supabase
       .channel(`order-${orderDetails.id}`)
@@ -153,7 +154,9 @@ export const OrderConfirmation: React.FC = () => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up real-time subscription');
@@ -163,11 +166,18 @@ export const OrderConfirmation: React.FC = () => {
 
   // Polling backup for pending payments (in case webhook is delayed)
   useEffect(() => {
-    if (!orderDetails?.id || orderDetails?.payment_status !== 'pending') return;
+    if (!orderDetails?.id || orderDetails?.payment_status !== 'pending') {
+      console.log('Polling not started:', { 
+        hasId: !!orderDetails?.id, 
+        status: orderDetails?.payment_status 
+      });
+      return;
+    }
 
     console.log('Starting payment status polling for pending order');
     
     const pollInterval = setInterval(async () => {
+      console.log('Polling payment status...');
       try {
         const { data: updatedOrder, error } = await supabase
           .from('orders')
@@ -176,6 +186,7 @@ export const OrderConfirmation: React.FC = () => {
           .single();
 
         if (!error && updatedOrder) {
+          console.log('Polled status:', updatedOrder.payment_status);
           if (updatedOrder.payment_status !== orderDetails.payment_status) {
             console.log('Payment status changed via polling:', updatedOrder.payment_status);
             
@@ -203,6 +214,7 @@ export const OrderConfirmation: React.FC = () => {
     }, 300000);
 
     return () => {
+      console.log('Stopping payment polling');
       clearInterval(pollInterval);
       clearTimeout(timeout);
     };
@@ -488,7 +500,7 @@ export const OrderConfirmation: React.FC = () => {
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button
-                    onClick={() => navigate(`/checkout?eventId=${orderDetails.tickets?.[0]?.ticket_type?.event_id}`)}
+                    onClick={() => navigate(`/checkout?eventId=${orderDetails.tickets?.[0]?.ticket_types?.event_id || ''}`)}
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="h-4 w-4" />
