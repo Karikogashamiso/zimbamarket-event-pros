@@ -210,19 +210,27 @@ export const useSimpleCheckout = () => {
           throw new Error('ContiPay did not return a payment URL');
         }
 
-        console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
-        
-        // Navigate to order confirmation page first so user can see status updates
+        // Navigate to order confirmation page
         navigate(`/order-confirmation/${order.order_number}`);
         
-        // Open ContiPay in same window - will redirect back after payment
-        setTimeout(() => {
+        // If payment URL exists, redirect to complete payment
+        if (contiPayResponse.paymentUrl) {
+          console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
+          
+          setTimeout(() => {
+            toast({
+              title: "Redirecting to Payment",
+              description: "You'll return here automatically after payment...",
+            });
+            window.location.href = contiPayResponse.paymentUrl;
+          }, 1000);
+        } else if (contiPayResponse.pending) {
+          // Payment is pending - webhook will update status
           toast({
-            title: "Redirecting to Payment",
-            description: "You'll return here automatically after payment...",
+            title: "Payment Processing",
+            description: "Your payment is being processed. Status will update automatically.",
           });
-          window.location.href = contiPayResponse.paymentUrl;
-        }, 1000);
+        }
         
         return order;
       }

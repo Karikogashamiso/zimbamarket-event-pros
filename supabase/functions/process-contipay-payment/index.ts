@@ -173,23 +173,43 @@ serve(async (req) => {
       encodedLength: base64Auth.length,
     });
 
-    // Make request to ContiPay API with retry logic and timeout
-    const response = await fetchWithRetry(
-      `${CONTIPAY_API_URL}/acquire/payment`,
-      {
-        method: 'PUT',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': authHeader,
+    // Make request to ContiPay API with retry logic and timeout (max 3 attempts)
+    let response;
+    let responseText;
+    try {
+      response = await fetchWithRetry(
+        `${CONTIPAY_API_URL}/acquire/payment`,
+        {
+          method: 'PUT',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify(paymentRequest),
         },
-        body: JSON.stringify(paymentRequest),
-      },
-      3, // retries
-      30000 // 30 second timeout
-    );
+        3, // 3 retries max
+        30000 // 30 second timeout
+      );
 
-    const responseText = await response.text();
+      responseText = await response.text();
+    } catch (fetchError) {
+      // After 3 failed retries, return pending status - webhook will update later
+      console.error('ContiPay request failed after 3 retries:', fetchError.message);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          pending: true,
+          orderNumber: paymentData.orderNumber,
+          message: 'Payment is being processed. Please wait for confirmation.',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
     console.log('ContiPay Response:', {
       status: response.status,
       statusText: response.statusText,
