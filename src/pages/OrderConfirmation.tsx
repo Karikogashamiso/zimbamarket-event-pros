@@ -50,33 +50,31 @@ export const OrderConfirmation: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
         }
 
-        // Retry logic for order fetching
+        // Retry logic for order fetching using edge function (bypasses RLS)
         while (retryCount < maxRetries && !order) {
           if (retryCount > 0) {
             console.log(`🔄 Retry attempt ${retryCount}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Wait between retries
+            await new Promise(resolve => setTimeout(resolve, 1500));
           }
 
-          const { data: fetchedOrder, error: orderError } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('order_number', orderNumber)
-            .maybeSingle();
+          const { data, error: functionError } = await supabase.functions.invoke('fetch-order-by-number', {
+            body: { orderNumber }
+          });
 
-          if (orderError) {
-            console.error('❌ Error fetching order:', orderError);
+          if (functionError) {
+            console.error('❌ Error calling function:', functionError);
             retryCount++;
             continue;
           }
           
-          if (fetchedOrder) {
+          if (data?.order) {
             console.log('✅ Order found:', {
-              order_number: fetchedOrder.order_number,
-              payment_status: fetchedOrder.payment_status,
-              booking_status: fetchedOrder.booking_status,
+              order_number: data.order.order_number,
+              payment_status: data.order.payment_status,
+              booking_status: data.order.booking_status,
               attempt: retryCount + 1
             });
-            order = fetchedOrder;
+            order = data.order;
             break;
           } else {
             console.log(`⚠️ Order not found on attempt ${retryCount + 1}`);
