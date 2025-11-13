@@ -242,34 +242,38 @@ serve(async (req) => {
     }
 
     // Create payment request matching ContiPay API spec
-    // ContiPay uses ISO 3166-1 alpha-3 country codes (3 letters)
+    // ContiPay uses ISO 3166-1 alpha-2 country codes (2 letters)
     const countryCodeMap: { [key: string]: string } = {
-      // ISO alpha-2 to alpha-3
-      'ZW': 'ZWE',
-      'ZA': 'ZAF',
-      'US': 'USA',
-      'GB': 'GBR',
-      'BW': 'BWA',
-      'MZ': 'MOZ',
-      'ZM': 'ZMB',
-      'MW': 'MWI',
-      // Full country names to alpha-3
-      'Zimbabwe': 'ZWE',
-      'South Africa': 'ZAF',
-      'United States': 'USA',
-      'United Kingdom': 'GBR',
-      'Botswana': 'BWA',
-      'Mozambique': 'MOZ',
-      'Zambia': 'ZMB',
-      'Malawi': 'MWI',
+      // Full country names to ISO alpha-2
+      'Zimbabwe': 'ZW',
+      'South Africa': 'ZA',
+      'United States': 'US',
+      'United Kingdom': 'GB',
+      'Botswana': 'BW',
+      'Mozambique': 'MZ',
+      'Zambia': 'ZM',
+      'Malawi': 'MW',
+      'Namibia': 'NA',
+      'Kenya': 'KE',
+      'Tanzania': 'TZ',
+      'Uganda': 'UG',
+      // Alpha-3 to Alpha-2 (in case they're sent)
+      'ZWE': 'ZW',
+      'ZAF': 'ZA',
+      'USA': 'US',
+      'GBR': 'GB',
+      'BWA': 'BW',
+      'MOZ': 'MZ',
+      'ZMB': 'ZM',
+      'MWI': 'MW',
     };
     
     const customerCountry = paymentData.customerInfo.country || 'ZW';
-    const alpha3CountryCode = countryCodeMap[customerCountry] || 'ZWE'; // Default to Zimbabwe
+    const alpha2CountryCode = countryCodeMap[customerCountry] || customerCountry.substring(0, 2).toUpperCase();
     
     console.log('Country code mapping:', {
       original: customerCountry,
-      mapped: alpha3CountryCode,
+      mapped: alpha2CountryCode,
     });
     
     const paymentRequest = {
@@ -288,7 +292,7 @@ serve(async (req) => {
         middleName: "",
         email: paymentData.customerInfo.email,
         cell: formattedPhone,
-        countryCode: alpha3CountryCode,
+        countryCode: alpha2CountryCode,
       },
     };
 
