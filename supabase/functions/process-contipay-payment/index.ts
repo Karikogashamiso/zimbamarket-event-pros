@@ -244,15 +244,33 @@ serve(async (req) => {
     // Create payment request matching ContiPay API spec
     // ContiPay uses ISO 3166-1 alpha-3 country codes (3 letters)
     const countryCodeMap: { [key: string]: string } = {
-      'ZW': 'ZWE', // Zimbabwe
-      'ZA': 'ZAF', // South Africa
+      // ISO alpha-2 to alpha-3
+      'ZW': 'ZWE',
+      'ZA': 'ZAF',
       'US': 'USA',
       'GB': 'GBR',
-      // Add more mappings as needed
+      'BW': 'BWA',
+      'MZ': 'MOZ',
+      'ZM': 'ZMB',
+      'MW': 'MWI',
+      // Full country names to alpha-3
+      'Zimbabwe': 'ZWE',
+      'South Africa': 'ZAF',
+      'United States': 'USA',
+      'United Kingdom': 'GBR',
+      'Botswana': 'BWA',
+      'Mozambique': 'MOZ',
+      'Zambia': 'ZMB',
+      'Malawi': 'MWI',
     };
     
     const customerCountry = paymentData.customerInfo.country || 'ZW';
-    const alpha3CountryCode = countryCodeMap[customerCountry] || customerCountry;
+    const alpha3CountryCode = countryCodeMap[customerCountry] || 'ZWE'; // Default to Zimbabwe
+    
+    console.log('Country code mapping:', {
+      original: customerCountry,
+      mapped: alpha3CountryCode,
+    });
     
     const paymentRequest = {
       webhookUrl,
