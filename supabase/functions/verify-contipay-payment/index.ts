@@ -17,7 +17,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const payload = await req.json();
+    // Handle GET requests (ContiPay verification ping)
+    if (req.method === 'GET') {
+      console.log('GET request received - webhook verification');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Webhook endpoint active' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // Parse request body safely
+    const contentType = req.headers.get('content-type') || '';
+    let payload: any = {};
+    
+    if (contentType.includes('application/json')) {
+      const text = await req.text();
+      if (text && text.trim()) {
+        try {
+          payload = JSON.parse(text);
+        } catch (parseError) {
+          console.error('Failed to parse JSON:', parseError, 'Body:', text);
+          throw new Error('Invalid JSON payload');
+        }
+      }
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const formData = await req.formData();
+      payload = Object.fromEntries(formData.entries());
+    } else {
+      const text = await req.text();
+      console.log('Unknown content type:', contentType, 'Body:', text);
+      // Try to parse as JSON anyway
+      if (text && text.trim()) {
+        try {
+          payload = JSON.parse(text);
+        } catch {
+          // If not JSON, treat as empty payload
+          console.warn('Could not parse body as JSON, using empty payload');
+        }
+      }
+    }
+    
     console.log('ContiPay webhook received:', JSON.stringify(payload, null, 2));
     console.log('Webhook headers:', Object.fromEntries(req.headers.entries()));
 

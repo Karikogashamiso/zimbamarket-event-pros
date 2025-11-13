@@ -160,6 +160,53 @@ export const OrderConfirmation: React.FC = () => {
     };
   }, [orderDetails?.id, orderDetails?.payment_status]);
 
+  // Polling backup for pending payments (in case webhook is delayed)
+  useEffect(() => {
+    if (!orderDetails?.id || orderDetails?.payment_status !== 'pending') return;
+
+    console.log('Starting payment status polling for pending order');
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: updatedOrder, error } = await supabase
+          .from('orders')
+          .select('payment_status, booking_status')
+          .eq('id', orderDetails.id)
+          .single();
+
+        if (!error && updatedOrder) {
+          if (updatedOrder.payment_status !== orderDetails.payment_status) {
+            console.log('Payment status changed via polling:', updatedOrder.payment_status);
+            
+            if (updatedOrder.payment_status === 'completed') {
+              toast.success('Payment confirmed! Your order has been processed.');
+            } else if (updatedOrder.payment_status === 'failed') {
+              toast.error('Payment failed. Please try again or contact support.');
+            }
+            
+            setOrderDetails((prev: any) => ({
+              ...prev,
+              ...updatedOrder
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Error polling payment status:', err);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Stop polling after 5 minutes
+    const timeout = setTimeout(() => {
+      clearInterval(pollInterval);
+      console.log('Payment polling timeout reached');
+    }, 300000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeout);
+    };
+  }, [orderDetails?.id, orderDetails?.payment_status]);
+
   const formatCurrency = (amount: number, currency = 'USD') => {
     const symbol = currency === 'USD' ? '$' : currency === 'ZWL' ? 'Z$' : 'RTGS$';
     return `${symbol}${amount.toFixed(2)}`;
