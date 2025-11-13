@@ -212,16 +212,17 @@ export const useSimpleCheckout = () => {
 
         console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
         
-        // Show success message before redirect
-        toast({
-          title: "Payment Page Ready",
-          description: "Redirecting you to complete payment...",
-        });
-
-        // Redirect to ContiPay payment page
+        // Navigate to order confirmation page first
+        navigate(`/order-confirmation/${order.order_number}`);
+        
+        // Open ContiPay in new window after navigation
         setTimeout(() => {
-          window.location.href = contiPayResponse.paymentUrl;
-        }, 500);
+          toast({
+            title: "Payment Page Opening",
+            description: "Complete your payment in the new window. This page will update automatically.",
+          });
+          window.open(contiPayResponse.paymentUrl, '_blank');
+        }, 1000);
         
         return order;
       }
