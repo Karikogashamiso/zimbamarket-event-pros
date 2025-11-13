@@ -89,6 +89,21 @@ export const OrderConfirmation: React.FC = () => {
           order = fetchedOrder;
         }
 
+        console.log('🔔 WEBHOOK RESPONSE DATA:', {
+          order_number: order.order_number,
+          payment_status: order.payment_status,
+          booking_status: order.booking_status,
+          payment_provider_id: order.payment_provider_id,
+          payment_method: order.payment_method,
+          total_amount: order.total_amount,
+          currency: order.currency,
+          confirmed_at: order.confirmed_at,
+          cancelled_at: order.cancelled_at,
+          created_at: order.created_at,
+          updated_at: order.updated_at,
+          metadata: order.metadata
+        });
+
         // Fetch tickets for this order
         const { data: tickets, error: ticketsError } = await supabase
           .from('tickets')
