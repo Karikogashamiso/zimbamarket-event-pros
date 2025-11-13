@@ -242,6 +242,18 @@ serve(async (req) => {
     }
 
     // Create payment request matching ContiPay API spec
+    // ContiPay uses ISO 3166-1 alpha-3 country codes (3 letters)
+    const countryCodeMap: { [key: string]: string } = {
+      'ZW': 'ZWE', // Zimbabwe
+      'ZA': 'ZAF', // South Africa
+      'US': 'USA',
+      'GB': 'GBR',
+      // Add more mappings as needed
+    };
+    
+    const customerCountry = paymentData.customerInfo.country || 'ZW';
+    const alpha3CountryCode = countryCodeMap[customerCountry] || customerCountry;
+    
     const paymentRequest = {
       webhookUrl,
       description: `Order ${paymentData.orderNumber}`,
@@ -258,7 +270,7 @@ serve(async (req) => {
         middleName: "",
         email: paymentData.customerInfo.email,
         cell: formattedPhone,
-        countryCode: paymentData.customerInfo.country || "ZW",
+        countryCode: alpha3CountryCode,
       },
     };
 
