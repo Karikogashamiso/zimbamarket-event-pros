@@ -72,8 +72,15 @@ export const OrderConfirmation: React.FC = () => {
             .eq('order_number', orderNumber)
             .maybeSingle();
 
-          if (orderError || !fetchedOrder) {
-            console.error('Order not found:', orderError);
+          if (orderError) {
+            console.error('Error fetching order:', orderError);
+            setError('Unable to load order. Please check your email for confirmation.');
+            setLoading(false);
+            return;
+          }
+          
+          if (!fetchedOrder) {
+            console.error('Order not found');
             setError('Order not found. Please check your email for confirmation.');
             setLoading(false);
             return;
@@ -164,7 +171,7 @@ export const OrderConfirmation: React.FC = () => {
     };
   }, [orderDetails?.id, orderDetails?.payment_status]);
 
-  // Polling backup for pending payments (in case webhook is delayed)
+  // Polling backup for pending payments - max 3 attempts
   useEffect(() => {
     if (!orderDetails?.id || orderDetails?.payment_status !== 'pending') {
       console.log('Polling not started:', { 
@@ -174,10 +181,14 @@ export const OrderConfirmation: React.FC = () => {
       return;
     }
 
-    console.log('Starting payment status polling for pending order');
+    console.log('Starting payment status polling for pending order (max 3 attempts)');
+    let pollCount = 0;
+    const maxPolls = 3;
     
     const pollInterval = setInterval(async () => {
-      console.log('Polling payment status...');
+      pollCount++;
+      console.log(`Polling payment status... (attempt ${pollCount}/${maxPolls})`);
+      
       try {
         const { data: updatedOrder, error } = await supabase
           .from('orders')
@@ -200,23 +211,25 @@ export const OrderConfirmation: React.FC = () => {
               ...prev,
               ...updatedOrder
             }));
+            
+            // Stop polling once status changes
+            clearInterval(pollInterval);
           }
         }
       } catch (err) {
         console.error('Error polling payment status:', err);
       }
-    }, 3000); // Poll every 3 seconds
-
-    // Stop polling after 5 minutes
-    const timeout = setTimeout(() => {
-      clearInterval(pollInterval);
-      console.log('Payment polling timeout reached');
-    }, 300000);
+      
+      // Stop polling after 3 attempts
+      if (pollCount >= maxPolls) {
+        clearInterval(pollInterval);
+        console.log('Payment polling stopped after 3 attempts');
+      }
+    }, 5000); // Poll every 5 seconds
 
     return () => {
       console.log('Stopping payment polling');
       clearInterval(pollInterval);
-      clearTimeout(timeout);
     };
   }, [orderDetails?.id, orderDetails?.payment_status]);
 
