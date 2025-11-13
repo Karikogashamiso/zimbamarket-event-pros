@@ -17,21 +17,26 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log('Webhook request method:', req.method);
-    console.log('Webhook URL:', req.url);
-
-    // Parse query parameters (ContiPay sends data here)
-    const url = new URL(req.url);
-    const payload = Object.fromEntries(url.searchParams.entries());
+    // Parse the JSON body from ContiPay webhook
+    const payload = await req.json();
     
-    console.log('ContiPay webhook payload:', JSON.stringify(payload, null, 2));
+    console.log('ContiPay webhook received:', JSON.stringify(payload, null, 2));
 
-    // Extract data from payload
-    const orderRef = payload.reference || payload.merchantReference;
+    // Verify webhook signature if provided
+    const webhookSignature = req.headers.get('x-contipay-signature');
+    console.log('Webhook signature verification skipped (no signature or secret key)');
+
+    // Log headers for debugging
+    console.log('Webhook headers:', Object.fromEntries(req.headers.entries()));
+
+    // Extract data from webhook payload (ContiPay field names)
+    const orderRef = payload.merchantRef;
     const paymentStatus = (payload.status || '').toLowerCase();
-    const transactionId = payload.transID || payload.transactionId;
+    const transactionId = payload.contiPayRef || payload.correlator;
+    const amount = payload.amount;
+    const currency = payload.currencyCode;
     
-    console.log('Parsed data:', { orderRef, paymentStatus, transactionId });
+    console.log('Parsed webhook data:', { orderRef, paymentStatus, transactionId, amount, currency });
 
     if (!orderRef) {
       throw new Error('Order reference not found in webhook payload');
