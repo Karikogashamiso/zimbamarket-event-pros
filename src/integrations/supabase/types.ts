@@ -337,6 +337,7 @@ export type Database = {
           description: string
           email: string
           id: string
+          images: string[] | null
           location: string
           phone_number: string
           status: string
@@ -351,6 +352,7 @@ export type Database = {
           description: string
           email: string
           id?: string
+          images?: string[] | null
           location: string
           phone_number: string
           status?: string
@@ -365,6 +367,7 @@ export type Database = {
           description?: string
           email?: string
           id?: string
+          images?: string[] | null
           location?: string
           phone_number?: string
           status?: string

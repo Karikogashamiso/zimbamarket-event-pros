@@ -48,6 +48,8 @@ const ListBusiness = () => {
     email: "",
     description: ""
   });
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   // Form validation schema
   const businessApplicationSchema = z.object({
@@ -184,6 +186,106 @@ const ListBusiness = () => {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check if total images (existing + new) exceed 5
+    if (uploadedImages.length + files.length > 5) {
+      toast({
+        title: "Too many images",
+        description: "You can upload a maximum of 5 images",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingImages(true);
+    const newImageUrls: string[] = [];
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to upload images",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      for (const file of Array.from(files)) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not an image file`,
+            variant: "destructive"
+          });
+          continue;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds 5MB limit`,
+            variant: "destructive"
+          });
+          continue;
+        }
+
+        // Upload to Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { data, error } = await supabase.storage
+          .from('business-applications')
+          .upload(fileName, file);
+
+        if (error) {
+          console.error('Upload error:', error);
+          toast({
+            title: "Upload failed",
+            description: `Failed to upload ${file.name}`,
+            variant: "destructive"
+          });
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('business-applications')
+          .getPublicUrl(fileName);
+
+        newImageUrls.push(publicUrl);
+      }
+
+      setUploadedImages([...uploadedImages, ...newImageUrls]);
+      
+      if (newImageUrls.length > 0) {
+        toast({
+          title: "Success",
+          description: `${newImageUrls.length} image(s) uploaded successfully`
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload images",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+  };
+
   // Handle form submission
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,7 +313,8 @@ const ListBusiness = () => {
           contact_person: validatedData.contactPerson,
           phone_number: validatedData.phoneNumber,
           email: validatedData.email,
-          description: validatedData.description
+          description: validatedData.description,
+          images: uploadedImages
         });
 
       if (error) {
@@ -264,6 +367,7 @@ const ListBusiness = () => {
       // Reset selected business type and custom type
       setSelectedBusinessType("");
       setCustomBusinessType("");
+      setUploadedImages([]);
       setFormErrors({});
       setTouchedFields({});
 
@@ -786,11 +890,68 @@ const ListBusiness = () => {
                         </p>
                       </div>
                     </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Business Images (Optional)</label>
+                      <div className="space-y-4">
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                          <input
+                            type="file"
+                            id="image-upload"
+                            multiple
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            disabled={uploadingImages || uploadedImages.length >= 5}
+                          />
+                          <label 
+                            htmlFor="image-upload" 
+                            className={`cursor-pointer ${uploadingImages || uploadedImages.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                            <p className="text-sm font-medium mb-1">
+                              {uploadingImages ? 'Uploading...' : 'Click to upload images'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              PNG, JPG up to 5MB each (max 5 images)
+                            </p>
+                          </label>
+                        </div>
+
+                        {uploadedImages.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {uploadedImages.map((url, index) => (
+                              <div key={index} className="relative group">
+                                <img
+                                  src={url}
+                                  alt={`Business image ${index + 1}`}
+                                  className="w-full h-32 object-cover rounded-lg border border-border"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(index)}
+                                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <p className="text-xs text-muted-foreground">
+                          Upload photos of your work, venue, or services to showcase your business
+                        </p>
+                      </div>
+                    </div>
                     
                     <Button 
                       type="submit" 
                       className="w-full text-lg py-3 h-auto"
-                      disabled={isSubmitting || Object.keys(formErrors).length > 0}
+                      disabled={isSubmitting || Object.keys(formErrors).length > 0 || uploadingImages}
                     >
                       <CheckCircle className="w-5 h-5 mr-2" />
                       {isSubmitting ? "Submitting..." : "Submit Application"}
