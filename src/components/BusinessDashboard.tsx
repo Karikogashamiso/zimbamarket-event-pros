@@ -43,7 +43,7 @@ const BusinessDashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6 mt-8">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">
             <BarChart3 className="w-4 h-4 mr-2" />
