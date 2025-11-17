@@ -61,7 +61,6 @@ import Profile from "./pages/Profile";
 import BookingPaymentSuccess from "./pages/BookingPaymentSuccess";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
-import BusinessDashboard from "./components/BusinessDashboard";
 
 const queryClient = new QueryClient();
 
@@ -116,7 +115,7 @@ const App = () => {
                   <Route path="/organizer" element={<Layout><OrganizerDashboard /></Layout>} />
                   <Route path="/organizer/dashboard" element={<Layout><OrganizerDashboard /></Layout>} />
                   <Route path="/organizer-dashboard" element={<Layout><OrganizerDashboard /></Layout>} />
-                  <Route path="/business-dashboard" element={<Layout><BusinessDashboard /></Layout>} />
+                  <Route path="/business-dashboard" element={<Layout><ServiceProviderDashboard /></Layout>} />
                   <Route path="/service-provider" element={<Layout><ServiceProviderDashboard /></Layout>} />
                   <Route path="/service-provider/dashboard" element={<Layout><ServiceProviderDashboard /></Layout>} />
                   <Route path="/service-provider/create-service" element={<Layout><CreateService /></Layout>} />
