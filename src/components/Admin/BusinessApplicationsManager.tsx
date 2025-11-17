@@ -443,6 +443,7 @@ export const BusinessApplicationsManager = () => {
                       </div>
 
                       <div className="flex gap-2 ml-4">
+                        {/* Approved businesses can only be deleted, not rejected */}
                         {app.status === 'rejected' && (
                           <Button 
                             size="sm" 
@@ -452,17 +453,6 @@ export const BusinessApplicationsManager = () => {
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Approve
-                          </Button>
-                        )}
-                        {app.status === 'approved' && (
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => handleReject(app.id)}
-                            disabled={processing}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Reject
                           </Button>
                         )}
                         <Button 
