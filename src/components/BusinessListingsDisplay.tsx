@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { 
   Building2,
   Mail,
@@ -13,7 +14,8 @@ import {
   ExternalLink,
   Edit,
   Plus,
-  Eye
+  Eye,
+  Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -127,6 +129,31 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
     }
   };
 
+  const handleToggleFeatured = async (listingId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('business_listings')
+        .update({ featured: !currentFeatured })
+        .eq('id', listingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Business ${!currentFeatured ? 'featured' : 'unfeatured'} successfully`,
+      });
+
+      fetchListings();
+    } catch (error: any) {
+      console.error('Error toggling featured:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update featured status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -184,6 +211,18 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
                             <Badge className="bg-gradient-primary text-white">Featured</Badge>
                           )}
                         </div>
+
+                        {/* Featured Toggle */}
+                        {listing.status === 'approved' && (
+                          <div className="flex items-center gap-3 py-2 px-3 bg-muted/30 rounded-lg">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span className="text-sm font-medium">Show on home page</span>
+                            <Switch
+                              checked={listing.featured}
+                              onCheckedChange={() => handleToggleFeatured(listing.id, listing.featured)}
+                            />
+                          </div>
+                        )}
                         
                         {/* Location and Category */}
                         <div className="flex items-center gap-4 text-sm flex-wrap">

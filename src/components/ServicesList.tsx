@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { MapPin, Edit, Trash2, Star, BadgeCheck, Package } from 'lucide-react';
 import { useServiceManagement } from '@/hooks/useServiceManagement';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const ServicesList = () => {
@@ -18,6 +20,25 @@ export const ServicesList = () => {
     
     await deleteService(deleteServiceId);
     setDeleteServiceId(null);
+  };
+
+  const handleToggleFeatured = async (serviceId: string, currentFeatured: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ featured: !currentFeatured })
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      toast.success(`Service ${!currentFeatured ? 'featured' : 'unfeatured'} successfully`);
+      
+      // Refresh the list
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error toggling featured:', error);
+      toast.error(error.message || "Failed to update featured status");
+    }
   };
 
   if (loading) {
@@ -99,6 +120,17 @@ export const ServicesList = () => {
                   {service.active ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
+              
+              {/* Featured Toggle */}
+              <div className="flex items-center gap-3 py-2 px-3 bg-muted/30 rounded-lg mb-4">
+                <Star className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-medium">Show on home page</span>
+                <Switch
+                  checked={service.is_featured || false}
+                  onCheckedChange={() => handleToggleFeatured(service.id, service.is_featured || false)}
+                />
+              </div>
+              
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
