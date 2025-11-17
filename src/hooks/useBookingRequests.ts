@@ -19,6 +19,9 @@ interface BookingRequest {
   services?: {
     title: string;
     business_listing_id: string;
+    business_listings?: {
+      business_name: string;
+    };
   };
   profiles?: {
     first_name: string | null;
@@ -76,7 +79,10 @@ export const useBookingRequests = () => {
           *,
           services!inner(
             title,
-            business_listing_id
+            business_listing_id,
+            business_listings(
+              business_name
+            )
           )
         `)
         .in('service_id', serviceIds)

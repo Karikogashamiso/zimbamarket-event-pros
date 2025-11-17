@@ -206,11 +206,19 @@ export const BookingRequestsManager = () => {
                           {getStatusBadge(request.status)}
                         </div>
                         
-                        {/* Service Name */}
+                        {/* Service and Business Name */}
                         {request.services && (
-                          <div className="flex items-center gap-1 text-sm bg-primary/10 px-3 py-1.5 rounded-md w-fit">
-                            <span className="font-medium text-primary">Service:</span>
-                            <span className="text-foreground">{request.services.title}</span>
+                          <div className="space-y-1">
+                            {request.services.business_listings && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span className="font-medium">Business:</span>
+                                <span>{request.services.business_listings.business_name}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1 text-sm bg-primary/10 px-3 py-1.5 rounded-md w-fit">
+                              <span className="font-medium text-primary">Service:</span>
+                              <span className="text-foreground">{request.services.title}</span>
+                            </div>
                           </div>
                         )}
                         
@@ -308,11 +316,19 @@ export const BookingRequestsManager = () => {
                           </p>
                         </div>
                         
-                        {/* Service Name */}
+                        {/* Service and Business Name */}
                         {request.services && (
-                          <div className="flex items-center gap-1 text-sm bg-primary/10 px-2 py-1 rounded-md w-fit">
-                            <span className="font-medium text-primary text-xs">Service:</span>
-                            <span className="text-foreground text-xs">{request.services.title}</span>
+                          <div className="space-y-1">
+                            {request.services.business_listings && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span className="font-medium">Business:</span>
+                                <span>{request.services.business_listings.business_name}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1 text-sm bg-primary/10 px-2 py-1 rounded-md w-fit">
+                              <span className="font-medium text-primary text-xs">Service:</span>
+                              <span className="text-foreground text-xs">{request.services.title}</span>
+                            </div>
                           </div>
                         )}
                         
@@ -391,13 +407,23 @@ export const BookingRequestsManager = () => {
           
           {selectedRequest && (
             <div className="space-y-4">
-              {/* Service Name - Prominent Display */}
+              {/* Service and Business Name - Prominent Display */}
               {selectedRequest.services && (
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                  <label className="text-sm font-medium text-muted-foreground">Service Requested</label>
-                  <p className="text-lg font-semibold text-primary mt-1">
-                    {selectedRequest.services.title}
-                  </p>
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 space-y-2">
+                  {selectedRequest.services.business_listings && (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Business</label>
+                      <p className="text-base font-semibold text-foreground">
+                        {selectedRequest.services.business_listings.business_name}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Service Requested</label>
+                    <p className="text-lg font-semibold text-primary">
+                      {selectedRequest.services.title}
+                    </p>
+                  </div>
                 </div>
               )}
               
