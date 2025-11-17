@@ -242,6 +242,17 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                       Favorites
                     </Link>
                   </DropdownMenuItem>
+                  {hasBusinessListings && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/service-provider/dashboard" className="cursor-pointer">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Service Provider
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
