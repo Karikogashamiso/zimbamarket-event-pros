@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Layout from "./components/Layout";
-import ChatWidget from "./components/Chat/ChatWidget";
+
 import Index from "./pages/Index";
 import Categories from "./pages/Categories";
 import SearchResults from "./pages/SearchResults";
@@ -152,9 +152,6 @@ const App = () => {
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<Layout><NotFound /></Layout>} />
                 </Routes>
-                
-                {/* Global Chat Widget - Available on all pages */}
-                <ChatWidget />
               </div>
             </TooltipProvider>
           </BrowserRouter>
