@@ -139,8 +139,8 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
     : "bg-muted md:bg-white/20 border-border md:border-white/30 text-foreground md:text-white placeholder:text-muted-foreground md:placeholder:text-white/70 focus:bg-muted md:focus:bg-white/30";
 
   const buttonStyles = variant === "solid" || isScrolled
-    ? "hover:bg-muted"
-    : "hover:bg-muted md:hover:bg-white/30";
+    ? "hover:bg-muted hover:text-primary"
+    : "hover:bg-muted hover:text-primary md:hover:bg-white/20 md:hover:text-primary";
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles} transition-all duration-300`}>
