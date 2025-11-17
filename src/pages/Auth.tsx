@@ -277,24 +277,8 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  // Check if user is already logged in (but not during password reset)
-  useEffect(() => {
-    // CRITICAL: Check URL first before any redirect
-    const type = searchParams.get('type');
-    
-    // Skip redirect if we're in recovery mode or showing password update form
-    if (showPasswordUpdate || type === 'recovery') {
-      return;
-    }
-    
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        navigate("/");
-      }
-    };
-    checkUser();
-  }, [navigate, searchParams, showPasswordUpdate]);
+  // Allow access to auth page for all users
+  // Users may want to access this page to signup even if they're logged in
 
   // Handle auth state changes
   useEffect(() => {
