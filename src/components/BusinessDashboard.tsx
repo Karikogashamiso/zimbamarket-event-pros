@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -21,11 +21,15 @@ import { useInventoryManagement } from '@/hooks/useInventoryManagement';
 import { BusinessApplicationsManager } from '@/components/Admin/BusinessApplicationsManager';
 import { BusinessListingsManager } from '@/components/Admin/BusinessListingsManager';
 import { BookingRequestsManager } from '@/components/BookingRequestsManager';
+import { ServicesList } from '@/components/ServicesList';
+import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 
 const BusinessDashboard = () => {
   const { metrics, loading: analyticsLoading } = useAnalytics();
   const { pricingModels } = useDynamicPricing();
   const { conflicts } = useInventoryManagement();
+  const navigate = useNavigate();
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -40,7 +44,7 @@ const BusinessDashboard = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">
             <BarChart3 className="w-4 h-4 mr-2" />
             Overview
@@ -52,6 +56,10 @@ const BusinessDashboard = () => {
           <TabsTrigger value="listings">
             <Building2 className="w-4 h-4 mr-2" />
             My Listings
+          </TabsTrigger>
+          <TabsTrigger value="services">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Services
           </TabsTrigger>
           <TabsTrigger value="enquiries">
             <MessageSquare className="w-4 h-4 mr-2" />
@@ -218,6 +226,29 @@ const BusinessDashboard = () => {
         {/* Listings Tab */}
         <TabsContent value="listings">
           <BusinessListingsManager />
+        </TabsContent>
+
+        {/* Services Tab */}
+        <TabsContent value="services" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>My Services</CardTitle>
+                  <CardDescription>
+                    Manage services for your approved business listings
+                  </CardDescription>
+                </div>
+                <Button onClick={() => navigate('/service-provider/create-service')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ServicesList />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Enquiries Tab */}
