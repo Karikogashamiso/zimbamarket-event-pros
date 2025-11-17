@@ -206,6 +206,14 @@ export const BookingRequestsManager = () => {
                           {getStatusBadge(request.status)}
                         </div>
                         
+                        {/* Service Name */}
+                        {request.services && (
+                          <div className="flex items-center gap-1 text-sm bg-primary/10 px-3 py-1.5 rounded-md w-fit">
+                            <span className="font-medium text-primary">Service:</span>
+                            <span className="text-foreground">{request.services.title}</span>
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {request.guest_email && (
                             <div className="flex items-center gap-1">
@@ -290,8 +298,8 @@ export const BookingRequestsManager = () => {
                     onClick={() => handleViewDetails(request)}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <p className="font-medium">
                             {request.user_id && request.profiles
@@ -299,6 +307,15 @@ export const BookingRequestsManager = () => {
                               : request.guest_name || 'Guest User'}
                           </p>
                         </div>
+                        
+                        {/* Service Name */}
+                        {request.services && (
+                          <div className="flex items-center gap-1 text-sm bg-primary/10 px-2 py-1 rounded-md w-fit">
+                            <span className="font-medium text-primary text-xs">Service:</span>
+                            <span className="text-foreground text-xs">{request.services.title}</span>
+                          </div>
+                        )}
+                        
                         {request.guest_email && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="w-3 h-3" />
@@ -374,6 +391,16 @@ export const BookingRequestsManager = () => {
           
           {selectedRequest && (
             <div className="space-y-4">
+              {/* Service Name - Prominent Display */}
+              {selectedRequest.services && (
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <label className="text-sm font-medium text-muted-foreground">Service Requested</label>
+                  <p className="text-lg font-semibold text-primary mt-1">
+                    {selectedRequest.services.title}
+                  </p>
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Name</label>
