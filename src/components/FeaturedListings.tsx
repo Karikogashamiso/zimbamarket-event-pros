@@ -91,7 +91,11 @@ const FeaturedListings = () => {
                 >
                   <div className="relative overflow-hidden">
                     <LazyImage 
-                      src={listing.images?.[0] || "/placeholder.svg"} 
+                      src={
+                        listing.images?.[0] || 
+                        listing.services?.[0]?.images?.[0] || 
+                        "/placeholder.svg"
+                      } 
                       alt={listing.business_name}
                       aspectRatio={4 / 3}
                       className="group-hover:scale-110 transition-all duration-700"

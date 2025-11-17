@@ -284,6 +284,18 @@ const ServiceProviderDashboard = () => {
                   </CardHeader>
                 </Card>
               )}
+              
+              {businessListings.some(b => b.status === 'approved' && (!b.images || b.images.length === 0)) && (
+                <Card className="border-blue-500">
+                  <CardHeader>
+                    <CardTitle className="text-blue-700">Add Business Images</CardTitle>
+                    <CardDescription>
+                      Your business needs photos to appear in Featured Listings on the home page.
+                      Please add business images by applying again at <a href="/list-business" className="underline">List Business</a> page.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="services" className="space-y-6">

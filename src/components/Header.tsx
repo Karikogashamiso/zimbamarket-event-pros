@@ -253,22 +253,6 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
                       </DropdownMenuItem>
                     </>
                   )}
-                  {hasBusinessListings && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link to="/business-dashboard" className="cursor-pointer">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Business Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/service-provider/dashboard" className="cursor-pointer">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Service Provider
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
                   {hasOrganizerProfile && (
                     <DropdownMenuItem asChild>
                       <Link to="/organizer-dashboard" className="cursor-pointer">
