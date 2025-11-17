@@ -100,6 +100,8 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
         title: "Signed out successfully",
         description: "You have been signed out. Come back soon!",
       });
+      
+      navigate('/auth');
     } catch (error) {
       toast({
         title: "Error",
