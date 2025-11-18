@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import QRCodeLib from 'qrcode';
+import DOMPurify from 'dompurify';
 
 interface TicketWithDetails {
   id: string;
@@ -291,7 +292,14 @@ export const MyTickets = () => {
         ? `${ticket.ticket_type.event?.venue.name}, ${ticket.ticket_type.event?.venue.city}`
         : `${ticket.ticket_type.trip?.route.origin_venue.name} → ${ticket.ticket_type.trip?.route.destination_venue.name}`;
 
-      // Build ticket HTML
+      // Sanitize all user-generated content to prevent XSS attacks
+      const sanitizedTitle = DOMPurify.sanitize(title, { ALLOWED_TAGS: [] });
+      const sanitizedLocation = DOMPurify.sanitize(location, { ALLOWED_TAGS: [] });
+      const sanitizedTicketType = DOMPurify.sanitize(ticket.ticket_type.name, { ALLOWED_TAGS: [] });
+      const sanitizedTicketNumber = DOMPurify.sanitize(ticketData.ticket_number, { ALLOWED_TAGS: [] });
+      const sanitizedOrderNumber = DOMPurify.sanitize(ticket.order.order_number, { ALLOWED_TAGS: [] });
+
+      // Build ticket HTML with sanitized data
       container.innerHTML = `
         <div style="font-family: Arial, sans-serif; border: 2px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
@@ -300,7 +308,7 @@ export const MyTickets = () => {
           </div>
           
           <div style="padding: 30px;">
-            <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #333;">${title}</h2>
+            <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #333;">${sanitizedTitle}</h2>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
               <div>
@@ -310,11 +318,11 @@ export const MyTickets = () => {
               </div>
               <div>
                 <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Location</p>
-                <p style="margin: 0; font-size: 14px;">${location}</p>
+                <p style="margin: 0; font-size: 14px;">${sanitizedLocation}</p>
               </div>
               <div>
                 <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Ticket Type</p>
-                <p style="margin: 0; font-size: 16px; font-weight: 600;">${ticket.ticket_type.name}</p>
+                <p style="margin: 0; font-size: 16px; font-weight: 600;">${sanitizedTicketType}</p>
               </div>
               <div>
                 <p style="margin: 0 0 5px 0; color: #666; font-size: 12px; text-transform: uppercase;">Amount Paid</p>
@@ -324,7 +332,7 @@ export const MyTickets = () => {
 
             <div style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 8px; margin-bottom: 20px;">
               <img src="${qrUrl}" alt="QR Code" style="width: 300px; height: 300px;" />
-              <p style="margin: 15px 0 0 0; font-family: monospace; font-size: 14px; color: #666;">Ticket #${ticketData.ticket_number}</p>
+              <p style="margin: 15px 0 0 0; font-family: monospace; font-size: 14px; color: #666;">Ticket #${sanitizedTicketNumber}</p>
             </div>
 
             <div style="border-top: 2px dashed #e0e0e0; padding-top: 20px; font-size: 12px; color: #666; line-height: 1.6;">
@@ -333,7 +341,7 @@ export const MyTickets = () => {
                 <li>Present this ticket (digital or printed) at the venue entrance</li>
                 <li>Bring a valid ID that matches the ticket holder name</li>
                 <li>Each ticket can only be used once</li>
-                <li>Order #${ticket.order.order_number}</li>
+                <li>Order #${sanitizedOrderNumber}</li>
               </ul>
             </div>
           </div>

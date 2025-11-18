@@ -13,6 +13,19 @@ serve(async (req) => {
   }
 
   try {
+    // Verify JWT token for authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - No authorization header' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
       throw new Error('Stripe not configured');
@@ -30,7 +43,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get order details
+    // Verify user authentication
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Invalid token:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
+
+    console.log('User authenticated:', user.id);
+
+    // Get order details and verify ownership
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -39,6 +69,18 @@ serve(async (req) => {
 
     if (orderError || !order) {
       throw new Error('Order not found');
+    }
+
+    // Verify user owns this order
+    if (order.user_id !== user.id && order.customer_email !== user.email) {
+      console.error('User does not own this order');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - You do not have access to this order' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403
+        }
+      );
     }
 
     // If already confirmed, return success
