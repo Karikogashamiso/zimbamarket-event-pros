@@ -1,6 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * ContiPay Webhook Handler
+ * 
+ * IMPORTANT: ContiPay webhook behavior for failed transactions:
+ * - For failed transactions or errors, webhooks may be delayed significantly
+ * - Delay range: 10 minutes up to 2 DAYS
+ * - This handler prevents delayed failure webhooks from overwriting completed orders
+ * - Orders in completed/confirmed state will not be changed by delayed failure notifications
+ */
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -67,8 +77,35 @@ serve(async (req) => {
       id: currentOrder.id,
       order_number: currentOrder.order_number,
       current_payment_status: currentOrder.payment_status,
+      current_booking_status: currentOrder.booking_status,
       incoming_payment_status: paymentStatus.toUpperCase(),
+      order_created_at: currentOrder.created_at,
+      webhook_received_at: new Date().toISOString(),
     });
+
+    // CRITICAL: Handle delayed webhooks for failed transactions
+    // ContiPay webhooks can be delayed 10 minutes to 2 days for failures
+    
+    // Prevent overwriting completed/confirmed orders with delayed failure webhooks
+    if (currentOrder.payment_status === 'completed' && currentOrder.booking_status === 'confirmed') {
+      console.log('⚠️ Order already completed, ignoring delayed webhook:', {
+        order_id: currentOrder.id,
+        current_status: 'completed',
+        incoming_status: paymentStatus,
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Order already completed, webhook ignored',
+          reason: 'duplicate_or_delayed'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
 
     // Update order based on status
     if (paymentStatus === 'completed' || paymentStatus === 'success' || paymentStatus === 'paid') {
@@ -108,30 +145,49 @@ serve(async (req) => {
     } else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'declined') {
       console.log('❌ Processing FAILED/CANCELLED/DECLINED payment...');
       
-      await supabaseClient
-        .from('orders')
-        .update({
-          payment_status: 'failed',
-          booking_status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentOrder.id);
+      // Check how old the order is - webhook might be delayed
+      const orderAge = new Date().getTime() - new Date(currentOrder.created_at).getTime();
+      const orderAgeHours = orderAge / (1000 * 60 * 60);
+      
+      console.log('⏱️ Order age:', {
+        hours: orderAgeHours.toFixed(2),
+        created_at: currentOrder.created_at,
+      });
 
-      console.log('❌ Order marked as failed/cancelled/declined:', currentOrder.id);
+      // Only update if order is not already in a terminal state
+      if (currentOrder.payment_status !== 'completed' && currentOrder.booking_status !== 'confirmed') {
+        await supabaseClient
+          .from('orders')
+          .update({
+            payment_status: 'failed',
+            booking_status: 'cancelled',
+            cancelled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', currentOrder.id);
+
+        console.log('❌ Order marked as failed/cancelled/declined:', currentOrder.id, `(webhook delay: ${orderAgeHours.toFixed(2)} hours)`);
+      } else {
+        console.log('⚠️ Order already in terminal state, not updating to failed:', currentOrder.id);
+      }
     } else if (paymentStatus === 'pending') {
       console.log('⏳ Payment still PENDING:', currentOrder.id);
       
-      await supabaseClient
-        .from('orders')
-        .update({
-          payment_status: 'pending',
-          payment_provider_id: transactionId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', currentOrder.id);
+      // Only update pending status if not already completed
+      if (currentOrder.payment_status !== 'completed') {
+        await supabaseClient
+          .from('orders')
+          .update({
+            payment_status: 'pending',
+            payment_provider_id: transactionId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', currentOrder.id);
+      } else {
+        console.log('⚠️ Order already completed, ignoring pending status webhook:', currentOrder.id);
+      }
     } else {
-      console.log('⚠️ Unknown payment status received:', paymentStatus);
+      console.log('⚠️ Unknown payment status received:', paymentStatus, '- no action taken');
     }
 
     console.log('✅ Webhook processing completed successfully');
