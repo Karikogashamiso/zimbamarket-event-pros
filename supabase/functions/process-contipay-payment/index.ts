@@ -237,7 +237,7 @@ serve(async (req) => {
       payment = JSON.parse(responseText);
     console.log('Parsed payment response:', {
       hasPaymentId: !!(payment.paymentId || payment.payment_id),
-      hasRedirectUrl: !!(payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url),
+      hasRedirectUrl: !!(payment.redirectURL || payment.redirectUrl || payment.redirect_url || payment.paymentUrl || payment.payment_url),
       status: payment.status,
       statusCode: payment.statusCode,
       fullResponse: payment,
@@ -291,6 +291,7 @@ serve(async (req) => {
 
     // Extract redirect URL with multiple fallback field names
     const redirectUrl = 
+      payment.redirectURL ||  // ContiPay uses capital URL
       payment.redirectUrl || 
       payment.redirect_url || 
       payment.paymentUrl || 
