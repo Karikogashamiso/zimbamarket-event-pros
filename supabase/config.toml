@@ -31,7 +31,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.verify-payment]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-contipay-payment]
 verify_jwt = false
