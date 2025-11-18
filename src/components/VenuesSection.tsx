@@ -3,51 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Users, Star } from "lucide-react";
 import LazyImage from "@/components/LazyImage";
 import { Link } from "react-router-dom";
-import crestaLodge from "@/assets/cresta-lodge-harare.jpg";
-import meiklesHotel from "@/assets/meikles-hotel.jpg";
-import rainbowTowers from "@/assets/rainbow-towers-hotel.jpg";
-import royalGardens from "@/assets/royal-gardens-wedding-venue.jpg";
-
-const venues = [
-  {
-    id: 1,
-    name: "Cresta Lodge Harare",
-    location: "Harare, Zimbabwe",
-    image: crestaLodge,
-    capacity: "200 guests",
-    rating: 4.8,
-    type: "Hotel & Conference",
-  },
-  {
-    id: 2,
-    name: "Meikles Hotel",
-    location: "Central Harare, Zimbabwe",
-    image: meiklesHotel,
-    capacity: "500 guests",
-    rating: 4.9,
-    type: "Luxury Hotel",
-  },
-  {
-    id: 3,
-    name: "Rainbow Towers Hotel",
-    location: "Harare, Zimbabwe",
-    image: rainbowTowers,
-    capacity: "300 guests",
-    rating: 4.7,
-    type: "Hotel & Events",
-  },
-  {
-    id: 4,
-    name: "Royal Gardens Wedding Venue",
-    location: "Harare, Zimbabwe",
-    image: royalGardens,
-    capacity: "400 guests",
-    rating: 4.9,
-    type: "Wedding Venue",
-  },
-];
+import { useBusinessListings } from "@/hooks/useBusinessListings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VenuesSection = () => {
+  const { listings: venues, loading } = useBusinessListings({ 
+    category: 'venues',
+    featured: true 
+  });
   return (
     <section className="py-16 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
@@ -61,46 +24,63 @@ const VenuesSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {venues.map((venue) => (
-            <Card 
-              key={venue.id} 
-              className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <LazyImage
-                  src={venue.image}
-                  alt={venue.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
-                  <Star className="w-3 h-3 fill-primary text-primary" />
-                  <span className="text-xs font-semibold">{venue.rating}</span>
+          {loading ? (
+            // Loading skeletons
+            Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="p-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3 mb-2" />
+                  <Skeleton className="h-10 w-full mt-4" />
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            venues.map((venue) => (
+              <Card 
+                key={venue.id} 
+                className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <LazyImage
+                    src={venue.images[0] || '/placeholder.svg'}
+                    alt={venue.business_name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-primary text-primary" />
+                    <span className="text-xs font-semibold">4.8</span>
+                  </div>
                 </div>
-              </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-2 line-clamp-1">{venue.name}</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="line-clamp-1">{venue.location}</span>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-1">{venue.business_name}</h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span className="line-clamp-1">{venue.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span>Up to {venue.capacity_max} guests</span>
+                    </div>
+                    {venue.price_from && (
+                      <div className="text-xs text-primary font-medium">
+                        From ${venue.price_from} {venue.price_unit}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>{venue.capacity}</span>
-                  </div>
-                  <div className="text-xs text-primary font-medium">
-                    {venue.type}
-                  </div>
-                </div>
-                <Link
-                  to="/search?category=venues"
-                  className="mt-4 w-full inline-block text-center py-2 px-4 bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-md transition-colors text-sm font-medium"
-                >
-                  View Details
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+                  <Link
+                    to={`/business/${venue.id}`}
+                    className="mt-4 w-full inline-block text-center py-2 px-4 bg-primary/10 hover:bg-primary hover:text-primary-foreground rounded-md transition-colors text-sm font-medium"
+                  >
+                    View Details
+                  </Link>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
         <div className="text-center mt-8">
