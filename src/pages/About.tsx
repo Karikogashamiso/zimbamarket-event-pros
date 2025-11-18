@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import zimEventsProLogo from "@/assets/zimeventspro-logo.png";
 import { 
   CheckCircle, 
   Users, 
@@ -135,9 +136,9 @@ const About = () => {
             {/* Hero Image */}
             <div className="relative mb-12 rounded-3xl overflow-hidden shadow-2xl hover-scale">
               <img 
-                src="/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png" 
-                alt="Elegant event dining setup"
-                className="w-full h-64 md:h-96 object-cover"
+                src={zimEventsProLogo} 
+                alt="ZimEventsPro - Zimbabwe's Premier Event Marketplace"
+                className="w-full h-64 md:h-96 object-contain"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm rounded-2xl p-4">
