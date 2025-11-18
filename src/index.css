@@ -18,14 +18,14 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 245 15% 15%;
 
-    /* Premium Event Colors - World-class palette */
-    --primary: 267 83% 58%; /* Luxury Deep Purple */
+    /* Premium Event Colors - Professional palette inspired by EventBookr */
+    --primary: 184 51% 53%; /* Professional Teal */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 100% 80%; /* Champagne Gold */
-    --secondary-foreground: 245 15% 15%;
+    --secondary: 38 60% 60%; /* Muted Gold */
+    --secondary-foreground: 0 0% 100%;
 
-    --accent: 314 100% 76%; /* Rose Gold */
+    --accent: 10 55% 65%; /* Soft Coral */
     --accent-foreground: 0 0% 100%;
 
     --muted: 270 7% 97%;
@@ -39,11 +39,11 @@ All colors MUST be HSL.
     --ring: 267 83% 58%;
 
     /* Premium Event Design Tokens */
-    --hero-gradient: linear-gradient(135deg, hsl(267 83% 58%), hsl(314 100% 76%));
-    --hero-overlay: linear-gradient(135deg, hsl(267 83% 58% / 0.85), hsl(314 100% 76% / 0.75));
-    --card-shadow: 0 10px 30px -10px hsl(267 83% 58% / 0.15);
-    --card-hover-shadow: 0 20px 40px -10px hsl(267 83% 58% / 0.25);
-    --celebration-glow: 0 0 40px hsl(36 100% 80% / 0.4);
+    --hero-gradient: linear-gradient(135deg, hsl(184 51% 53%), hsl(184 51% 43%));
+    --hero-overlay: linear-gradient(135deg, hsl(184 51% 53% / 0.85), hsl(184 51% 43% / 0.75));
+    --card-shadow: 0 10px 30px -10px hsl(184 51% 53% / 0.15);
+    --card-hover-shadow: 0 20px 40px -10px hsl(184 51% 53% / 0.25);
+    --celebration-glow: 0 0 40px hsl(38 60% 60% / 0.4);
 
     --radius: 0.5rem;
 
@@ -74,32 +74,32 @@ All colors MUST be HSL.
     --popover: 245 30% 12%;
     --popover-foreground: 270 7% 95%;
 
-    --primary: 267 83% 65%;
-    --primary-foreground: 245 35% 8%;
+    --primary: 184 51% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 100% 85%;
-    --secondary-foreground: 245 35% 8%;
+    --secondary: 38 60% 65%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 245 25% 18%;
     --muted-foreground: 270 7% 65%;
 
-    --accent: 314 100% 80%;
-    --accent-foreground: 245 35% 8%;
+    --accent: 10 55% 70%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 60%;
     --destructive-foreground: 270 7% 95%;
 
     --border: 245 25% 18%;
     --input: 245 25% 18%;
-    --ring: 267 83% 65%;
+    --ring: 184 51% 60%;
     --sidebar-background: 245 30% 10%;
     --sidebar-foreground: 270 7% 90%;
-    --sidebar-primary: 267 83% 60%;
-    --sidebar-primary-foreground: 270 7% 95%;
+    --sidebar-primary: 184 51% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 245 25% 15%;
     --sidebar-accent-foreground: 270 7% 90%;
     --sidebar-border: 245 25% 15%;
-    --sidebar-ring: 267 83% 65%;
+    --sidebar-ring: 184 51% 60%;
   }
 }
 
