@@ -8,6 +8,7 @@ interface BusinessListingFilters {
   category?: string;
   featured?: boolean;
   verified?: boolean;
+  requireServices?: boolean;
 }
 
 export const useBusinessListings = (filters?: BusinessListingFilters) => {
@@ -85,8 +86,8 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
           services: listing.services?.filter((s: any) => s && s.active) || []
         }))
         .filter(listing => {
-          // Only show listings that have at least one service
-          if (listing.services.length === 0) return false;
+          // Only show listings that have at least one service (if required)
+          if (filters?.requireServices && listing.services.length === 0) return false;
 
           // Apply verified filter to services
           if (filters?.verified) {
