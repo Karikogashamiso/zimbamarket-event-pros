@@ -44,9 +44,9 @@ const VenuesSection = () => {
                 key={venue.id} 
                 className="group overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-48 overflow-hidden bg-muted">
                   <LazyImage
-                    src={venue.images[0] || '/placeholder.svg'}
+                    src={venue.images && venue.images.length > 0 ? venue.images[0] : '/placeholder.svg'}
                     alt={venue.business_name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />

@@ -87,7 +87,7 @@ const Index = () => {
   const organizationData = {
     name: "ZimEventPro",
     url: "https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com",
-    logo: zimEventsProLogo,
+    logo: "/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
     description: "Zimbabwe's premier event planning marketplace connecting clients with trusted professionals",
     city: "Harare",
     phone: "+263 24 2XXX XXX",
@@ -111,7 +111,7 @@ const Index = () => {
         description="Discover and book trusted event professionals across Zimbabwe. Find venues, caterers, DJs, photographers, and more for your perfect celebration."
         keywords="event planning Zimbabwe, wedding venues Harare, party planners Zimbabwe, event services, catering services Zimbabwe"
         type="website"
-        image={zimEventsProLogo}
+        image="/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png"
         url="https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com"
       />
       <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
