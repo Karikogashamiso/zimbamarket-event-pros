@@ -9,6 +9,7 @@ import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { measureWebVitals, monitorPerformanceBudget } from "@/utils/performance";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import zimEventsProLogo from "@/assets/zimeventspro-logo.png";
 import {
   StatsSectionSkeleton,
   CategorySectionSkeleton,
@@ -86,7 +87,7 @@ const Index = () => {
   const organizationData = {
     name: "ZimEventPro",
     url: "https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com",
-    logo: "https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png",
+    logo: zimEventsProLogo,
     description: "Zimbabwe's premier event planning marketplace connecting clients with trusted professionals",
     city: "Harare",
     phone: "+263 24 2XXX XXX",
@@ -110,7 +111,7 @@ const Index = () => {
         description="Discover and book trusted event professionals across Zimbabwe. Find venues, caterers, DJs, photographers, and more for your perfect celebration."
         keywords="event planning Zimbabwe, wedding venues Harare, party planners Zimbabwe, event services, catering services Zimbabwe"
         type="website"
-        image="/lovable-uploads/e2d79037-25f0-47c6-9c14-4a3674ff7ce6.png"
+        image={zimEventsProLogo}
         url="https://309c8f6f-cefd-4bca-8cda-808078a3b393.lovableproject.com"
       />
       <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
