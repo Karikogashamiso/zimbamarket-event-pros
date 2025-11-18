@@ -30,6 +30,7 @@ import ServiceProviderDashboard from "./pages/ServiceProviderDashboard";
 import CreateService from "./pages/CreateService";
 import Favorites from "./pages/Favorites";
 import BusinessListingDetail from "./pages/BusinessListingDetail";
+import PublicBusinessDetail from "./pages/PublicBusinessDetail";
 import AdminLayout from "./pages/Admin/Layout";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminCategories from "./pages/Admin/Categories";
@@ -95,7 +96,7 @@ const App = () => {
                   <Route path="/categories" element={<Layout><Categories /></Layout>} />
                   <Route path="/search" element={<Layout><SearchResults /></Layout>} />
                   <Route path="/service/:id" element={<Layout><ServiceDetail /></Layout>} />
-                  <Route path="/business/:id" element={<Layout><BusinessListingDetail /></Layout>} />
+                  <Route path="/business/:id" element={<Layout><PublicBusinessDetail /></Layout>} />
                   <Route path="/about" element={<Layout><About /></Layout>} />
                   <Route path="/blog" element={<Layout><Blog /></Layout>} />
                   <Route path="/blog/:slug" element={<Layout><BlogDetail /></Layout>} />
