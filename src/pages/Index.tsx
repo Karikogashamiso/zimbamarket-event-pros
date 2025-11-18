@@ -33,6 +33,7 @@ const StatsSection = lazy(() => import("@/components/StatsSection"));
 const TestimonialsSection = lazy(() => import("@/components/Marketing/TestimonialsSection"));
 const TrendingServices = lazy(() => import("@/components/TrendingServices"));
 const FloatingActionButton = lazy(() => import("@/components/FloatingActionButton"));
+const VenuesSection = lazy(() => import("@/components/VenuesSection"));
 
 const Index = () => {
   const navigate = useNavigate();
@@ -155,6 +156,10 @@ const Index = () => {
             
             <SectionErrorBoundary sectionName="featured listings">
               <FeaturedListings />
+            </SectionErrorBoundary>
+            
+            <SectionErrorBoundary sectionName="venues">
+              <VenuesSection />
             </SectionErrorBoundary>
             
             <SectionErrorBoundary sectionName="recommendations">
