@@ -21,6 +21,20 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
       setLoading(true);
       setError(null);
 
+      // If category filter is provided, fetch category UUID by slug first
+      let categoryId: string | undefined;
+      if (filters?.category) {
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', filters.category)
+          .single();
+        
+        if (categoryData) {
+          categoryId = categoryData.id;
+        }
+      }
+
       let query = supabase
         .from('business_listings')
         .select(`
@@ -44,8 +58,8 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
         .order('created_at', { ascending: false });
 
       // Apply filters
-      if (filters?.category) {
-        query = query.eq('category_id', filters.category);
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
       }
 
       if (filters?.location) {
