@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 const VenuesSection = () => {
   const { listings: venues, loading } = useBusinessListings({ 
     category: 'venues',
-    featured: true 
+    featured: true,
+    requireServices: false
   });
   return (
     <section className="py-16 bg-gradient-to-b from-background to-muted/20">
