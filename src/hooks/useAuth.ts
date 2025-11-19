@@ -58,15 +58,24 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      // Clear state immediately for instant UI feedback
+      setSession(null);
+      setUser(null);
+      
       const { error } = await supabase.auth.signOut();
+      
       // Ignore "session_not_found" errors - user is already signed out
-      if (error && error.message?.includes('Session not found')) {
-        return { error: null };
+      if (error && !error.message?.includes('Session not found')) {
+        console.error('Sign out error:', error);
+        return { error };
       }
-      return { error };
+      
+      return { error: null };
     } catch (err) {
       console.error('Sign out error:', err);
-      // If any error occurs, clear local session anyway
+      // Clear state even on error
+      setSession(null);
+      setUser(null);
       return { error: null };
     }
   };
