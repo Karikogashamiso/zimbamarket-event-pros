@@ -148,11 +148,6 @@ export const useSimpleCheckout = () => {
       // Process payment through ContiPay
       if (checkoutData.paymentMethod === 'contipay') {
         console.log('Creating ContiPay payment...');
-        
-        toast({
-          title: "Redirecting to Payment",
-          description: "Please wait while we redirect you to ContiPay...",
-        });
 
         const { data: contiPayResponse, error: contiPayError } = await supabase.functions.invoke('process-contipay-payment', {
           body: {
@@ -217,19 +212,26 @@ export const useSimpleCheckout = () => {
             description: "Your payment is being processed. Status will update automatically.",
           });
           navigate(`/order-confirmation/${order.order_number}`);
-        } else if (contiPayResponse.paymentUrl) {
+          return order;
+        }
+        
+        if (contiPayResponse.paymentUrl) {
           // Redirect directly to ContiPay payment page
           console.log('Redirecting to ContiPay:', contiPayResponse.paymentUrl);
           toast({
-            title: "Redirecting to Payment",
-            description: "Completing your payment...",
+            title: "Redirecting to Payment Gateway",
+            description: "Taking you to ContiPay...",
           });
+          
+          // Use a slightly longer delay and ensure redirect happens
+          await new Promise(resolve => setTimeout(resolve, 500));
           window.location.href = contiPayResponse.paymentUrl;
-        } else {
-          throw new Error('ContiPay did not return a payment URL or pending status');
+          
+          // Keep processing state active during redirect
+          return new Promise(() => {}); // Never resolves, keeps loading state
         }
         
-        return order;
+        throw new Error('ContiPay did not return a payment URL or pending status');
       }
 
       // For non-card payments, go directly to confirmation
