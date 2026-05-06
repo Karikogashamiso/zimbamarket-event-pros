@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Ticket, RefreshCw, Ban, CheckCircle, XCircle, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,9 +62,9 @@ const Tickets = () => {
 
   useEffect(() => {
     fetchTickets();
-  }, []);
+  }, [fetchTickets]);
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -84,7 +84,7 @@ const Tickets = () => {
 
       if (error) throw error;
       setTickets(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching tickets:", error);
       toast({
         title: "Error",
@@ -94,7 +94,7 @@ const Tickets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleRefundRequest = async () => {
     if (!selectedTicket || !refundAmount || !refundReason) {
@@ -129,7 +129,7 @@ const Tickets = () => {
       setRefundReason("");
       setSelectedTicket(null);
       fetchTickets();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating refund:", error);
       toast({
         title: "Error",
@@ -171,7 +171,7 @@ const Tickets = () => {
       setNewStatus("");
       setSelectedTicket(null);
       fetchTickets();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating ticket:", error);
       toast({
         title: "Error",

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { Ticket, Calendar, MapPin, Download, QrCode, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,9 +70,9 @@ export const MyTickets = () => {
     if (user) {
       fetchTickets();
     }
-  }, [user]);
+  }, [user, fetchTickets]);
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -162,7 +162,7 @@ export const MyTickets = () => {
       }));
       
       setTickets(transformedData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching tickets:', error);
       toast({
         title: 'Error',
@@ -172,7 +172,7 @@ export const MyTickets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
 
   const formatDate = (datetime: string) => {
     return new Date(datetime).toLocaleDateString('en-US', {

@@ -17,7 +17,7 @@ import {
   Heart
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -26,20 +26,14 @@ import { useAuth } from "@/hooks/useAuth";
 const VideoTutorials = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [tutorials, setTutorials] = useState<any[]>([]);
+  const [tutorials, setTutorials] = useState<unknown[]>([]);
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user && tutorials.length > 0) {
-      fetchLikedVideos();
-    }
-  }, [user, tutorials.length]);
-
-  const fetchLikedVideos = async () => {
+  const fetchLikedVideos = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -54,7 +48,13 @@ const VideoTutorials = () => {
     } catch (error) {
       console.error("Error fetching liked videos:", error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && tutorials.length > 0) {
+      fetchLikedVideos();
+    }
+  }, [user, tutorials.length, fetchLikedVideos]);
 
   const handleLike = async (videoId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -192,11 +192,7 @@ const VideoTutorials = () => {
     { id: "tips", label: "Pro Tips" }
   ];
 
-  useEffect(() => {
-    fetchTutorials();
-  }, []);
-
-  const fetchTutorials = async () => {
+  const fetchTutorials = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('video_tutorials')
@@ -229,7 +225,11 @@ const VideoTutorials = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTutorials();
+  }, [fetchTutorials]);
 
   const filteredTutorials = tutorials.filter(tutorial => {
     const matchesCategory = selectedCategory === "all" || tutorial.category === selectedCategory;

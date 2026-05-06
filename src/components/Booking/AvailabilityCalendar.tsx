@@ -134,7 +134,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
       
       setSelectedSlot(null);
       setSelectedDate(undefined);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Request Failed",
         description: error.message || "Failed to submit booking request. Please try again.",

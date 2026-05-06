@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,11 +31,7 @@ const Favorites = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSavedServices();
-  }, []);
-
-  const fetchSavedServices = async () => {
+  const fetchSavedServices = useCallback(async () => {
     try {
       setLoading(true);
       const savedIds = localStorage.getItem('savedServices');
@@ -84,7 +80,11 @@ const Favorites = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchSavedServices();
+  }, [fetchSavedServices]);
 
   const handleRemoveFavorite = (serviceId: string) => {
     const savedIds = localStorage.getItem('savedServices');

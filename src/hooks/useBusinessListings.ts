@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -12,12 +12,12 @@ interface BusinessListingFilters {
 }
 
 export const useBusinessListings = (filters?: BusinessListingFilters) => {
-  const [listings, setListings] = useState<any[]>([]);
+  const [listings, setListings] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -99,7 +99,7 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
         });
 
       setListings(filteredData || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching business listings:', err);
       setError(err);
       toast({
@@ -110,7 +110,7 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, filters]);
 
   useEffect(() => {
     fetchListings();
@@ -119,7 +119,8 @@ export const useBusinessListings = (filters?: BusinessListingFilters) => {
     filters?.location,
     filters?.category,
     filters?.featured,
-    filters?.verified
+    filters?.verified,
+    fetchListings
   ]);
 
   return {

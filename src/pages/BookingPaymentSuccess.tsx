@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ const BookingPaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const booking_id = searchParams.get('booking_id');
   const [loading, setLoading] = useState(true);
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<unknown>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const BookingPaymentSuccess = () => {
           title: "Payment Successful!",
           description: "Your booking has been confirmed.",
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error updating payment:', error);
         toast({
           title: "Error",
@@ -64,7 +64,7 @@ const BookingPaymentSuccess = () => {
     };
 
     updatePaymentStatus();
-  }, [booking_id]);
+  }, [booking_id, toast]);
 
   if (loading) {
     return (

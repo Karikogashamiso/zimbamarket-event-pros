@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,14 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Reports = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<unknown[]>([]);
   const [salesData, setSalesData] = useState({
     totalRevenue: 0,
     totalOrders: 0,
     totalTickets: 0,
     avgOrderValue: 0,
   });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<unknown[]>([]);
   const [bookingsSummary, setBookingsSummary] = useState({
     pending: 0,
     confirmed: 0,
@@ -36,7 +36,7 @@ const Reports = () => {
     cancelled: 0,
   });
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -56,7 +56,7 @@ const Reports = () => {
 
       if (error) throw error;
       setReports(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching reports:", error);
       toast({
         title: "Error",
@@ -66,14 +66,14 @@ const Reports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchReports();
     fetchSalesData();
     fetchRecentOrders();
     fetchBookingsSummary();
-  }, []);
+  }, [fetchReports, fetchSalesData, fetchRecentOrders, fetchBookingsSummary]);
 
   const updateReportStatus = async (reportId: string, newStatus: string) => {
     try {
@@ -93,7 +93,7 @@ const Reports = () => {
         description: `Report marked as ${newStatus}`,
       });
       fetchReports();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating report:", error);
       toast({
         title: "Error",
@@ -103,7 +103,7 @@ const Reports = () => {
     }
   };
 
-  const fetchSalesData = async () => {
+  const fetchSalesData = useCallback(async () => {
     try {
       const { data: orders, error } = await supabase
         .from("orders")
@@ -127,12 +127,12 @@ const Reports = () => {
         totalTickets: ticketsCount || 0,
         avgOrderValue,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching sales data:", error);
     }
-  };
+  }, []);
 
-  const fetchRecentOrders = async () => {
+  const fetchRecentOrders = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -142,12 +142,12 @@ const Reports = () => {
 
       if (error) throw error;
       setRecentOrders(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching recent orders:", error);
     }
-  };
+  }, []);
 
-  const fetchBookingsSummary = async () => {
+  const fetchBookingsSummary = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -163,10 +163,10 @@ const Reports = () => {
       };
 
       setBookingsSummary(summary);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching bookings summary:", error);
     }
-  };
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {

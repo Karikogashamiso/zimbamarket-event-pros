@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Store, TrendingUp, Calendar, AlertTriangle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const ServiceProviderDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [businessListings, setBusinessListings] = useState<any[]>([]);
+  const [businessListings, setBusinessListings] = useState<unknown[]>([]);
   const [hasApprovedListings, setHasApprovedListings] = useState(false);
   
   // Analytics and metrics
@@ -48,9 +48,9 @@ const ServiceProviderDashboard = () => {
     }
     
     checkBusinessListings();
-  }, [user, authLoading]);
+  }, [user, authLoading, checkBusinessListings, navigate, toast]);
 
-  const checkBusinessListings = async () => {
+  const checkBusinessListings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('business_listings')
@@ -72,7 +72,7 @@ const ServiceProviderDashboard = () => {
         navigate('/list-business');
         return;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking business listings:', error);
       toast({
         title: "Error",
@@ -82,7 +82,7 @@ const ServiceProviderDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast, navigate]);
 
   if (loading || authLoading) {
     return (

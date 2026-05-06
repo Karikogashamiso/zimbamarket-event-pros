@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,11 +36,7 @@ export const HomeFeaturesManager = () => {
     display_order: 0,
   });
 
-  useEffect(() => {
-    fetchFeatures();
-  }, []);
-
-  const fetchFeatures = async () => {
+  const fetchFeatures = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('home_features')
@@ -63,7 +59,11 @@ export const HomeFeaturesManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchFeatures();
+  }, [fetchFeatures]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

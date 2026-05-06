@@ -138,7 +138,7 @@ export const VideoTutorialsManager = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchTutorials();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving tutorial:', error);
       toast.error(error.message || 'Failed to save video tutorial');
     }

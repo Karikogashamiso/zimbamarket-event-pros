@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Users as UsersIcon, Shield, Ban, Unlock, Key, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,9 +60,9 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -72,7 +72,7 @@ const Users = () => {
       if (error) throw error;
 
       setUsers(data.users || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching users:", error);
       toast({
         title: "Error",
@@ -82,7 +82,7 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleSendPasswordReset = async () => {
     if (!resetEmail) {
@@ -109,7 +109,7 @@ const Users = () => {
       setResetPasswordDialogOpen(false);
       setResetEmail("");
       setSelectedUser(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error sending reset email:", error);
       toast({
         title: "Error",
@@ -133,7 +133,7 @@ const Users = () => {
 
       setBlockDialogOpen(false);
       setSelectedUser(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error blocking user:", error);
       toast({
         title: "Error",

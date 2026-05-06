@@ -68,8 +68,8 @@ const Index = () => {
       }
       
       // Send to analytics
-      if ((window as any).gtag) {
-        (window as any).gtag('event', metric.name, {
+      if ((window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+        (window as Window & { gtag?: (...args: unknown[]) => void }).gtag('event', metric.name, {
           value: Math.round(metric.value),
           metric_rating: metric.rating,
           custom_parameter: 'web_vitals'

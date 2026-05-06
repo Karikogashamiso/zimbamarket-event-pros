@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Star, BadgeCheck, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ const CreateService = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editServiceId = searchParams.get('edit');
-  const [businessListings, setBusinessListings] = useState<any[]>([]);
+  const [businessListings, setBusinessListings] = useState<unknown[]>([]);
   const [selectedBusinessListingId, setSelectedBusinessListingId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(!!editServiceId);
@@ -44,9 +44,9 @@ const CreateService = () => {
     if (editServiceId) {
       fetchServiceData();
     }
-  }, [user, editServiceId]);
+  }, [user, editServiceId, fetchBusinessListings, fetchServiceData]);
 
-  const fetchServiceData = async () => {
+  const fetchServiceData = useCallback(async () => {
     if (!editServiceId) return;
     
     try {
@@ -80,9 +80,9 @@ const CreateService = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [editServiceId, navigate]);
 
-  const fetchBusinessListings = async () => {
+  const fetchBusinessListings = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -103,7 +103,7 @@ const CreateService = () => {
       console.error('Error fetching business listings:', error);
       toast.error('Failed to load business listings');
     }
-  };
+  }, [user, navigate]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -233,7 +233,7 @@ const CreateService = () => {
       }
 
       navigate('/service-provider');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving service:', error);
       toast.error(error.message || 'Failed to save service');
     } finally {

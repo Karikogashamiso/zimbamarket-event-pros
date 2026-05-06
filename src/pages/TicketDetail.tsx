@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +14,10 @@ import MetaTags from '@/components/SEO/MetaTags';
 
 export const TicketDetail: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
-  const [ticket, setTicket] = useState<any>(null);
+  const [ticket, setTicket] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (ticketId) {
-      fetchTicketDetails();
-    }
-  }, [ticketId]);
-
-  const fetchTicketDetails = async () => {
+  const fetchTicketDetails = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -52,13 +46,19 @@ export const TicketDetail: React.FC = () => {
       if (error) throw error;
 
       setTicket(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching ticket:', error);
       toast.error('Failed to load ticket details');
     } finally {
       setLoading(false);
     }
-  };
+  }, [ticketId]);
+
+  useEffect(() => {
+    if (ticketId) {
+      fetchTicketDetails();
+    }
+  }, [ticketId, fetchTicketDetails]);
 
   const handleDownload = () => {
     toast.success('Download feature coming soon!');

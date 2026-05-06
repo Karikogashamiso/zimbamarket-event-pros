@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Download, Share2, Mail, MessageCircle } from 'lucide-react';
 
 interface TicketGeneratorProps {
-  ticketData: any; // This would come from your order/booking data
+  ticketData: TicketData;
 }
 
 export const TicketGenerator: React.FC<TicketGeneratorProps> = ({ ticketData }) => {
@@ -82,7 +82,7 @@ export const TicketGenerator: React.FC<TicketGeneratorProps> = ({ ticketData }) 
     specialInstructions: 'Check-in opens 3 hours before departure'
   };
 
-  const downloadTicket = async (format: 'pdf' | 'image', ticket: any) => {
+  const downloadTicket = async (format: 'pdf' | 'image', ticket: TicketData) => {
     setIsGenerating(true);
     try {
       const element = document.querySelector(`[data-ticket="${ticket.ticketNumber}"]`) as HTMLElement;
@@ -126,7 +126,7 @@ export const TicketGenerator: React.FC<TicketGeneratorProps> = ({ ticketData }) 
     }
   };
 
-  const shareTicket = async (ticket: any) => {
+  const shareTicket = async (ticket: TicketData) => {
     try {
       if (navigator.share) {
         // Use native share API if available
@@ -147,7 +147,7 @@ export const TicketGenerator: React.FC<TicketGeneratorProps> = ({ ticketData }) 
     }
   };
 
-  const sendViaWhatsApp = (ticket: any) => {
+  const sendViaWhatsApp = (ticket: TicketData) => {
     const message = encodeURIComponent(
       `🎟️ Your ${ticket.eventTitle} ticket is ready!\n\n` +
       `📅 ${new Date(ticket.dateTime).toLocaleDateString('en-ZW')}\n` +
@@ -159,7 +159,7 @@ export const TicketGenerator: React.FC<TicketGeneratorProps> = ({ ticketData }) 
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
-  const sendViaEmail = (ticket: any) => {
+  const sendViaEmail = (ticket: TicketData) => {
     const subject = encodeURIComponent(`Your ${ticket.eventTitle} Ticket - ${ticket.ticketNumber}`);
     const body = encodeURIComponent(
       `Dear ${ticket.customerName},\n\n` +

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,7 +40,7 @@ const NewsletterPage = () => {
 
   useEffect(() => {
     fetchSubscriptions();
-  }, []);
+  }, [fetchSubscriptions]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -55,7 +55,7 @@ const NewsletterPage = () => {
     }
   }, [searchQuery, subscriptions]);
 
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("newsletter_subscriptions")
@@ -73,7 +73,7 @@ const NewsletterPage = () => {
       const inactive = total - active;
       
       setStats({ total, active, inactive });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching subscriptions:", error);
       toast({
         title: "Error",
@@ -83,7 +83,7 @@ const NewsletterPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const toggleSubscriptionStatus = async (id: string, currentStatus: boolean) => {
     try {
@@ -100,7 +100,7 @@ const NewsletterPage = () => {
       });
 
       fetchSubscriptions();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to update subscription status",

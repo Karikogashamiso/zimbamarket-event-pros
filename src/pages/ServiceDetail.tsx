@@ -328,7 +328,7 @@ const ServiceDetail = () => {
       setErrors({});
       setTouchedFields({});
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting booking:', error);
       toast({
         title: "Submission Failed",

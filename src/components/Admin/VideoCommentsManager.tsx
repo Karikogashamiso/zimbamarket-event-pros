@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ export const VideoCommentsManager = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('video_comments')
@@ -38,7 +38,7 @@ export const VideoCommentsManager = () => {
 
       if (error) throw error;
       setComments(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: error.message,
@@ -47,11 +47,11 @@ export const VideoCommentsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchComments();
-  }, []);
+  }, [fetchComments]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -67,7 +67,7 @@ export const VideoCommentsManager = () => {
         description: 'Comment approved successfully',
       });
       fetchComments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: error.message,
@@ -90,7 +90,7 @@ export const VideoCommentsManager = () => {
         description: 'Comment rejected',
       });
       fetchComments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: error.message,
@@ -115,7 +115,7 @@ export const VideoCommentsManager = () => {
         description: 'Comment deleted successfully',
       });
       fetchComments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: error.message,

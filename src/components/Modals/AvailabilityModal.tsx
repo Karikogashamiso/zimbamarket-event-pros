@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback} from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
   
   const { toast } = useToast();
 
-  const fetchAvailability = async (date: string) => {
+  const fetchAvailability = useCallback(async (date: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -53,7 +53,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
       } else {
         setAvailability(data);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching availability:', error);
       toast({
         title: "Error",
@@ -65,9 +65,9 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [serviceId, toast, generateMockAvailability]);
 
-  const generateMockAvailability = (date: string): AvailabilitySlot[] => {
+  const generateMockAvailability = useCallback((date: string): AvailabilitySlot[] => {
     const slots = [
       { time: '09:00', available: true, bookings: 2, capacity: 20 },
       { time: '11:00', available: true, bookings: 5, capacity: 20 },
@@ -85,13 +85,13 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
       max_capacity: slot.capacity,
       price_override: Math.random() > 0.7 ? (basePrice || 500) * 1.2 : undefined,
     }));
-  };
+  }, [basePrice]);
 
   useEffect(() => {
     if (isOpen && selectedDate) {
       fetchAvailability(selectedDate);
     }
-  }, [isOpen, selectedDate, serviceId]);
+  }, [isOpen, selectedDate, serviceId, fetchAvailability]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -292,7 +292,7 @@ export const AvailabilityModal = ({ serviceId, serviceName, basePrice }: Availab
                                 description: `Your request for ${new Date(selectedDate).toLocaleDateString()} ${slot.time_slot ? `at ${formatTime(slot.time_slot)}` : ''} has been submitted.`,
                               });
                               setIsOpen(false);
-                            } catch (error: any) {
+                            } catch (error: unknown) {
                               toast({
                                 title: "Request Failed",
                                 description: error.message || "Failed to submit booking request. Please try again.",

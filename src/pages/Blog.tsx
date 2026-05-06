@@ -17,7 +17,7 @@ import {
   Tag,
   Search
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,19 +26,13 @@ import { useAuth } from "@/hooks/useAuth";
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [blogPosts, setBlogPosts] = useState<any[]>([]);
+  const [blogPosts, setBlogPosts] = useState<unknown[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user && blogPosts.length > 0) {
-      fetchLikedPosts();
-    }
-  }, [user, blogPosts.length]);
-
-  const fetchLikedPosts = async () => {
+  const fetchLikedPosts = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -53,7 +47,13 @@ const Blog = () => {
     } catch (error) {
       console.error("Error fetching liked posts:", error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && blogPosts.length > 0) {
+      fetchLikedPosts();
+    }
+  }, [user, blogPosts.length, fetchLikedPosts]);
 
   const handleLike = async (postId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -166,11 +166,7 @@ const Blog = () => {
     { id: "Vendor Spotlight", label: "Vendor Spotlight" }
   ];
 
-  useEffect(() => {
-    fetchBlogPosts();
-  }, []);
-
-  const fetchBlogPosts = async () => {
+  const fetchBlogPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('blog_posts')
@@ -207,7 +203,11 @@ const Blog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchBlogPosts();
+  }, [fetchBlogPosts]);
 
   const filteredPosts = blogPosts.filter(post => {
     const matchesCategory = selectedCategory === "all" || post.category === selectedCategory;

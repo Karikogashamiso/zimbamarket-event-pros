@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,7 +73,7 @@ const SearchResults = () => {
   };
   
   // Helper function to parse URL params into proper SearchFilters format
-  const parseFiltersFromParams = (): Partial<SearchFilters> => {
+  const parseFiltersFromParams = useCallback((): Partial<SearchFilters> => {
     const filters: Partial<SearchFilters> = {
       query: searchParams.get('q') || '',
       location: searchParams.get('location') || '',
@@ -113,14 +113,14 @@ const SearchResults = () => {
     }
 
     return filters;
-  };
+  }, [searchParams]);
 
   const [searchFilters, setSearchFilters] = useState<Partial<SearchFilters>>(parseFiltersFromParams);
 
   // Update filters when URL params change
   useEffect(() => {
     setSearchFilters(parseFiltersFromParams());
-  }, [searchParams]);
+  }, [searchParams, parseFiltersFromParams]);
 
   // Use real data hooks
   const { categories } = useCategories();

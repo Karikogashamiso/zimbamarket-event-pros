@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Trash2, Eye, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,18 +29,18 @@ const Services = () => {
   const { toast } = useToast();
   const { refreshCache } = useServiceCache();
   const [loading, setLoading] = useState(true);
-  const [services, setServices] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [services, setServices] = useState<unknown[]>([]);
+  const [categories, setCategories] = useState<unknown[]>([]);
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedService, setSelectedService] = useState<unknown>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -65,7 +65,7 @@ const Services = () => {
 
       if (categoriesError) throw categoriesError;
       setCategories(categoriesData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching data:', error);
       toast({
         title: "Error",
@@ -75,7 +75,7 @@ const Services = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleDeleteService = async () => {
     if (!deleteServiceId) return;
@@ -90,7 +90,7 @@ const Services = () => {
 
       toast({ title: "Service deleted successfully" });
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting service:', error);
       toast({
         title: "Error",
@@ -121,7 +121,7 @@ const Services = () => {
         title: "Success",
         description: `Service ${!currentStatus ? 'featured' : 'unfeatured'} successfully. Changes will appear immediately on the home page.` 
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling featured status:', error);
       toast({
         title: "Error",

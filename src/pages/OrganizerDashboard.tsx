@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Plus, Settings, Users, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,18 +27,18 @@ const OrganizerDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [organizers, setOrganizers] = useState<any[]>([]);
-  const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null);
-  const [venues, setVenues] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [routes, setRoutes] = useState<any[]>([]);
+  const [organizers, setOrganizers] = useState<unknown[]>([]);
+  const [selectedOrganizer, setSelectedOrganizer] = useState<unknown>(null);
+  const [venues, setVenues] = useState<unknown[]>([]);
+  const [events, setEvents] = useState<unknown[]>([]);
+  const [routes, setRoutes] = useState<unknown[]>([]);
   const [showOrganizerForm, setShowOrganizerForm] = useState(false);
   const [selectedOriginId, setSelectedOriginId] = useState<string>('');
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>('');
   const [editingProfile, setEditingProfile] = useState(false);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<unknown[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingVenue, setEditingVenue] = useState<any>(null);
+  const [editingVenue, setEditingVenue] = useState<unknown>(null);
   const [showVenueDialog, setShowVenueDialog] = useState(false);
   const [deleteVenueId, setDeleteVenueId] = useState<string | null>(null);
 
@@ -56,9 +56,9 @@ const OrganizerDashboard = () => {
       return;
     }
     checkOrganizerStatus();
-  }, [user, authLoading]);
+  }, [user, authLoading, checkOrganizerStatus, navigate, toast]);
 
-  const checkOrganizerStatus = async () => {
+  const checkOrganizerStatus = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('organizers')
@@ -75,7 +75,7 @@ const OrganizerDashboard = () => {
       } else {
         setShowOrganizerForm(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking organizer status:', error);
       toast({
         title: "Error",
@@ -85,7 +85,7 @@ const OrganizerDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
   const fetchOrganizerData = async (organizerId: string) => {
     try {
@@ -143,8 +143,8 @@ const OrganizerDashboard = () => {
         .order('created_at', { ascending: false });
       
       // Filter orders that belong to this organizer and have valid events/trips
-      const organizerOrders = ordersData?.filter((order: any) => {
-        return order.tickets?.some((ticket: any) => {
+      const organizerOrders = ordersData?.filter((order: Record<string, unknown>) => {
+        return (order.tickets as Record<string, unknown>[] | undefined)?.some((ticket: Record<string, unknown>) => {
           const ticketType = ticket.ticket_type;
           if (!ticketType) return false;
           
@@ -200,7 +200,7 @@ const OrganizerDashboard = () => {
         title: "Success!",
         description: "Organizer profile created. You can now manage your business.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to create organizer profile.",
@@ -236,7 +236,7 @@ const OrganizerDashboard = () => {
       toast({ title: "Venue created successfully!" });
       await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to create venue.",
@@ -286,7 +286,7 @@ const OrganizerDashboard = () => {
       toast({ title: "Event created successfully!" });
       await fetchOrganizerData(selectedOrganizer.id);
       (e.target as HTMLFormElement).reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to create event.",
@@ -351,7 +351,7 @@ const OrganizerDashboard = () => {
       (e.target as HTMLFormElement).reset();
       setSelectedOriginId('');
       setSelectedDestinationId('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to create route.",
@@ -389,7 +389,7 @@ const OrganizerDashboard = () => {
       toast({ title: "Profile updated successfully!" });
       setEditingProfile(false);
       await checkOrganizerStatus();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to update profile.",
@@ -429,7 +429,7 @@ const OrganizerDashboard = () => {
       setShowVenueDialog(false);
       setEditingVenue(null);
       await fetchOrganizerData(selectedOrganizer.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to update venue.",
@@ -454,7 +454,7 @@ const OrganizerDashboard = () => {
 
       toast({ title: "Venue deleted successfully!" });
       await fetchOrganizerData(selectedOrganizer.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete venue.",
@@ -911,7 +911,7 @@ const OrganizerDashboard = () => {
                               <div className="mt-2 pt-2 border-t">
                                 <p className="text-xs font-medium text-muted-foreground mb-1">Ticket Types:</p>
                                 <div className="space-y-1">
-                                  {event.ticket_types.map((ticket: any) => (
+                                  {event.ticket_types.map((ticket: Record<string, unknown>) => (
                                     <div key={ticket.id} className="text-xs flex justify-between items-center">
                                       <span>{ticket.name}</span>
                                       <span className="font-medium">${ticket.base_price}</span>
@@ -925,7 +925,7 @@ const OrganizerDashboard = () => {
                               <div className="mt-2 pt-2 border-t">
                                 <p className="text-xs font-medium text-muted-foreground mb-1">Event Add-Ons:</p>
                                 <div className="space-y-1">
-                                  {event.event_addons.map((addon: any) => (
+                                  {event.event_addons.map((addon: Record<string, unknown>) => (
                                     <div key={addon.id} className="text-xs flex justify-between items-center">
                                       <span>{addon.name} ({addon.category})</span>
                                       <span className="font-medium">${addon.price}</span>
@@ -1061,7 +1061,7 @@ const OrganizerDashboard = () => {
                     <p className="text-muted-foreground text-center py-4">No routes yet. Create your first route above.</p>
                   ) : (
                     <div className="space-y-4">
-                      {routes.map((route: any) => (
+                      {routes.map((route: Record<string, unknown>) => (
                         <div key={route.id} className="border rounded-lg p-4 space-y-3">
                           <div>
                             <h3 className="font-semibold text-lg">{route.route_name}</h3>
@@ -1086,7 +1086,7 @@ const OrganizerDashboard = () => {
                           {route.transport_trips && route.transport_trips.length > 0 && (
                             <div className="border-t pt-3 space-y-3">
                               <p className="font-medium text-sm">Upcoming Trips:</p>
-                              {route.transport_trips.slice(0, 3).map((trip: any) => (
+                              {(route.transport_trips as Record<string, unknown>[]).slice(0, 3).map((trip: Record<string, unknown>) => (
                                 <div key={trip.id} className="bg-muted/50 rounded p-3 space-y-3">
                                   <div className="flex justify-between items-start">
                                     <span className="font-medium text-sm">Trip #{trip.trip_number}</span>
@@ -1129,7 +1129,7 @@ const OrganizerDashboard = () => {
                                     </div>
                                     {trip.ticket_types && trip.ticket_types.length > 0 ? (
                                       <div className="space-y-1">
-                                        {trip.ticket_types.map((ticket: any) => (
+                                        {(trip.ticket_types as Record<string, unknown>[]).map((ticket: Record<string, unknown>) => (
                                           <div key={ticket.id} className="flex justify-between text-xs bg-background rounded p-2">
                                             <span>{ticket.name}</span>
                                             <div className="flex gap-2">
@@ -1157,7 +1157,7 @@ const OrganizerDashboard = () => {
                                     </div>
                                     {trip.addons && trip.addons.length > 0 ? (
                                       <div className="space-y-1">
-                                        {trip.addons.map((addon: any) => (
+                                        {(trip.addons as Record<string, unknown>[]).map((addon: Record<string, unknown>) => (
                                           <div key={addon.id} className="flex justify-between text-xs bg-background rounded p-2">
                                             <span>{addon.name}</span>
                                             <span className="font-medium">${addon.price}</span>

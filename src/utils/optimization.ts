@@ -1,7 +1,7 @@
 import { useRef, useCallback, useMemo } from 'react';
 
 // Debounce utility for performance optimization
-export const debounce = <T extends (...args: any[]) => void>(
+export const debounce = <T extends (...args: unknown[]) => void>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -14,7 +14,7 @@ export const debounce = <T extends (...args: any[]) => void>(
 };
 
 // Throttle utility for performance optimization
-export const throttle = <T extends (...args: any[]) => void>(
+export const throttle = <T extends (...args: unknown[]) => void>(
   func: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -30,13 +30,13 @@ export const throttle = <T extends (...args: any[]) => void>(
 };
 
 // Hook for stable callback references
-export const useStableCallback = <T extends (...args: any[]) => any>(
+export const useStableCallback = <T extends (...args: unknown[]) => unknown>(
   callback: T
 ): T => {
   const ref = useRef<T>(callback);
   ref.current = callback;
   
-  return useCallback((...args: any[]) => ref.current(...args), []) as T;
+  return useCallback((...args: unknown[]) => ref.current(...args), []) as T;
 };
 
 // Hook for memoizing expensive computations

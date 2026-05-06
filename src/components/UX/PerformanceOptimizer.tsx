@@ -33,7 +33,7 @@ const PerformanceOptimizer = () => {
     // Monitor Core Web Vitals
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      entries.forEach((entry: any) => {
+      entries.forEach((entry: PerformanceEntry) => {
         console.log(`Performance: ${entry.name} - ${entry.value || entry.duration}ms`);
       });
     });

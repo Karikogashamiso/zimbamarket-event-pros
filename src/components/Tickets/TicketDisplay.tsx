@@ -6,8 +6,8 @@ import { Download, Share2, Mail, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TicketDisplayProps {
-  orderDetails: any;
-  tickets: any[];
+  orderDetails: Record<string, unknown>;
+  tickets: Record<string, unknown>[];
   onDownload?: (ticketId: string, format: 'pdf' | 'image') => void;
   onShare?: (ticketId: string, method: 'email' | 'whatsapp') => void;
 }
@@ -23,7 +23,7 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
     toast.success(`Ticket ${format.toUpperCase()} download started`);
   };
 
-  const handleShare = (ticket: any, method: 'email' | 'whatsapp') => {
+  const handleShare = (ticket: Record<string, unknown>, method: 'email' | 'whatsapp') => {
     const message = `Your ticket for ${ticket.metadata?.eventInfo?.title || 'Event'} - Ticket #${ticket.ticket_number}`;
     
     if (method === 'whatsapp') {
@@ -39,7 +39,7 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
     toast.success(`Ticket shared via ${method === 'whatsapp' ? 'WhatsApp' : 'Email'}`);
   };
 
-  const convertTicketToDisplayFormat = (ticket: any, order: any) => {
+  const convertTicketToDisplayFormat = (ticket: Record<string, unknown>, order: Record<string, unknown>) => {
     const eventInfo = ticket.metadata?.eventInfo || {};
     
     // Get customer name from ticket holder fields or fallback to order customer info
@@ -123,7 +123,7 @@ export const TicketDisplay: React.FC<TicketDisplayProps> = ({
                   if (error) throw error;
                   
                   toast.success('Tickets sent to your email!');
-                } catch (error: any) {
+                } catch (error: unknown) {
                   console.error('Email error:', error);
                   toast.error('Failed to send email: ' + error.message);
                 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserPreferences {
@@ -85,7 +85,7 @@ export const useSmartRecommendations = (userId?: string) => {
   };
 
   // Load user preferences from localStorage only for now
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     if (!userId) return;
 
     try {
@@ -97,10 +97,10 @@ export const useSmartRecommendations = (userId?: string) => {
     } catch (error) {
       console.error('Error loading preferences:', error);
     }
-  };
+  }, [userId]);
 
   // Generate smart recommendations
-  const generateRecommendations = async () => {
+  const generateRecommendations = useCallback(async () => {
     if (!userPreferences) return;
 
     setIsLoading(true);
@@ -201,7 +201,7 @@ export const useSmartRecommendations = (userId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userPreferences]);
 
   // Get trending services (most viewed/booked recently)
   const getTrendingServices = async () => {
@@ -247,13 +247,13 @@ export const useSmartRecommendations = (userId?: string) => {
     if (userId) {
       loadPreferences();
     }
-  }, [userId]);
+  }, [userId, loadPreferences]);
 
   useEffect(() => {
     if (userPreferences && userId) {
       generateRecommendations();
     }
-  }, [userPreferences]);
+  }, [userPreferences, userId, generateRecommendations]);
 
   return {
     recommendations,

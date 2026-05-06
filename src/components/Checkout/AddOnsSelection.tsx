@@ -7,10 +7,21 @@ import { Utensils, Car, Luggage, Wifi, Coffee, Gift, Ticket } from 'lucide-react
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface AddOn {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  category: string;
+  max_quantity: number;
+  is_active: boolean;
+}
+
 interface AddOnsSelectionProps {
-  event: any;
-  selectedAddOns: any[];
-  onAddOnsChange: (addOns: any[]) => void;
+  event: { id?: string; [key: string]: unknown };
+  selectedAddOns: AddOn[];
+  onAddOnsChange: (addOns: AddOn[]) => void;
 }
 
 export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
@@ -19,7 +30,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
   onAddOnsChange
 }) => {
   const { toast } = useToast();
-  const [addOns, setAddOns] = useState<any[]>([]);
+  const [addOns, setAddOns] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +45,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
 
         if (error) throw error;
         setAddOns(data || []);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching add-ons:', error);
         toast({
           title: "Error",
@@ -51,7 +62,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
     } else {
       setLoading(false);
     }
-  }, [event?.id]);
+  }, [event?.id, toast]);
 
   const getIcon = (category: string) => {
     switch (category) {
@@ -62,7 +73,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
       default: return <Ticket className="h-5 w-5" />;
     }
   };
-  const toggleAddOn = (addOn: any) => {
+  const toggleAddOn = (addOn: AddOn) => {
     const existingIndex = selectedAddOns.findIndex(a => a.id === addOn.id);
     
     if (existingIndex >= 0) {
@@ -142,7 +153,7 @@ export const AddOnsSelection: React.FC<AddOnsSelectionProps> = ({
         <div key={category}>
           <h3 className="font-semibold text-lg mb-3">{getCategoryTitle(category)}</h3>
           <div className="space-y-3">
-            {categoryAddOns.map((addOn: any) => {
+            {categoryAddOns.map((addOn: AddOn) => {
               const selectedAddOn = getSelectedAddOn(addOn.id);
               const isSelected = !!selectedAddOn;
 

@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MetaTags from "@/components/SEO/MetaTags";
 import Header from "@/components/Header";
@@ -26,8 +26,8 @@ const VideoTutorialDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [video, setVideo] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [video, setVideo] = useState<unknown>(null);
+  const [comments, setComments] = useState<unknown[]>([]);
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -39,18 +39,7 @@ const VideoTutorialDetail = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    fetchVideo();
-  }, [id]);
-
-  useEffect(() => {
-    if (video?.id) {
-      fetchComments();
-      fetchLikes();
-    }
-  }, [video?.id, user]);
-
-  const fetchVideo = async () => {
+  const fetchVideo = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("video_tutorials")
@@ -71,9 +60,9 @@ const VideoTutorialDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase
       .from("video_comments")
@@ -83,9 +72,9 @@ const VideoTutorialDetail = () => {
       .order("created_at", { ascending: false });
     
     setComments(data || []);
-  };
+  }, [id]);
 
-  const fetchLikes = async () => {
+  const fetchLikes = useCallback(async () => {
     if (!id) return;
     const { count } = await supabase
       .from("video_likes")
@@ -104,7 +93,18 @@ const VideoTutorialDetail = () => {
       
       setIsLiked(!!data);
     }
-  };
+  }, [id, user]);
+
+  useEffect(() => {
+    fetchVideo();
+  }, [fetchVideo]);
+
+  useEffect(() => {
+    if (video?.id) {
+      fetchComments();
+      fetchLikes();
+    }
+  }, [video?.id, user, fetchComments, fetchLikes]);
 
   const handleLike = async () => {
     if (!user) {

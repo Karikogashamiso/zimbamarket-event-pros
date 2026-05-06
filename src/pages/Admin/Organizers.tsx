@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Users, Check, X, Building2, Mail, Phone, MapPin, Globe, Shield, CheckCircle, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,9 +55,9 @@ export default function Organizers() {
 
   useEffect(() => {
     fetchOrganizers();
-  }, []);
+  }, [fetchOrganizers]);
 
-  const fetchOrganizers = async () => {
+  const fetchOrganizers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -67,7 +67,7 @@ export default function Organizers() {
 
       if (error) throw error;
       setOrganizers(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching organizers:', error);
       toast({
         title: "Error",
@@ -77,7 +77,7 @@ export default function Organizers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateOrganizerStatus = async (organizerId: string, status: string) => {
     try {
@@ -95,7 +95,7 @@ export default function Organizers() {
 
       fetchOrganizers();
       setSelectedOrganizer(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating organizer status:', error);
       toast({
         title: "Error",
@@ -121,7 +121,7 @@ export default function Organizers() {
 
       fetchOrganizers();
       setSelectedOrganizer(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating verification status:', error);
       toast({
         title: "Error",
@@ -150,7 +150,7 @@ export default function Organizers() {
       fetchOrganizers();
       setSelectedOrganizer(null);
       setDeleteDialogOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting organizer:', error);
       toast({
         title: "Error",

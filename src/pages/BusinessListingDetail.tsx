@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Plus, Edit, Trash2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,11 @@ const BusinessListingDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [business, setBusiness] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([]);
+  const [business, setBusiness] = useState<unknown>(null);
+  const [services, setServices] = useState<unknown[]>([]);
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchBusinessDetails();
-      fetchServices();
-    }
-  }, [id, user]);
-
-  const fetchBusinessDetails = async () => {
+  const fetchBusinessDetails = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('business_listings')
@@ -55,9 +48,9 @@ const BusinessListingDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user, navigate]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('services')
@@ -71,7 +64,14 @@ const BusinessListingDetail = () => {
       console.error('Error fetching services:', error);
       toast.error('Failed to load services');
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchBusinessDetails();
+      fetchServices();
+    }
+  }, [id, user, fetchBusinessDetails, fetchServices]);
 
   const handleDeleteService = async () => {
     if (!deleteServiceId) return;
@@ -86,7 +86,7 @@ const BusinessListingDetail = () => {
 
       toast.success('Service deleted successfully');
       setServices(prev => prev.filter(s => s.id !== deleteServiceId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting service:', error);
       toast.error('Failed to delete service');
     } finally {

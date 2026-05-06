@@ -49,7 +49,7 @@ export const useTicketGeneration = () => {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
-  const generateDigitalSignature = async (ticketData: any): Promise<string> => {
+  const generateDigitalSignature = async (ticketData: Record<string, unknown>): Promise<string> => {
     // In production, this would use proper cryptographic signing with private keys
     const signatureInput = JSON.stringify(ticketData) + 'TICKET_SIGNING_SECRET';
     return await generateSecureHash(signatureInput);
@@ -64,7 +64,7 @@ export const useTicketGeneration = () => {
     return `ZEP-${orderPrefix}-${uniqueId}-${tierCode}${ticketCode}`;
   };
 
-  const createSecureQRCode = async (ticketData: any): Promise<{ qrData: string; qrUrl: string; hash: string; signature: string }> => {
+  const createSecureQRCode = async (ticketData: Record<string, unknown>): Promise<{ qrData: string; qrUrl: string; hash: string; signature: string }> => {
     // Create secure QR payload
     const timestamp = Date.now();
     const expiryTimestamp = timestamp + (365 * 24 * 60 * 60 * 1000); // 1 year expiry
@@ -246,7 +246,7 @@ export const useTicketGeneration = () => {
       
       return tickets;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Ticket generation failed:', error);
       
       toast.error(`Ticket generation failed: ${error.message}`);
@@ -257,7 +257,7 @@ export const useTicketGeneration = () => {
     }
   };
 
-  const validateTicket = async (qrData: string): Promise<{ isValid: boolean; ticket?: any; error?: string }> => {
+  const validateTicket = async (qrData: string): Promise<{ isValid: boolean; ticket?: Record<string, unknown>; error?: string }> => {
     try {
       const parsedData = JSON.parse(qrData);
       

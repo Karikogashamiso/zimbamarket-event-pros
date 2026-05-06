@@ -35,7 +35,7 @@ export const ServicesList = () => {
       
       // Refresh the list
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling featured:', error);
       toast.error(error.message || "Failed to update featured status");
     }

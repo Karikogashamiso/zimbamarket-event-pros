@@ -73,8 +73,8 @@ const App = () => {
         console.error('Top-level application error:', error, errorInfo);
         
         // Send critical errors to analytics
-        if (typeof window !== 'undefined' && (window as any).gtag) {
-          (window as any).gtag('event', 'exception', {
+        if (typeof window !== 'undefined' && (window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+          (window as Window & { gtag?: (...args: unknown[]) => void }).gtag('event', 'exception', {
             description: `App Error: ${error.message}`,
             fatal: true,
             custom_parameter: 'app_boundary'

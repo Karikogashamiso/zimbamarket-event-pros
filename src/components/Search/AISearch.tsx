@@ -17,7 +17,7 @@ const AISearch: React.FC<AISearchProps> = ({ onResults, className }) => {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<unknown>(null);
 
   const handleAISearch = async () => {
     if (!query.trim()) return;

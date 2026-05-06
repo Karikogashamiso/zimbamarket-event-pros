@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,22 +53,7 @@ const Profile = () => {
     path: ["confirmPassword"],
   });
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-    fetchProfile();
-  }, [user, navigate, authLoading]);
-
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) setActiveTab(tab);
-  }, [searchParams]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -87,10 +72,20 @@ const Profile = () => {
           phoneNumber: data.phone_number || '',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    fetchProfile();
+  }, [user, navigate, authLoading, fetchProfile]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +149,7 @@ const Profile = () => {
         title: "Profile Updated",
         description: "Your profile has been updated successfully",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
       const errorMessage = error.message || error.hint || 'Failed to update profile';
       toast({
@@ -215,7 +210,7 @@ const Profile = () => {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
         error.errors.forEach((err) => {

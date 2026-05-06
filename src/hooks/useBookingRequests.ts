@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,7 +35,7 @@ export const useBookingRequests = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     if (!user?.id) return;
     
     try {
@@ -107,7 +107,7 @@ export const useBookingRequests = () => {
       );
 
       setRequests(requestsWithProfiles);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching booking requests:', error);
       toast({
         title: "Error",
@@ -117,13 +117,13 @@ export const useBookingRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
 
   useEffect(() => {
     if (user?.id) {
       fetchRequests();
     }
-  }, [user?.id]);
+  }, [user?.id, fetchRequests]);
 
   const updateRequestStatus = async (requestId: string, status: string) => {
     try {
@@ -140,7 +140,7 @@ export const useBookingRequests = () => {
       });
 
       fetchRequests();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating request:', error);
       toast({
         title: "Error",

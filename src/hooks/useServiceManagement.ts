@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,7 +44,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -98,7 +98,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
         if (error) throw error;
         setServices(data || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching services:', error);
       toast({
         title: "Error",
@@ -108,11 +108,11 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, categoryId, userOnly]);
 
   useEffect(() => {
     fetchServices();
-  }, [categoryId, userOnly]);
+  }, [categoryId, userOnly, fetchServices]);
 
   const createService = async (serviceData: CreateServiceData) => {
     try {
@@ -137,7 +137,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
 
       fetchServices();
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating service:', error);
       toast({
         title: "Error",
@@ -166,7 +166,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
 
       fetchServices();
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating service:', error);
       toast({
         title: "Error",
@@ -192,7 +192,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
       });
 
       fetchServices();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting service:', error);
       toast({
         title: "Error",
@@ -217,7 +217,7 @@ export const useServiceManagement = (categoryId?: string, userOnly: boolean = fa
       });
 
       fetchServices();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling featured status:', error);
       toast({
         title: "Error",

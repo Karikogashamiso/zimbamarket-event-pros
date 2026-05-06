@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, MapPin, Calendar, Package, Settings, ChevronLeft, Menu, Briefcase, Users, Flag, Mail, Quote, BookOpen, Video, MessageSquare, FolderTree, Webhook } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -131,9 +131,9 @@ const AdminLayout = () => {
     };
 
     initializeAdmin();
-  }, [user, authLoading]);
+  }, [user, authLoading, checkAdminStatus, navigate, toast]);
 
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     try {
       console.log('Checking admin status for user ID:', user?.id);
       
@@ -164,7 +164,7 @@ const AdminLayout = () => {
 
       console.log('Admin access granted');
       setIsAdmin(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking admin status:', error);
       toast({
         title: "Error",
@@ -175,7 +175,7 @@ const AdminLayout = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, toast, navigate]);
 
   if (authLoading || loading) {
     return (

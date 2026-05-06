@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Review {
@@ -16,7 +16,7 @@ export const useReviews = (serviceId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -40,13 +40,13 @@ export const useReviews = (serviceId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [serviceId]);
 
   useEffect(() => {
     if (serviceId) {
       fetchReviews();
     }
-  }, [serviceId]);
+  }, [serviceId, fetchReviews]);
 
   return { reviews, loading, error, refetch: fetchReviews };
 };

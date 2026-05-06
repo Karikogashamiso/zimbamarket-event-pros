@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Clock, Users, Ticket, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,11 +66,7 @@ const Events = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchEventsAndTrips();
-  }, [eventsPage, tripsPage]);
-
-  const fetchEventsAndTrips = async () => {
+  const fetchEventsAndTrips = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch events with venue and ticket types
@@ -122,7 +118,7 @@ const Events = () => {
 
       setEvents(eventsData || []);
       setTrips(tripsData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching events/trips:', error);
       toast({
         title: "Error",
@@ -132,7 +128,11 @@ const Events = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [eventsPage, tripsPage, toast]);
+
+  useEffect(() => {
+    fetchEventsAndTrips();
+  }, [fetchEventsAndTrips]);
 
   const handleBuyTickets = (eventId: string, type: 'event' | 'trip') => {
     navigate(`/checkout?${type}Id=${eventId}`);

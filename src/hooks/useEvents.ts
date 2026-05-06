@@ -63,14 +63,14 @@ export const useEvents = () => {
         if (eventsError) throw eventsError;
 
         // Transform events data
-        const transformedEvents: Event[] = (eventsData || []).map((event: any) => {
+        const transformedEvents: Event[] = (eventsData || []).map((event: Record<string, unknown>) => {
           const venue = event.venues;
           const ticketTypes = event.ticket_types || [];
           const lowestPrice = ticketTypes.length > 0 
-            ? Math.min(...ticketTypes.map((t: any) => t.price || 0))
+            ? Math.min(...ticketTypes.map((t: Record<string, unknown>) => (t.price as number) || 0))
             : 0;
-          const totalAvailable = ticketTypes.reduce((sum: number, t: any) => sum + (t.quantity_available || 0), 0);
-          const totalCapacity = ticketTypes.reduce((sum: number, t: any) => sum + (t.quantity_total || 0), 0);
+          const totalAvailable = ticketTypes.reduce((sum: number, t: Record<string, unknown>) => sum + ((t.quantity_available as number) || 0), 0);
+          const totalCapacity = ticketTypes.reduce((sum: number, t: Record<string, unknown>) => sum + ((t.quantity_total as number) || 0), 0);
 
           const startDate = new Date(event.start_datetime);
 

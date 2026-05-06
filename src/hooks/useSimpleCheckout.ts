@@ -238,7 +238,7 @@ export const useSimpleCheckout = () => {
       navigate(`/order-confirmation/${order.order_number}`);
       return order;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout failed:', error);
       
       toast({

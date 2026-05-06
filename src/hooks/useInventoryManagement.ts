@@ -54,7 +54,7 @@ export const useInventoryManagement = () => {
   };
 
   // Update availability
-  const updateAvailability = async (availabilityData: any) => {
+  const updateAvailability = async (availabilityData: Record<string, unknown>) => {
     try {
       const { data, error } = await supabase
         .from('service_availability')
@@ -75,7 +75,7 @@ export const useInventoryManagement = () => {
   };
 
   // Bulk update availability
-  const bulkUpdateAvailability = async (updates: any[]) => {
+  const bulkUpdateAvailability = async (updates: Record<string, unknown>[]) => {
     try {
       const { data, error } = await supabase
         .from('service_availability')
@@ -109,7 +109,7 @@ export const useInventoryManagement = () => {
 
       if (availError) throw availError;
 
-      const conflicts: any[] = [];
+      const conflicts: unknown[] = [];
 
       for (const slot of availability || []) {
         // Check for overbooking

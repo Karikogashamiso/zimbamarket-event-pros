@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Users, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,17 +12,10 @@ import LazyImage from '@/components/LazyImage';
 const PublicBusinessDetail = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
-  const [business, setBusiness] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([]);
+  const [business, setBusiness] = useState<unknown>(null);
+  const [services, setServices] = useState<unknown[]>([]);
 
-  useEffect(() => {
-    if (id) {
-      fetchBusinessDetails();
-      fetchServices();
-    }
-  }, [id]);
-
-  const fetchBusinessDetails = async () => {
+  const fetchBusinessDetails = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('business_listings')
@@ -42,9 +35,9 @@ const PublicBusinessDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('services')
@@ -58,7 +51,14 @@ const PublicBusinessDetail = () => {
     } catch (error) {
       console.error('Error fetching services:', error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchBusinessDetails();
+      fetchServices();
+    }
+  }, [id, fetchBusinessDetails, fetchServices]);
 
   if (loading) {
     return (

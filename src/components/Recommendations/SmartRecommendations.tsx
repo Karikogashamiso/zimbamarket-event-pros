@@ -69,7 +69,7 @@ const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
         setLoadingTrending(false);
       });
     }
-  }, [showTrending]);
+  }, [showTrending, getTrendingServices]);
 
   // Load personalized recommendations
   useEffect(() => {

@@ -1,162 +1,115 @@
-import { 
-  Building2, 
-  Utensils, 
-  Wine, 
-  Music, 
-  Users2, 
-  Flower,
-  Palette,
-  Camera,
-  Video,
-  Cake,
-  Piano,
-  UserCheck,
-  Scissors,
-  Mic,
-  Shield,
-  Guitar,
-  Lightbulb,
-  Speaker,
-  Image,
-  ChefHat,
-  ShoppingBag,
-  Heart
-} from "lucide-react";
+import { Building2, Utensils, Music, Camera, Flower, UserCheck, Scissors, Mic, Shield, Guitar, Lightbulb, Speaker, Image, ChefHat, ShoppingBag, Heart, Video, Cake, Piano, Wine, Users2, Palette } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { Link } from "react-router-dom";
 
+// Category images - using Unsplash for visual richness
+const CATEGORY_IMAGES: Record<string, string> = {
+  "Venues": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=300&fit=crop",
+  "Catering": "https://images.unsplash.com/photo-1555244162-803834f70033?w=400&h=300&fit=crop",
+  "Photography": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop",
+  "DJs & Entertainment": "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=400&h=300&fit=crop",
+  "Decor": "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=400&h=300&fit=crop",
+  "Planners": "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=400&h=300&fit=crop",
+  "Florists": "https://images.unsplash.com/photo-1487530811015-780bab56ab31?w=400&h=300&fit=crop",
+  "Security": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=300&fit=crop",
+  "Transport": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
+  "Audio Visual": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
+  "MCs": "https://images.unsplash.com/photo-1578025880049-21e48b0e527c?w=400&h=300&fit=crop",
+  "Lighting": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop",
+};
+
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop";
+
+const iconMap: Record<string, unknown> = {
+  Building2, Utensils, Wine, Music, Users2, Flower, Palette, Camera,
+  Video, Cake, Piano, UserCheck, Scissors, Mic, Shield, Guitar,
+  Lightbulb, Speaker, Image, ChefHat, ShoppingBag, Heart,
+};
+
 const CategorySection = () => {
-  const { categories, loading, error } = useCategories();
+  const { categories, loading } = useCategories();
 
-  // Icon mapping
-  const iconMap: Record<string, any> = {
-    Building2,
-    Utensils,
-    Wine,
-    Music,
-    Users2,
-    Flower,
-    Palette,
-    Camera,
-    Video,
-    Cake,
-    Piano,
-    UserCheck,
-    Scissors,
-    Mic,
-    Shield,
-    Guitar,
-    Lightbulb,
-    Speaker,
-    Image,
-    ChefHat,
-    ShoppingBag,
-    Heart
-  };
-
-  if (error) {
-    return (
-      <section className="py-16 bg-gradient-to-br from-background to-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="text-muted-foreground">Error loading categories: {error}</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const skeletons = Array.from({ length: 6 });
 
   return (
-    <section className="py-16 bg-gradient-to-br from-background to-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Browse by Category
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Find the perfect service providers for your event
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {loading ? (
-            // Loading skeleton
-            Array.from({ length: 12 }).map((_, index) => (
-              <div key={index} className="bg-card rounded-3xl p-6 border border-border/50">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-16 h-16 bg-muted rounded-2xl animate-pulse"></div>
-                  <div className="w-20 h-4 bg-muted rounded animate-pulse"></div>
-                </div>
-              </div>
-            ))
-          ) : (
-            categories.map((category, index) => {
-              const IconComponent = iconMap[category.icon] || Building2;
-              
-              // Create vibrant color themes for different categories
-              const getThemeColors = (categoryName: string, index: number) => {
-                const themes = [
-                  { bg: "from-purple-500 to-purple-700", icon: "text-white", hover: "hover:from-purple-600 hover:to-purple-800" },
-                  { bg: "from-pink-500 to-rose-600", icon: "text-white", hover: "hover:from-pink-600 hover:to-rose-700" },
-                  { bg: "from-blue-500 to-indigo-600", icon: "text-white", hover: "hover:from-blue-600 hover:to-indigo-700" },
-                  { bg: "from-emerald-500 to-teal-600", icon: "text-white", hover: "hover:from-emerald-600 hover:to-teal-700" },
-                  { bg: "from-amber-500 to-orange-600", icon: "text-white", hover: "hover:from-amber-600 hover:to-orange-700" },
-                  { bg: "from-red-500 to-red-700", icon: "text-white", hover: "hover:from-red-600 hover:to-red-800" },
-                  { bg: "from-cyan-500 to-blue-600", icon: "text-white", hover: "hover:from-cyan-600 hover:to-blue-700" },
-                  { bg: "from-green-500 to-emerald-600", icon: "text-white", hover: "hover:from-green-600 hover:to-emerald-700" },
-                  { bg: "from-violet-500 to-purple-600", icon: "text-white", hover: "hover:from-violet-600 hover:to-purple-700" },
-                  { bg: "from-fuchsia-500 to-pink-600", icon: "text-white", hover: "hover:from-fuchsia-600 hover:to-pink-700" },
-                  { bg: "from-lime-500 to-green-600", icon: "text-white", hover: "hover:from-lime-600 hover:to-green-700" },
-                  { bg: "from-sky-500 to-cyan-600", icon: "text-white", hover: "hover:from-sky-600 hover:to-cyan-700" }
-                ];
-                return themes[index % themes.length];
-              };
+    <section className="py-16 relative" style={{ background: "hsl(248 35% 6%)" }}>
+      {/* Section background glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[40vw] rounded-full opacity-30"
+          style={{ background: "radial-gradient(ellipse, hsl(265 80% 62% / 0.08) 0%, transparent 70%)" }} />
+      </div>
 
-              const theme = getThemeColors(category.name, index);
-              
-              return (
-                <Link 
-                  key={category.id}
-                  to={`/search?category=${category.slug}`}
-                  className="group relative overflow-hidden"
-                  style={{
-                    animation: `fade-in-up 0.6s ease-out ${index * 0.1}s both`
-                  }}
-                >
-                  <div className="bg-white dark:bg-card rounded-3xl p-6 transition-all duration-500 cursor-pointer hover:scale-110 hover:-translate-y-2 border border-border/20 hover:border-white/30 group-hover:shadow-2xl hover:shadow-primary/20 backdrop-blur-sm">
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${theme.bg} ${theme.hover} transition-all duration-500 flex items-center justify-center transform group-hover:rotate-12 group-hover:scale-110 shadow-lg group-hover:shadow-xl`}>
-                        {/* Glow effect */}
-                        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${theme.bg} opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500 scale-150`}></div>
-                        
-                        {/* Icon with enhanced styling */}
-                        <IconComponent className={`w-8 h-8 ${theme.icon} relative z-10 transition-all duration-300 group-hover:scale-110 drop-shadow-sm`} />
-                        
-                        {/* Sparkle effect */}
-                        <div className="absolute top-1 right-1 w-2 h-2 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse"></div>
-                        <div className="absolute bottom-2 left-2 w-1 h-1 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100 animate-pulse"></div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-105">
-                          {category.name}
-                        </h3>
-                        <div className="w-0 group-hover:w-8 h-0.5 bg-gradient-to-r from-primary to-secondary transition-all duration-500 mx-auto rounded-full"></div>
-                      </div>
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5">
+          {loading
+            ? skeletons.map((_, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden aspect-[4/3] animate-pulse"
+                  style={{ background: "hsl(248 30% 11%)", border: "1px solid hsl(265 30% 18%)" }} />
+              ))
+            : (categories.slice(0, 6)).map((cat, i) => {
+                const imgSrc = CATEGORY_IMAGES[cat.name] || FALLBACK_IMG;
+                return (
+                  <Link
+                    key={cat.id}
+                    to={`/search?category=${cat.slug}`}
+                    className="group relative rounded-2xl overflow-hidden hover-lift"
+                    style={{
+                      border: "1px solid hsl(265 80% 62% / 0.25)",
+                      boxShadow: "0 0 0 0 hsl(265 80% 62% / 0)",
+                      animation: `fade-in-up 0.6s ease-out ${i * 0.08}s both`,
+                      transition: "border-color 0.3s, box-shadow 0.3s",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "hsl(265 80% 62% / 0.7)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 0 24px hsl(265 80% 62% / 0.25)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "hsl(265 80% 62% / 0.25)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 0 transparent";
+                    }}
+                  >
+                    {/* Image */}
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <img
+                        src={imgSrc}
+                        alt={cat.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                        onError={e => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                      />
                     </div>
-                    
-                    {/* Floating particles effect */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute top-4 left-4 w-1 h-1 bg-primary rounded-full animate-float delay-0"></div>
-                      <div className="absolute top-8 right-6 w-1.5 h-1.5 bg-secondary rounded-full animate-float delay-300"></div>
-                      <div className="absolute bottom-6 left-6 w-1 h-1 bg-accent rounded-full animate-float delay-700"></div>
+
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d0b1e]/90 via-[#0d0b1e]/30 to-transparent" />
+
+                    {/* Text */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="text-white font-bold text-base mb-2" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>
+                        {cat.name}
+                      </h3>
+                      <span className="explore-chip">Explore</span>
                     </div>
-                  </div>
-                </Link>
-              );
-            })
-          )}
+                  </Link>
+                );
+              })}
         </div>
+
+        {/* View all link */}
+        {!loading && categories.length > 6 && (
+          <div className="text-center mt-8">
+            <Link
+              to="/categories"
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold transition-all hover:bg-purple-500/10"
+              style={{
+                border: "1px solid hsl(265 80% 62% / 0.4)",
+                color: "hsl(265 80% 78%)",
+              }}
+            >
+              View All Categories
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

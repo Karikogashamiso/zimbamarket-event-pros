@@ -39,7 +39,7 @@ export const AddTicketTypeForm = ({ eventId, onSuccess }: AddTicketTypeFormProps
       setIsOpen(false);
       (e.target as HTMLFormElement).reset();
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to add ticket type.",

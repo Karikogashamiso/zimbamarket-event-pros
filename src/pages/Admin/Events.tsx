@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Trash2, Edit, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,18 +17,18 @@ import { useToast } from "@/hooks/use-toast";
 const Events = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [events, setEvents] = useState<any[]>([]);
-  const [venues, setVenues] = useState<any[]>([]);
-  const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [events, setEvents] = useState<unknown[]>([]);
+  const [venues, setVenues] = useState<unknown[]>([]);
+  const [editingEvent, setEditingEvent] = useState<unknown>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -50,7 +50,7 @@ const Events = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteEventId) return;
@@ -65,7 +65,7 @@ const Events = () => {
 
       toast({ title: "Event deleted successfully" });
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete event.",
@@ -139,7 +139,7 @@ const Events = () => {
       setShowDialog(false);
       setEditingEvent(null);
       await fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving event:', error);
       toast({
         title: "Error",

@@ -42,7 +42,7 @@ const NewsletterSection = () => {
         description: "Successfully subscribed to our newsletter!",
       });
       setEmail("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Newsletter signup error:', error);
       toast({
         title: "Subscription Failed",

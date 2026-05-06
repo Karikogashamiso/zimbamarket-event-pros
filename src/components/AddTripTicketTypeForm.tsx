@@ -39,7 +39,7 @@ export const AddTripTicketTypeForm = ({ tripId, onSuccess }: AddTripTicketTypeFo
       setIsOpen(false);
       (e.target as HTMLFormElement).reset();
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to add ticket type.",

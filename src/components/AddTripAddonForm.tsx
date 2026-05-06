@@ -62,7 +62,7 @@ export const AddTripAddonForm: React.FC<AddTripAddonFormProps> = ({ tripId, onAd
       });
       setIsOpen(false);
       onAddonAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating add-on:', error);
       toast({
         title: "Error",

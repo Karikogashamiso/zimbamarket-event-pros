@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,18 +36,14 @@ interface BusinessListingsDisplayProps {
 }
 
 export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps) => {
-  const [listings, setListings] = useState<any[]>([]);
+  const [listings, setListings] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [selectedListing, setSelectedListing] = useState<unknown>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchListings();
-  }, [userId]);
-
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -69,7 +65,7 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
       }));
       
       setListings(cleanedData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching listings:', error);
       toast({
         title: "Error",
@@ -79,7 +75,11 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
+
+  useEffect(() => {
+    fetchListings();
+  }, [userId, fetchListings]);
 
   const handleEditListing = (listing: any) => {
     setSelectedListing(listing);
@@ -119,7 +119,7 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
       setShowEditDialog(false);
       setSelectedListing(null);
       fetchListings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating listing:', error);
       toast({
         title: "Error",
@@ -144,7 +144,7 @@ export const BusinessListingsDisplay = ({ userId }: BusinessListingsDisplayProps
       });
 
       fetchListings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling featured:', error);
       toast({
         title: "Error",

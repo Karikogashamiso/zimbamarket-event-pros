@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,14 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const Orders = () => {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await supabase
@@ -32,7 +32,7 @@ const Orders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleResendTickets = async (orderId: string, customerEmail: string) => {
     try {
@@ -76,7 +76,7 @@ const Orders = () => {
         title: "Tickets Resent",
         description: `Tickets have been sent to ${customerEmail}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error resending tickets:', error);
       toast({
         title: "Error",

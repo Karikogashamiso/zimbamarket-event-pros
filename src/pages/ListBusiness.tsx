@@ -77,7 +77,7 @@ const ListBusiness = () => {
     phoneNumber: z.string()
       .trim()
       .min(1, "Phone number is required")
-      .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, "Please enter a valid phone number")
+      .regex(/^[+]?[0-9\s\-()]{7,20}$/, "Please enter a valid phone number")
       .max(20, "Phone number must be less than 20 characters"),
     email: z.string()
       .trim()

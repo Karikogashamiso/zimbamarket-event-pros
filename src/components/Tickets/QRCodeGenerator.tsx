@@ -52,11 +52,21 @@ export const QRCodeGenerator: React.FC<QRGeneratorProps> = ({
   const [useSigning, setUseSigning] = useState(true);
   const [expiryHours, setExpiryHours] = useState(24);
 
-  useEffect(() => {
-    generateSecureQRCode();
-  }, [ticketData, useEncryption, useSigning, expiryHours]);
+  const generateHash = useCallback(async (input: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }, []);
 
-  const generateSecureQRCode = async () => {
+  const generateSignature = useCallback(async (payload: SecureTicketData): Promise<string> => {
+    // Simulate ECDSA signature generation
+    const signatureInput = `${payload.ticketId}:${payload.eventId}:${payload.timestamp}:${payload.hash}`;
+    return await generateHash(signatureInput + 'SIGNING_SECRET');
+  }, [generateHash]);
+
+  const generateSecureQRCode = useCallback(async () => {
     setIsGenerating(true);
     
     try {
@@ -115,22 +125,11 @@ export const QRCodeGenerator: React.FC<QRGeneratorProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [ticketData, expiryHours, useEncryption, useSigning, offlineMode, onQRGenerated, generateSignature, generateHash]);
 
-  const generateHash = async (input: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(input);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
-  const generateSignature = async (payload: SecureTicketData): Promise<string> => {
-    // Simulate ECDSA signature generation
-    // In production, this would use proper cryptographic signing
-    const signatureInput = `${payload.ticketId}:${payload.eventId}:${payload.timestamp}:${payload.hash}`;
-    return await generateHash(signatureInput + 'SIGNING_SECRET');
-  };
+  useEffect(() => {
+    generateSecureQRCode();
+  }, [ticketData, useEncryption, useSigning, expiryHours, generateSecureQRCode]);
 
   const downloadQRCode = () => {
     if (!qrCodeUrl) return;

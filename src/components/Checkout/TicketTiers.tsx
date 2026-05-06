@@ -4,11 +4,28 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Ticket } from 'lucide-react';
 
+interface TicketType {
+  id: string;
+  name: string;
+  description?: string;
+  base_price: number;
+  currency: string;
+  max_quantity: number;
+  is_active: boolean;
+}
+
+interface SelectedTier {
+  ticketTypeId: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
 interface TicketTiersProps {
-  event: any;
-  selectedSeats: any[];
-  selectedTiers: any[];
-  onTiersChange: (tiers: any[]) => void;
+  event: { ticket_types?: TicketType[]; [key: string]: unknown };
+  selectedSeats: unknown[];
+  selectedTiers: SelectedTier[];
+  onTiersChange: (tiers: SelectedTier[]) => void;
 }
 
 export const TicketTiers: React.FC<TicketTiersProps> = ({
@@ -21,10 +38,10 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
   console.log('TicketTiers - ticket_types:', event?.ticket_types);
   
   // Get ticket types from event
-  const ticketTypes = event?.ticket_types?.filter((tt: any) => tt.is_active) || [];
+  const ticketTypes = event?.ticket_types?.filter((tt: TicketType) => tt.is_active) || [];
   console.log('TicketTiers - filtered ticket types:', ticketTypes);
 
-  const handleTierSelect = (tier: any) => {
+  const handleTierSelect = (tier: TicketType) => {
     console.log('Selecting tier:', tier);
     const existingIndex = selectedTiers.findIndex(t => t.ticketTypeId === tier.id);
     
@@ -79,7 +96,7 @@ export const TicketTiers: React.FC<TicketTiersProps> = ({
         <p className="text-muted-foreground">Select the ticket type for this event</p>
       </div>
 
-      {ticketTypes.map((tier: any) => {
+      {ticketTypes.map((tier: TicketType) => {
         const selectedTier = getSelectedTier(tier.id);
         const isSelected = !!selectedTier;
 

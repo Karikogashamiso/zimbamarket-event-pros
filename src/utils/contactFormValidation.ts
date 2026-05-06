@@ -37,7 +37,7 @@ export const verifyContactFormIntegration = async (): Promise<{
       latestSubmission
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       isConnected: false,
       canInsert: false,

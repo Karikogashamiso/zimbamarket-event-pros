@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceCache {
-  services: any[];
-  categories: any[];
-  featuredServices: any[];
+  services: unknown[];
+  categories: unknown[];
+  featuredServices: unknown[];
   lastFetched: number;
 }
 

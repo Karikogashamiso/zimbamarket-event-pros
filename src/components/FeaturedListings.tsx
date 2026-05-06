@@ -15,7 +15,7 @@ const FeaturedListings = () => {
 
   if (error) {
     return (
-      <section className="py-16 bg-background">
+      <section className="py-16" style={{background:"hsl(248 35% 6%)"}}>
         <div className="container mx-auto px-4">
           <LoadingErrorBanner
             message="Unable to load featured businesses. You can still browse other sections."
@@ -33,7 +33,7 @@ const FeaturedListings = () => {
   }
 
   return (
-    <section className="py-12 md:py-20 lg:py-24 bg-gradient-to-br from-background via-muted/10 to-background relative overflow-hidden">
+    <section className="py-16 relative" style={{background:"hsl(248 35% 6%)"}}>
       {/* Background Elements */}
       <div className="absolute top-20 left-10 text-primary/5 animate-float">
         <Star className="w-32 h-32" />
@@ -48,7 +48,7 @@ const FeaturedListings = () => {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">Featured Services</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 md:mb-6 text-gradient">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{background:"linear-gradient(135deg, hsl(40 85% 68%), hsl(38 70% 48%))", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text"}}>
             Featured Businesses
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4">

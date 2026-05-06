@@ -61,8 +61,8 @@ const ServiceErrorBoundary: React.FC<ServiceErrorBoundaryProps> = ({
         console.error(`Error in service ${serviceId}:`, error, errorInfo);
         
         // Track service errors for analytics
-        if (typeof window !== 'undefined' && (window as any).gtag) {
-          (window as any).gtag('event', 'service_error', {
+        if (typeof window !== 'undefined' && (window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+          (window as Window & { gtag?: (...args: unknown[]) => void }).gtag('event', 'service_error', {
             service_id: serviceId,
             error_message: error.message,
             custom_parameter: 'service_boundary'

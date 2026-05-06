@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { Trash2, Edit, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,17 +13,17 @@ import { useToast } from "@/hooks/use-toast";
 
 const Venues = () => {
   const { toast } = useToast();
-  const [venues, setVenues] = useState<any[]>([]);
-  const [editingVenue, setEditingVenue] = useState<any>(null);
+  const [venues, setVenues] = useState<unknown[]>([]);
+  const [editingVenue, setEditingVenue] = useState<unknown>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleteVenueId, setDeleteVenueId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVenues();
-  }, []);
+  }, [fetchVenues]);
 
-  const fetchVenues = async () => {
+  const fetchVenues = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await supabase
@@ -36,7 +36,7 @@ const Venues = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteVenueId) return;
@@ -51,7 +51,7 @@ const Venues = () => {
 
       toast({ title: "Venue deleted successfully" });
       await fetchVenues();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete venue.",
@@ -94,7 +94,7 @@ const Venues = () => {
       setShowDialog(false);
       setEditingVenue(null);
       await fetchVenues();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save venue.",

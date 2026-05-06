@@ -73,7 +73,7 @@ const NewsletterSubscription = () => {
 
       setEmail(""); // Clear the form
       setValidationError('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Newsletter subscription error:', error);
       
       toast({

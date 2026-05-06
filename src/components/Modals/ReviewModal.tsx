@@ -92,7 +92,7 @@ export const ReviewModal = ({ serviceId, serviceName, onReviewSubmitted }: Revie
       
       // Notify parent component
       onReviewSubmitted?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting review:', error);
       toast({
         title: "Error",

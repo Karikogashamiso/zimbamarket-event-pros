@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,22 +38,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const BusinessApplicationsManager = () => {
-  const [applications, setApplications] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [applications, setApplications] = useState<unknown[]>([]);
+  const [categories, setCategories] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [selectedApp, setSelectedApp] = useState<unknown>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchApplications();
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -62,12 +57,12 @@ export const BusinessApplicationsManager = () => {
 
       if (error) throw error;
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, []);
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -77,7 +72,7 @@ export const BusinessApplicationsManager = () => {
 
       if (error) throw error;
       setApplications(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching applications:', error);
       toast({
         title: "Error",
@@ -87,7 +82,12 @@ export const BusinessApplicationsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchApplications();
+    fetchCategories();
+  }, [fetchApplications, fetchCategories]);
 
   const handleApprove = (application: any) => {
     setSelectedApp(application);
@@ -168,7 +168,7 @@ export const BusinessApplicationsManager = () => {
       setSelectedApp(null);
       setSelectedCategoryId('');
       fetchApplications();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving application:', error);
       toast({
         title: "Error",
@@ -218,7 +218,7 @@ export const BusinessApplicationsManager = () => {
       });
 
       fetchApplications();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting application:', error);
       toast({
         title: "Error",
@@ -248,7 +248,7 @@ export const BusinessApplicationsManager = () => {
 
       setDeleteApplicationId(null);
       fetchApplications();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting application:', error);
       toast({
         title: "Error",

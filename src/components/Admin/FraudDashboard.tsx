@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,11 +50,7 @@ export const FraudDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
 
-  useEffect(() => {
-    fetchFraudData();
-  }, [selectedTimeframe]);
-
-  const fetchFraudData = async () => {
+  const fetchFraudData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -89,7 +85,11 @@ export const FraudDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTimeframe]);
+
+  useEffect(() => {
+    fetchFraudData();
+  }, [fetchFraudData]);
 
   const getTimeframeDate = (timeframe: string): Date => {
     const now = new Date();

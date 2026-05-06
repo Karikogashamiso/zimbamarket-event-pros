@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +18,9 @@ import { format } from "date-fns";
 const Contacts = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<unknown[]>([]);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -30,7 +30,7 @@ const Contacts = () => {
 
       if (error) throw error;
       setContacts(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching contacts:", error);
       toast({
         title: "Error",
@@ -40,11 +40,11 @@ const Contacts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [fetchContacts]);
 
   return (
     <>

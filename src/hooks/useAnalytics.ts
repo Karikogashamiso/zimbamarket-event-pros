@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface AnalyticsEvent {
   serviceId: string;
   eventType: 'view' | 'inquiry' | 'booking' | 'conversion' | 'cancellation';
-  eventData?: Record<string, any>;
+  eventData?: Record<string, unknown>;
 }
 
 export interface BusinessMetric {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,14 +25,26 @@ const MyBusinessApplications = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [applications, setApplications] = useState<unknown[]>([]);
+  const [user, setUser] = useState<unknown>(null);
 
-  useEffect(() => {
-    checkAuthAndFetchApplications();
+  const fetchApplications = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('business_applications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setApplications(data || []);
+    } catch (error: unknown) {
+      console.error("Error fetching applications:", error);
+      throw error;
+    }
   }, []);
 
-  const checkAuthAndFetchApplications = async () => {
+  const checkAuthAndFetchApplications = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -49,7 +61,7 @@ const MyBusinessApplications = () => {
 
       setUser(user);
       await fetchApplications(user.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error:", error);
       toast({
         title: "Error",
@@ -59,23 +71,11 @@ const MyBusinessApplications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, navigate, fetchApplications]);
 
-  const fetchApplications = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('business_applications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setApplications(data || []);
-    } catch (error: any) {
-      console.error("Error fetching applications:", error);
-      throw error;
-    }
-  };
+  useEffect(() => {
+    checkAuthAndFetchApplications();
+  }, [checkAuthAndFetchApplications]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

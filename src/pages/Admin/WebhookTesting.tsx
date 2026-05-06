@@ -16,7 +16,7 @@ const WebhookTesting = () => {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [isLoading, setIsLoading] = useState(false);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<unknown>(null);
 
   const handleTestWebhook = async () => {
     if (!orderId.trim()) {
@@ -56,7 +56,7 @@ const WebhookTesting = () => {
         title: "Webhook Test Successful",
         description: `Successfully triggered webhook for order ${orderId}`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Webhook test error:', error);
       setTestResult({
         success: false,

@@ -69,7 +69,7 @@ const Contact = () => {
     phone: z.string()
       .trim()
       .optional()
-      .refine((val) => !val || /^[\+]?[0-9\s\-\(\)]{7,20}$/.test(val), {
+      .refine((val) => !val || /^[+]?[0-9\s\-()]{7,20}$/.test(val), {
         message: "Please enter a valid phone number"
       }),
     
@@ -188,7 +188,7 @@ const Contact = () => {
         setIsSubmitted(false);
       }, 3000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Contact form submission error:', error);
       
       if (error instanceof z.ZodError) {

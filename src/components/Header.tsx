@@ -1,8 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Menu, Heart, LogOut, Search, User, Shield, FileText } from "lucide-react";
-import { useState, useEffect } from "react";
-import MobileMenu from "./MobileMenu";
+import { Bell, Search, User, Menu, X, ChevronDown, LogOut, LayoutDashboard, Shield, Building2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,281 +29,174 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const checkUserAccess = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setHasBusinessListings(false);
-        setHasOrganizerProfile(false);
-        return;
-      }
-
-      try {
-        // Check admin status
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        setIsAdmin(!!roleData);
-
-        // Check business listings
-        const { data: listingsData } = await supabase
-          .from('business_listings')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-        setHasBusinessListings(!!listingsData);
-
-        // Check organizer profile
-        const { data: organizerData } = await supabase
-          .from('organizers')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-        setHasOrganizerProfile(!!organizerData);
-      } catch (error) {
-        console.error('Error checking user access:', error);
-      }
-    };
-
-    checkUserAccess();
+  const checkUserAccess = useCallback(async () => {
+    if (!user) {
+      setIsAdmin(false);
+      setHasBusinessListings(false);
+      setHasOrganizerProfile(false);
+      return;
+    }
+    try {
+      const [roleData, listingsData, organizerData] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle(),
+        supabase.from("business_listings").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
+        supabase.from("organizers").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
+      ]);
+      setIsAdmin(!!roleData.data);
+      setHasBusinessListings(!!listingsData.data);
+      setHasOrganizerProfile(!!organizerData.data);
+    } catch (err) {
+      console.error("Header access check error:", err);
+    }
   }, [user]);
 
+  useEffect(() => {
+    checkUserAccess();
+  }, [checkUserAccess]);
+
   const handleSignOut = async () => {
-    try {
-      const { error } = await signOut();
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to sign out. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You have been signed out. Come back soon!",
-      });
-      
-      navigate('/auth');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    }
+    await signOut();
+    toast({ title: "Signed out", description: "See you next time!" });
+    navigate("/");
   };
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  const headerStyles = variant === "solid" || isScrolled
-    ? "bg-background/95 dark:bg-card/95 backdrop-blur-lg border-border shadow-lg" 
-    : "bg-transparent border-transparent";
-
-  const textStyles = variant === "solid" || isScrolled
-    ? "text-foreground"
-    : "text-foreground md:text-white";
-
-  const logoAccentStyles = variant === "solid" || isScrolled
-    ? "text-primary"
-    : "text-primary md:text-secondary";
-
-  const searchStyles = variant === "solid" || isScrolled
-    ? "bg-muted border-border text-foreground placeholder:text-muted-foreground"
-    : "bg-muted md:bg-white/20 border-border md:border-white/30 text-foreground md:text-white placeholder:text-muted-foreground md:placeholder:text-white/70 focus:bg-muted md:focus:bg-white/30";
-
-  const buttonStyles = variant === "solid" || isScrolled
-    ? "hover:bg-muted hover:text-primary"
-    : "hover:bg-muted hover:text-primary md:hover:bg-white/20 md:hover:text-primary";
+  const scrolled = isScrolled || variant === "solid";
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerStyles} transition-all duration-300`}>
-      <div className="container mx-auto px-3 sm:px-4 lg:px-6">
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center flex-shrink-0">
-            <h1 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold ${textStyles} transition-colors whitespace-nowrap`}>
-              Zim<span className={logoAccentStyles}>EventPro</span>
-            </h1>
-          </Link>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-[#0d0b1e]/95 backdrop-blur-xl border-b border-purple-500/20 shadow-lg shadow-purple-900/20"
+          : "bg-transparent"
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
           
-          {/* Desktop Navigation - Only on XL+ screens */}
-          <nav className="hidden xl:flex items-center space-x-4 2xl:space-x-6">
-            <Link to="/categories" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm 2xl:text-base`}>
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+            <span
+              className="text-xl font-bold"
+              style={{
+                fontFamily: "'Outfit', sans-serif",
+                background: "linear-gradient(135deg, hsl(40 85% 68%), hsl(38 70% 48%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              ZimEventPro
+            </span>
+          </Link>
+
+          {/* Nav links - desktop */}
+          <nav className="hidden md:flex items-center gap-8">
+            <Link to="/categories" className="text-white/80 hover:text-white text-sm font-medium transition-colors hover:text-[hsl(40_85%_68%)]">
               Browse
             </Link>
-            <Link to="/events" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm 2xl:text-base whitespace-nowrap`}>
+            <Link to="/events" className="text-white/80 hover:text-white text-sm font-medium transition-colors hover:text-[hsl(40_85%_68%)]">
               Events
             </Link>
-            <Link to="/organizer" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm 2xl:text-base`}>
-              Organizer
-            </Link>
-            <Link to="/about" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm 2xl:text-base`}>
-              About
-            </Link>
-            <Link to="/contact" className={`${textStyles} hover:text-accent transition-all duration-200 font-medium text-sm 2xl:text-base`}>
-              Contact
+            <Link to="/list-business" className="text-white/80 hover:text-white text-sm font-medium transition-colors hover:text-[hsl(40_85%_68%)]">
+              List Business
             </Link>
           </nav>
-          
-          {/* Desktop Search - Only on XL+ screens */}
-          <div className="hidden xl:flex items-center flex-1 max-w-md mx-4">
-            <div className="relative w-full group">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors ${variant === "solid" || isScrolled ? "text-muted-foreground group-focus-within:text-primary" : "text-muted-foreground md:text-white/70 group-focus-within:text-primary md:group-focus-within:text-white"}`} />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleSearchKeyPress}
-                placeholder="Search..."
-                className={`pl-10 h-10 transition-all duration-200 ${searchStyles}`}
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSearch}
-                  className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 ${variant === "solid" || isScrolled ? "hover:bg-muted" : "hover:bg-muted md:hover:bg-white/20"}`}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Desktop Actions - Only on XL+ screens */}
-          <div className="hidden xl:flex items-center space-x-2 flex-shrink-0">
-            <Link to="/favorites">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={`${textStyles} ${buttonStyles} transition-all duration-200`}
-              >
-                <Heart className="w-5 h-5" />
-              </Button>
-            </Link>
-            
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3">
+            {/* Search icon */}
+            <button
+              onClick={() => navigate("/search")}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
+            {/* Bell */}
+            <button
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+            </button>
+
+            {/* User */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className={`${textStyles} ${buttonStyles} transition-all duration-200`}
-                  >
-                    <User className="w-5 h-5" />
-                  </Button>
+                  <button className="w-9 h-9 flex items-center justify-center rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-500/70 transition-all">
+                    <User className="w-4 h-4" />
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">
-                      <User className="w-4 h-4 mr-2" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/my-tickets" className="cursor-pointer">
-                      <FileText className="w-4 h-4 mr-2" />
-                      My Tickets
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/favorites" className="cursor-pointer">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Favorites
-                    </Link>
+                <DropdownMenuContent align="end" className="w-52 bg-[#13112a] border-purple-500/30 text-white">
+                  <DropdownMenuLabel className="text-white/60 text-xs">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-purple-500/20" />
+                  <DropdownMenuItem onClick={() => navigate("/profile")} className="hover:bg-purple-500/20 cursor-pointer">
+                    <User className="w-4 h-4 mr-2" /> Profile
                   </DropdownMenuItem>
                   {hasBusinessListings && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/service-provider/dashboard" className="cursor-pointer">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Service Provider
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin" className="cursor-pointer">
-                          <Shield className="w-4 h-4 mr-2" />
-                          Admin Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {hasOrganizerProfile && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/organizer-dashboard" className="cursor-pointer">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Organizer Dashboard
-                      </Link>
+                    <DropdownMenuItem onClick={() => navigate("/business-dashboard")} className="hover:bg-purple-500/20 cursor-pointer">
+                      <Building2 className="w-4 h-4 mr-2" /> Business Dashboard
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                  {hasOrganizerProfile && (
+                    <DropdownMenuItem onClick={() => navigate("/organizer")} className="hover:bg-purple-500/20 cursor-pointer">
+                      <LayoutDashboard className="w-4 h-4 mr-2" /> Organizer Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")} className="hover:bg-purple-500/20 cursor-pointer">
+                      <Shield className="w-4 h-4 mr-2" /> Admin Panel
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator className="bg-purple-500/20" />
+                  <DropdownMenuItem onClick={handleSignOut} className="hover:bg-red-500/20 text-red-400 cursor-pointer">
+                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
-                asChild
-                variant="ghost"
-                size="icon"
-                className={`${textStyles} ${buttonStyles}`}
+              <Link
+                to="/auth"
+                className="w-9 h-9 flex items-center justify-center rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-500/70 transition-all"
               >
-                <Link to="/auth">
-                  <User className="w-5 h-5" />
-                </Link>
-              </Button>
+                <User className="w-4 h-4" />
+              </Link>
             )}
-          </div>
-          
-          {/* Mobile Menu Button - Show on screens < XL */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`xl:hidden ${textStyles} ${buttonStyles}`}
-          >
-            <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
-          </Button>
-        </div>
-      </div>
 
-      {/* Mobile Menu */}
-      <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-purple-500/20 animate-fade-in">
+            <nav className="flex flex-col gap-3">
+              <Link to="/categories" onClick={() => setIsMenuOpen(false)} className="text-white/80 hover:text-[hsl(40_85%_68%)] py-2 transition-colors text-sm font-medium">Browse</Link>
+              <Link to="/events" onClick={() => setIsMenuOpen(false)} className="text-white/80 hover:text-[hsl(40_85%_68%)] py-2 transition-colors text-sm font-medium">Events</Link>
+              <Link to="/list-business" onClick={() => setIsMenuOpen(false)} className="text-white/80 hover:text-[hsl(40_85%_68%)] py-2 transition-colors text-sm font-medium">List Business</Link>
+              <Link to="/search" onClick={() => setIsMenuOpen(false)} className="text-white/80 hover:text-[hsl(40_85%_68%)] py-2 transition-colors text-sm font-medium">Search</Link>
+            </nav>
+          </div>
+        )}
+      </div>
     </header>
   );
 };

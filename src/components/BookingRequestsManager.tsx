@@ -27,13 +27,10 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface BookingRequestsManagerProps {
-  // No props needed - automatically uses authenticated user
-}
-
+// No props needed - component uses authenticated user internally
 export const BookingRequestsManager = () => {
   const { requests, loading, updateRequestStatus, refreshRequests } = useBookingRequests();
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<unknown>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [customPrice, setCustomPrice] = useState('');
@@ -145,7 +142,7 @@ export const BookingRequestsManager = () => {
       setShowPriceDialog(false);
       setShowDetailsDialog(false);
       refreshRequests();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving booking:', error);
       toast({
         title: "Error",

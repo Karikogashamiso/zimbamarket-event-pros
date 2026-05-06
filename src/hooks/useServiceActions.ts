@@ -44,7 +44,7 @@ export const useServiceActions = () => {
           description: `${serviceName} has been added to your saved services.`,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving service:', error);
       toast({
         title: "Error",
@@ -95,7 +95,7 @@ export const useServiceActions = () => {
         // Silently fail analytics logging
         console.log('Analytics logging failed:', analyticsError);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sharing service:', error);
       
       // Fallback: try to copy to clipboard
@@ -149,7 +149,7 @@ export const useServiceActions = () => {
         reportedBy: user?.id || 'anonymous',
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error reporting service:', error);
       toast({
         title: "Error",

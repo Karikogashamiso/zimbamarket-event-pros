@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import MetaTags from "@/components/SEO/MetaTags";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,8 @@ const BlogDetail = () => {
   const { slug } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [post, setPost] = useState<any>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [post, setPost] = useState<unknown>(null);
+  const [comments, setComments] = useState<unknown[]>([]);
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -37,18 +37,7 @@ const BlogDetail = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    fetchBlogPost();
-  }, [slug]);
-
-  useEffect(() => {
-    if (post?.id) {
-      fetchComments();
-      fetchLikes();
-    }
-  }, [post?.id, user]);
-
-  const fetchBlogPost = async () => {
+  const fetchBlogPost = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("blog_posts")
@@ -75,9 +64,9 @@ const BlogDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug, toast]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!post?.id) return;
     const { data } = await supabase
       .from("blog_comments")
@@ -87,9 +76,9 @@ const BlogDetail = () => {
       .order("created_at", { ascending: false });
     
     setComments(data || []);
-  };
+  }, [post?.id]);
 
-  const fetchLikes = async () => {
+  const fetchLikes = useCallback(async () => {
     if (!post?.id) return;
     const { count } = await supabase
       .from("blog_likes")
@@ -108,7 +97,18 @@ const BlogDetail = () => {
       
       setIsLiked(!!data);
     }
-  };
+  }, [post?.id, user]);
+
+  useEffect(() => {
+    fetchBlogPost();
+  }, [fetchBlogPost]);
+
+  useEffect(() => {
+    if (post?.id) {
+      fetchComments();
+      fetchLikes();
+    }
+  }, [post?.id, user, fetchComments, fetchLikes]);
 
   const handleLike = async () => {
     if (!user) {

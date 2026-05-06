@@ -30,7 +30,7 @@ const Auth = () => {
     return params.get('type') === 'recovery' || params.get('code') || hash.includes('type=recovery');
   });
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
-  const [recoverySession, setRecoverySession] = useState<any>(null);
+  const [recoverySession, setRecoverySession] = useState<unknown>(null);
   const [passwordUpdateForm, setPasswordUpdateForm] = useState({
     password: "",
     confirmPassword: "",

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,18 +27,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const TransportManagementManager = () => {
-  const [routes, setRoutes] = useState<any[]>([]);
-  const [trips, setTrips] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<unknown[]>([]);
+  const [trips, setTrips] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteRouteId, setDeleteRouteId] = useState<string | null>(null);
   const [deleteTripId, setDeleteTripId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchTransportData();
-  }, []);
-
-  const fetchTransportData = async () => {
+  const fetchTransportData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -90,7 +86,7 @@ export const TransportManagementManager = () => {
       if (tripsError) throw tripsError;
       setTrips(tripsData || []);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching transport data:', error);
       toast({
         title: "Error",
@@ -100,7 +96,11 @@ export const TransportManagementManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchTransportData();
+  }, [fetchTransportData]);
 
   const handleDeleteRoute = async () => {
     if (!deleteRouteId) return;
@@ -121,7 +121,7 @@ export const TransportManagementManager = () => {
 
       setDeleteRouteId(null);
       fetchTransportData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting route:', error);
       toast({
         title: "Error",
@@ -150,7 +150,7 @@ export const TransportManagementManager = () => {
 
       setDeleteTripId(null);
       fetchTransportData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting trip:', error);
       toast({
         title: "Error",

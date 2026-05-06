@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,11 @@ import jsPDF from 'jspdf';
 export const OrderConfirmation: React.FC = () => {
   const { orderNumber } = useParams<{ orderNumber: string }>();
   const navigate = useNavigate();
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [verificationAttempted, setVerificationAttempted] = useState(false);
+  const verificationAttemptedRef = useRef(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -91,8 +92,9 @@ export const OrderConfirmation: React.FC = () => {
         }
 
         // Handle Stripe payment verification
-        if (paymentStatus === 'success' && !verificationAttempted) {
+        if (paymentStatus === 'success' && !verificationAttemptedRef.current) {
           console.log('💳 Stripe payment detected, verifying...');
+          verificationAttemptedRef.current = true;
           setVerificationAttempted(true);
           
           try {
@@ -136,14 +138,14 @@ export const OrderConfirmation: React.FC = () => {
         // Tickets are already included in the order from edge function
         const enrichedOrder = {
           ...order,
-          tickets: order.tickets?.map((ticket: any) => ({
+          tickets: order.tickets?.map((ticket: Record<string, unknown>) => ({
             ...ticket,
             ticket_type_name: ticket.ticket_types?.name || 'General Admission'
           })) || []
         };
 
         setOrderDetails(enrichedOrder);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching order:', err);
         setError('Failed to load order details');
       } finally {
@@ -187,10 +189,10 @@ export const OrderConfirmation: React.FC = () => {
           }
 
           // Update order details
-          setOrderDetails((prev: any) => ({
+          setOrderDetails((prev: Record<string, unknown> | null) => prev ? ({
             ...prev,
             ...updatedOrder
-          }));
+          }) : null);
         }
       )
       .subscribe((status) => {
@@ -252,10 +254,10 @@ export const OrderConfirmation: React.FC = () => {
               toast.error('Payment failed. Please try again or contact support.');
             }
             
-            setOrderDetails((prev: any) => ({
+            setOrderDetails((prev: Record<string, unknown> | null) => prev ? ({
               ...prev,
               ...updatedOrder
-            }));
+            }) : null);
             
             clearInterval(pollInterval);
             console.log('✅ Polling stopped - status updated');
@@ -374,7 +376,7 @@ export const OrderConfirmation: React.FC = () => {
       
       // Tickets
       if (orderDetails.tickets && orderDetails.tickets.length > 0) {
-        orderDetails.tickets.forEach((ticket: any) => {
+        (orderDetails.tickets as Record<string, unknown>[]).forEach((ticket: Record<string, unknown>) => {
           doc.text(ticket.ticket_type_name || 'Ticket', 20, yPos);
           doc.text('1', 100, yPos);
           doc.text(formatCurrency(ticket.price || 0, orderDetails.currency), 160, yPos);
@@ -450,7 +452,7 @@ export const OrderConfirmation: React.FC = () => {
       if (error) throw error;
 
       toast.success('Invoice email sent successfully!', { id: 'email-invoice' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending invoice email:', error);
       toast.error('Failed to send invoice email. Please try again.', { id: 'email-invoice' });
     }

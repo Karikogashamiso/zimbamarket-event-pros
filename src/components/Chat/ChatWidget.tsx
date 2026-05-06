@@ -63,7 +63,7 @@ const ChatWidget = () => {
         timestamp: new Date()
       }]);
     }
-  }, []);
+  }, [messages.length]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -113,7 +113,7 @@ const ChatWidget = () => {
         setConversationId(data.conversationId);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Chat error:', error);
       
       let errorTitle = "Chat Error";

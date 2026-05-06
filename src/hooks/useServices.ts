@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { SearchFilters } from '@/components/Search/AdvancedSearch';
 
@@ -57,7 +57,7 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchServices = async (isRetry = false, loadMore = false) => {
+  const fetchServices = useCallback(async (isRetry = false, loadMore = false) => {
     try {
       if (isRetry) {
         setIsRetrying(true);
@@ -240,7 +240,7 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
       const newCurrentPage = loadMore ? pageToFetch : 0;
       setCurrentPage(newCurrentPage);
       setHasMore((newCurrentPage + 1) * ITEMS_PER_PAGE < total);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Services fetch error:', err);
       setError(err.message || 'Failed to load services. Please try again.');
     } finally {
@@ -248,7 +248,7 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
       setIsRetrying(false);
       setLoadingMore(false);
     }
-  };
+  }, [filters, currentPage]);
 
   const retry = () => fetchServices(true);
   const loadMore = () => {
@@ -270,7 +270,8 @@ export const useServices = (filters?: Partial<SearchFilters>): UseServicesReturn
     filters?.verified,
     filters?.capacity?.min, 
     filters?.capacity?.max,
-    filters?.sortBy
+    filters?.sortBy,
+    fetchServices
   ]);
 
   return { 
@@ -300,7 +301,7 @@ export const useService = (id: string): UseServiceReturn => {
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const fetchService = async (isRetry = false) => {
+  const fetchService = useCallback(async (isRetry = false) => {
     try {
       if (isRetry) {
         setIsRetrying(true);
@@ -336,14 +337,14 @@ export const useService = (id: string): UseServiceReturn => {
       }
 
       setService(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Service fetch error:', err);
       setError(err.message || 'Failed to load service details. Please try again.');
     } finally {
       setLoading(false);
       setIsRetrying(false);
     }
-  };
+  }, [id]);
 
   const retry = () => fetchService(true);
 
@@ -351,7 +352,7 @@ export const useService = (id: string): UseServiceReturn => {
     if (id) {
       fetchService();
     }
-  }, [id]);
+  }, [id, fetchService]);
 
   return { service, loading, error, retry, isRetrying };
 };

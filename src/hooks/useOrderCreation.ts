@@ -75,7 +75,7 @@ export const useOrderCreation = () => {
       });
 
       return data.order;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Unexpected error:', err);
       const errorMessage = err.message || 'An unexpected error occurred';
       setError(errorMessage);

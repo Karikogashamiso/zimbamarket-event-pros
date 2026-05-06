@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,11 +49,7 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
   const ticketRef = useRef<HTMLDivElement>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
-  useEffect(() => {
-    generateQRCode();
-  }, [ticket.qrCodeData]);
-
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     try {
       let qrData = ticket.qrCodeData;
       
@@ -88,7 +84,11 @@ export const TicketTemplate: React.FC<TicketTemplateProps> = ({
     } catch (error) {
       console.error('Error generating QR code:', error);
     }
-  };
+  }, [ticket.qrCodeData]);
+
+  useEffect(() => {
+    generateQRCode();
+  }, [ticket.qrCodeData, generateQRCode]);
 
   const getEventIcon = () => {
     switch (ticket.eventType) {

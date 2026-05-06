@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ import {
 export const ServiceCreationForm = () => {
   const { user } = useAuth();
   const { services, createService, updateService, deleteService, loading } = useServiceManagement(undefined, true);
-  const [businessListings, setBusinessListings] = useState<any[]>([]);
+  const [businessListings, setBusinessListings] = useState<unknown[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<any | null>(null);
@@ -50,9 +50,9 @@ export const ServiceCreationForm = () => {
 
   useEffect(() => {
     fetchBusinessListings();
-  }, [user]);
+  }, [user, fetchBusinessListings]);
 
-  const fetchBusinessListings = async () => {
+  const fetchBusinessListings = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -67,7 +67,7 @@ export const ServiceCreationForm = () => {
     } catch (error) {
       console.error('Error fetching business listings:', error);
     }
-  };
+  }, [user]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

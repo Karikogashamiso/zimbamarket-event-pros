@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,20 +42,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const BusinessListingsManager = () => {
-  const [listings, setListings] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [listings, setListings] = useState<unknown[]>([]);
+  const [categories, setCategories] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [selectedListing, setSelectedListing] = useState<unknown>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchListings();
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -64,12 +59,12 @@ export const BusinessListingsManager = () => {
 
       if (error) throw error;
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, []);
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -90,7 +85,7 @@ export const BusinessListingsManager = () => {
       }));
       
       setListings(cleanedData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching listings:', error);
       toast({
         title: "Error",
@@ -100,7 +95,12 @@ export const BusinessListingsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchListings();
+    fetchCategories();
+  }, [fetchListings, fetchCategories]);
 
   const handleEditListing = (listing: any) => {
     setSelectedListing(listing);
@@ -189,7 +189,7 @@ export const BusinessListingsManager = () => {
       setShowEditDialog(false);
       setSelectedListing(null);
       fetchListings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating listing:', error);
       toast({
         title: "Error",
@@ -227,7 +227,7 @@ export const BusinessListingsManager = () => {
       });
 
       fetchListings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating status:', error);
       toast({
         title: "Error",
@@ -321,7 +321,7 @@ export const BusinessListingsManager = () => {
 
       setDeleteListingId(null);
       fetchListings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting listing:', error);
       toast({
         title: "Error",

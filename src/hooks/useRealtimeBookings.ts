@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
@@ -29,7 +29,7 @@ export const useRealtimeBookings = (): RealtimeBookingHook => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const connect = () => {
+  const connect = useCallback(() => {
     if (!user) return;
 
     try {
@@ -74,7 +74,7 @@ export const useRealtimeBookings = (): RealtimeBookingHook => {
           switch (data.type) {
             case 'booking_update':
             case 'business_booking_update':
-            case 'specific_booking_update':
+            case 'specific_booking_update': {
               const update: BookingUpdate = {
                 type: data.type,
                 event: data.event,
@@ -104,6 +104,7 @@ export const useRealtimeBookings = (): RealtimeBookingHook => {
                 }
               }
               break;
+            }
 
             case 'connection_established':
             case 'subscriptions_active':
@@ -168,7 +169,7 @@ export const useRealtimeBookings = (): RealtimeBookingHook => {
       console.error('Failed to establish real-time connection:', error);
       setConnectionStatus('error');
     }
-  };
+  }, [user, toast]);
 
   const disconnect = () => {
     if (wsRef.current) {
@@ -207,7 +208,7 @@ export const useRealtimeBookings = (): RealtimeBookingHook => {
     return () => {
       disconnect();
     };
-  }, [user]);
+  }, [user, connect]);
 
   // Cleanup on unmount
   useEffect(() => {

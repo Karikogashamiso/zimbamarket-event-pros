@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,17 +26,17 @@ export interface CheckoutData {
     id: string;
     title: string;
     venue: string;
-    ticket_types?: any[];
-    event_addons?: any[];
+    ticket_types?: unknown[];
+    event_addons?: unknown[];
   };
-  selectedSeats?: any[];
+  selectedSeats?: unknown[];
   ticketTiers?: Array<{
     ticketTypeId: string;
     name: string;
     quantity: number;
     price: number;
   }>;
-  addOns?: any[];
+  addOns?: unknown[];
   customerInfo?: {
     firstName: string;
     lastName: string;
@@ -133,14 +133,14 @@ export const CheckoutFlow: React.FC = () => {
     };
 
     checkEventOwnership();
-  }, [user, eventId]);
+  }, [user, eventId, toast]);
 
   // Calculate total amount helper
-  const calculateTotal = (tiers: any[] = [], addons: any[] = []) => {
+  const calculateTotal = useCallback((tiers: {price: number; quantity: number}[] = [], addons: {price: number; quantity: number}[] = []) => {
     const tiersTotal = tiers.reduce((sum, tier) => sum + (tier.price * tier.quantity), 0);
     const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
     return tiersTotal + addonsTotal;
-  };
+  }, []);
 
   // Fetch event/trip data on mount
   useEffect(() => {
@@ -230,7 +230,7 @@ export const CheckoutFlow: React.FC = () => {
             });
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching event:', error);
         toast({
           title: "Error",
@@ -252,12 +252,12 @@ export const CheckoutFlow: React.FC = () => {
         variant: "destructive",
       });
     }
-  }, [eventId, tripId]);
+  }, [eventId, tripId, toast, updateCheckoutData]);
 
   const currentStepIndex = STEPS.findIndex(step => step.key === currentStep);
   const progressPercentage = ((currentStepIndex + 1) / STEPS.length) * 100;
 
-  const updateCheckoutData = (updates: Partial<CheckoutData>) => {
+  const updateCheckoutData = useCallback((updates: Partial<CheckoutData>) => {
     const updatedData = { ...checkoutData, ...updates };
     
     // Recalculate total when ticket tiers or add-ons change
@@ -270,7 +270,7 @@ export const CheckoutFlow: React.FC = () => {
     }
     
     setCheckoutData(updatedData);
-  };
+  }, [checkoutData, calculateTotal]);
 
   const handleConfirmOrder = async () => {
     // Prevent duplicate order creation

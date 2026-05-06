@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ const PerformanceMonitor: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const initializeMetrics = () => {
+  const initializeMetrics = useCallback(() => {
     setIsLoading(true);
     const collectedMetrics: Metric[] = [];
     let metricsCount = 0;
@@ -71,7 +71,7 @@ const PerformanceMonitor: React.FC = () => {
       setLastUpdated(new Date());
       cleanup();
     }, 3000);
-  };
+  }, []);
 
   const getMetricUnit = (name: string): string => {
     switch (name) {
@@ -136,7 +136,7 @@ const PerformanceMonitor: React.FC = () => {
 
   useEffect(() => {
     initializeMetrics();
-  }, []);
+  }, [initializeMetrics]);
 
   const overallScore = metrics.length > 0 
     ? Math.round((metrics.filter(m => m.rating === 'good').length / metrics.length) * 100)

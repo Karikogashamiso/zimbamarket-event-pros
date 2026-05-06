@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import MetaTags from '@/components/SEO/MetaTags';
 export const ScanTicket: React.FC = () => {
   const [qrData, setQrData] = useState('');
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<any>(null);
+  const [validationResult, setValidationResult] = useState<unknown>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
   // Check for ticket parameter in URL on mount
@@ -57,9 +57,9 @@ export const ScanTicket: React.FC = () => {
     } else {
       setDebugInfo('No ticket parameter found in URL');
     }
-  }, []);
+  }, [handleValidate]);
 
-  const handleValidate = async (dataToValidate?: string) => {
+  const handleValidate = useCallback(async (dataToValidate?: string) => {
     const dataToUse = dataToValidate || qrData;
     
     if (!dataToUse.trim()) {
@@ -93,7 +93,7 @@ export const ScanTicket: React.FC = () => {
       } else {
         toast.error(`Validation failed: ${data.reason}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Validation error:', error);
       toast.error(`Validation error: ${error.message}`);
       setValidationResult({
@@ -103,7 +103,7 @@ export const ScanTicket: React.FC = () => {
     } finally {
       setIsValidating(false);
     }
-  };
+  }, [qrData]);
 
   const generateDeviceFingerprint = async (): Promise<string> => {
     const canvas = document.createElement('canvas');

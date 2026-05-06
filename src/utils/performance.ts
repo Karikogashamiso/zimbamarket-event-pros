@@ -256,8 +256,8 @@ export const monitorPerformanceBudget = () => {
       console.warn(`Performance budget exceeded for ${metric.name}: ${metric.value} > ${budgetValue}`);
       
       // Send to analytics or monitoring service
-      if ((window as any).gtag) {
-        (window as any).gtag('event', 'performance_budget_exceeded', {
+      if ((window as Window & { gtag?: (...args: unknown[]) => void }).gtag) {
+        (window as Window & { gtag?: (...args: unknown[]) => void }).gtag('event', 'performance_budget_exceeded', {
           metric_name: metric.name,
           metric_value: metric.value,
           budget_value: budgetValue,

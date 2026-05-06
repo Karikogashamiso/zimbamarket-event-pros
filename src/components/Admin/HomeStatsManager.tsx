@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,11 +36,7 @@ export const HomeStatsManager = () => {
     display_order: 0,
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('home_stats')
@@ -59,7 +55,11 @@ export const HomeStatsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

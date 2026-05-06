@@ -62,10 +62,10 @@ export interface CheckoutData {
     available?: number;
     image?: string;
     featured?: boolean;
-    event_addons?: any[];
-    ticket_types?: any[];
+    event_addons?: unknown[];
+    ticket_types?: unknown[];
   };
-  selectedSeats?: any[];
+  selectedSeats?: unknown[];
   ticketTiers?: Array<{
     id: string;
     name: string;
@@ -73,7 +73,7 @@ export interface CheckoutData {
     currency: string;
     quantity: number;
   }>;
-  addOns?: any[];
+  addOns?: unknown[];
   customerInfo?: {
     firstName: string;
     lastName: string;
@@ -92,12 +92,12 @@ export interface CheckoutData {
 
 export const useCheckout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<unknown>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { generateTickets, isGenerating } = useTicketGeneration();
 
-  const calculateTotal = (ticketTiers: any[], addOns: any[] = []) => {
+  const calculateTotal = (ticketTiers: {price: number; quantity: number}[], addOns: {price: number; quantity: number}[] = []) => {
     const ticketTotal = ticketTiers.reduce((sum, tier) => sum + (tier.price * tier.quantity), 0);
     const addOnTotal = addOns.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
     return ticketTotal + addOnTotal;
@@ -180,7 +180,7 @@ export const useCheckout = () => {
     return order;
   };
 
-  const createTickets = async (orderId: string, ticketTiers: any[], checkoutData: CheckoutData) => {
+  const createTickets = async (orderId: string, ticketTiers: {id: string; name: string; price: number; quantity: number}[], checkoutData: CheckoutData) => {
     console.log('Creating secure tickets with QR codes...');
 
     const generationOptions = {
@@ -286,7 +286,7 @@ export const useCheckout = () => {
   };
 
   const updateOrderStatus = async (orderId: string, status: 'confirmed' | 'cancelled' | 'failed') => {
-    const updates: any = {
+    const updates: Record<string, unknown> = {
       booking_status: status as 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'checked_in',
       updated_at: new Date().toISOString(),
     };
@@ -400,7 +400,7 @@ export const useCheckout = () => {
 
       return finalOrderDetails;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout process failed:', error);
       
       toast({

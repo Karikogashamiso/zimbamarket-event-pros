@@ -140,7 +140,7 @@ export const useEmailService = () => {
         processingTime: data.processingTime
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Email Service] Unexpected error:', error);
       
       const emailError = classifyEmailError(error);
@@ -212,7 +212,7 @@ export const useEmailService = () => {
         processingTime: data.processingTime
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Email Service] Password reset error:', error);
       
       const emailError = classifyEmailError(error);

@@ -124,7 +124,7 @@ export const BlogPostsManager = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchPosts();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving post:', error);
       toast.error(error.message || 'Failed to save blog post');
     }
@@ -313,7 +313,7 @@ export const BlogPostsManager = () => {
 
                         setFormData({ ...formData, featured_image: publicUrl });
                         toast.success('Image uploaded successfully');
-                      } catch (error: any) {
+                      } catch (error: unknown) {
                         console.error('Error uploading image:', error);
                         toast.error(error.message || 'Failed to upload image');
                       } finally {

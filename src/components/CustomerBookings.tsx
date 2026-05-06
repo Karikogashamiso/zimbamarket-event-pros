@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,16 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 export const CustomerBookings = () => {
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchBookings();
-  }, [user]);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -41,7 +37,7 @@ export const CustomerBookings = () => {
 
       if (error) throw error;
       setBookings(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching bookings:', error);
       toast({
         title: "Error",
@@ -51,7 +47,11 @@ export const CustomerBookings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [user, fetchBookings]);
 
   const handlePayment = async (bookingId: string) => {
     try {
@@ -64,7 +64,7 @@ export const CustomerBookings = () => {
       if (data.url) {
         window.open(data.url, '_blank');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating checkout:', error);
       toast({
         title: "Payment Error",
